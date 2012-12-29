@@ -36,13 +36,9 @@ skip($skip, sub { $f->existent($testbed) }, 1, $skip);
 
 # 4
 # make a temporary file
-my($tmpf) = $testbed . SL . 'tmptst';
-skip(
-	$skip,
-	sub {
-		$f->write_file('file' => $tmpf, 'content' => $$ . NL),
-	}, 1, $skip
-);
+my $tmpf = $testbed . SL . 'tmptst';
+
+skip( $skip, sub { $f->write_file('file' => $tmpf, 'content' => $$ . NL); }, 1, $skip );
 
 # 5
 # File::Util::touch() a file, and see if it was created ok
