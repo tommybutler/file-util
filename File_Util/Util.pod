@@ -533,7 +533,7 @@ found by the call, the second is a reference to any files found by the call.
 
 =item C<--sl-after-dirs>
 
-Append a directory seperator ("/, "\", or ":" depending on your system)
+Append a directory separator ("/, "\", or ":" depending on your system)
 to all directories found by the call.  Useful in visual displays for quick
 differentiation between subdirectories and files.
 
@@ -1313,7 +1313,7 @@ on which your program runs.
 
 =item I<Syntax:> C<SL>
 
-Returns the correct directory path seperator for the system on which your
+Returns the correct directory path separator for the system on which your
 program runs.
 
 =back
@@ -1721,7 +1721,7 @@ Specifics: OS name =~ /^os2/i
    my($f) = File::Util->new();
    $f->trunc('/wibble/wombat/noot.tmp');
 
-=head2 Get the correct path seperator for the host system
+=head2 Get the correct path separator for the host system
 
    use File::Util qw( SL );
    print SL;

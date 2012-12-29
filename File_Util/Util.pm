@@ -10,7 +10,7 @@ use vars qw(
 use Exporter;
 use AutoLoader qw( AUTOLOAD );
 use Class::OOorNO qw( :all );
-$VERSION    = 3.27; # Sat Dec  6 13:10:00 CST 2008
+$VERSION    = 3.28; # Sat Sep 29 17:42:41 CDT 2012
 @ISA        = qw( Exporter   Class::OOorNO );
 @EXPORT_OK  = (
    @Class::OOorNO::EXPORT_OK, qw(
@@ -621,7 +621,7 @@ sub write_file {
       (!$opts->{'--empty-writes-OK'})
    );
 
-   # remove any possible trailing directory seperator
+   # remove any possible trailing directory separator
    $filename =~ s/$DIRSPLIT$//;
 
    # check if file already exists in the form of a directory
@@ -1151,7 +1151,7 @@ sub flock_rules {
    my($this)   = shift(@_);
    my(@rules)  = myargs(@_);
 
-   return @ONLOCKFAIL unless defined scalar @rules;
+   return @ONLOCKFAIL unless scalar @rules;
 
    my(%valid) = qw/
       NOBLOCKEX   NOBLOCKEX
@@ -1493,7 +1493,7 @@ sub open_handle {
       }
    ) if ($filename =~ /(?:$DIRSPLIT){2,}/);
 
-   # remove trailing directory seperator
+   # remove trailing directory separator
    $filename =~ s/$DIRSPLIT$//;
 
    # determine existance of the file path, make directory(ies) for the

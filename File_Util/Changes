@@ -1,5 +1,11 @@
 Revision history for Perl extension File::Util.pm
 
+   2.28
+      Sat Sep 29 17:38:47 CDT 2012
+      Adding a patch to fix breakage under Perl 5.17 (CPAN RT#31013)
+
+      Fix spelling error in documentation and code comments (CPAN RT# #64854)
+
    2.27
       Sat Dec  6 13:10:00 CST 2008
       Fixed a bug that caused root directories using Micro$oft filesystem
