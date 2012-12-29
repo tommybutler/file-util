@@ -1,5 +1,9 @@
 Revision history for Perl extension File::Util.pm
 
+   3.32
+      Wed Nov 28 21:42:59 CST 2012
+      Emergency break fix for abs paths on *nix
+
    3.31
       Tue Nov 20 16:33:10 CST 2012
       Adds new method: File::Util::atomize() which explodes a fully-qualified

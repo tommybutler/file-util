@@ -1,22 +1,23 @@
----
-abstract: 'Easy, versatile, portable file handling'
+--- #YAML:1.0
+name:               File-Util
+version:            3.30_003
+abstract:           Easy, versatile, portable file handling
 author:
-  - 'Tommy Butler <just.go.to.my.website@atrixnet.com>'
-build_requires:
-  ExtUtils::MakeMaker: 0
+    - Tommy Butler <just.go.to.my.website@atrixnet.com>
+license:            unknown
+distribution_type:  module
 configure_requires:
-  ExtUtils::MakeMaker: 0
-dynamic_config: 1
-generated_by: 'ExtUtils::MakeMaker version 6.62, CPAN::Meta::Converter version 2.120921'
-license: unknown
-meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
-name: File-Util
-no_index:
-  directory:
-    - t
-    - inc
+    ExtUtils::MakeMaker:  0
+build_requires:
+    ExtUtils::MakeMaker:  0
 requires:
-  Exception::Handler: 1
-version: 3.31
+    Class::OOorNO:       0.01
+    Exception::Handler:  1
+no_index:
+    directory:
+        - t
+        - inc
+generated_by:       ExtUtils::MakeMaker version 6.57_05
+meta-spec:
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4

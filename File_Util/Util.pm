@@ -16,7 +16,7 @@ use vars qw(
 use Exporter;
 use AutoLoader qw( AUTOLOAD );
 
-$VERSION    = 3.31; # Tue Nov 20 16:33:10 CST 2012
+$VERSION    = 3.32; # Wed Nov 28 21:42:59 CST 2012
 @ISA        = qw( Exporter );
 @EXPORT_OK  = qw(
    NL     can_flock   ebcdic       existent      needs_binmode
@@ -397,16 +397,13 @@ sub load_file {
       #    - /foo/bar/baz.txt stays as /foo/bar/baz.txt
       #    - foo/bar/baz.txt  becomes ./foo/bar/baz.txt
       #    - baz.txt          stays as baz.txt
-      if ( !length $root ) { # if no root, path will be modified...
+      if ( !length $root && !length $path ) {
 
-         if ( !length $path ) { # if no path, path normalized
+         $path = '.' . SL;
+      }
+      else { # otherwise path normalized at end
 
-            $path = '.' . SL;
-         }
-         else { # otherwise path normalized at end
-
-            $path .= SL;
-         }
+         $path .= SL;
       }
 
       # final clean filename assembled
@@ -699,8 +696,6 @@ sub write_file {
    # path if the full directory path doesn't exist
    @dirs = split /$DIRSPLIT/, $path;
 
-   unshift @dirs, $root if $root;
-
    # if prospective file name has illegal chars then complain
    foreach ( @dirs ) {
 
@@ -713,6 +708,9 @@ sub write_file {
          }
       ) if !$this->valid_filename( $_ );
    }
+
+   # do this AFTER the above check!!
+   unshift @dirs, $root if $root;
 
    # make sure that open mode is a valid mode
    unless ( $mode eq 'write' || $mode eq 'append' || $mode eq 'trunc' ) {
@@ -732,16 +730,13 @@ sub write_file {
    #    - /foo/bar/baz.txt stays as /foo/bar/baz.txt
    #    - foo/bar/baz.txt  becomes ./foo/bar/baz.txt
    #    - baz.txt          stays as baz.txt
-   if ( !length $root ) { # if no root, path will be modified...
+   if ( !length $root && !length $path ) {
 
-      if ( !length $path ) { # if no path, path normalized
+      $path = '.' . SL;
+   }
+   else { # otherwise path normalized at end
 
-         $path = '.' . SL;
-      }
-      else { # otherwise path normalized at end
-
-         $path .= SL;
-      }
+      $path .= SL;
    }
 
    # final clean filename assembled
@@ -1625,8 +1620,6 @@ sub open_handle {
    # path if the full directory path doesn't exist
    @dirs = split /$DIRSPLIT/, $path;
 
-   unshift @dirs, $root if $root;
-
    # if prospective file name has illegal chars then complain
    foreach ( @dirs ) {
 
@@ -1639,6 +1632,9 @@ sub open_handle {
          }
       ) if !$this->valid_filename( $_ );
    }
+
+   # do this AFTER the above check!!
+   unshift @dirs, $root if $root;
 
    # make sure that open mode is a valid mode
    if (
