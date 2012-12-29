@@ -3,7 +3,7 @@ use strict;
 use Test;
 
 # use a BEGIN block so we print our plan before MyModule is loaded
-BEGIN { plan tests => 46, todo => [] }
+BEGIN { plan tests => 49, todo => [] }
 BEGIN { $| = 1 }
 
 # load your module...
@@ -56,6 +56,8 @@ ok                                                                     # test 6
 
 # path stripping in general
 ok(strip_path(__FILE__),'004_portable.t');                               # test 7
+ok(strip_path('C:\foo'),'foo');                                          # test 8
+ok(strip_path('C:\foo\bar\baz.txt'),'baz.txt');                          # test 9
 
 # illegal filename character intolerance
 ok(!valid_filename(qq[?foo]));      # question mark
@@ -98,6 +100,7 @@ ok(valid_filename(']foo'));
 ok(valid_filename('~foo'));
 ok(valid_filename('.foo'));
 ok(valid_filename(q/;$%`!@#^&-_+=(){}[]~baz.foo'/));
+ok(valid_filename('C:\foo'));
 
 # directory listing tests...
 # remove '.' and '..' directory entries

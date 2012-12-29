@@ -6,7 +6,7 @@ require 5.006;
 WriteMakefile
    (
    'NAME'         => 'File::Util',
-   'AUTHOR'       => 'Tommy Butler <cpan@atrixnet.com>',
+   'AUTHOR'       => 'Tommy Butler <just.go.to.my.website@atrixnet.com>',
    'ABSTRACT_FROM'=> 'Util.pod',
    'VERSION_FROM' => 'Util.pm',
    'INSTALLDIRS'  => 'site',

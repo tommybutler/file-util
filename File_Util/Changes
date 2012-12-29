@@ -1,5 +1,16 @@
 Revision history for Perl extension File::Util.pm
 
+   3.30_001
+      Mon Nov 12 18:00:16 CST 2012
+      Development release.  BETA.  Do not use for production!  This release
+      attempts to fix MS Windows-related problems, and introduces bugfixes
+      for CPAN RT# 46368 and 67399.  As a result, the test suite has been
+      slightly improved (and will continue to improve).
+
+      There's been a lot of code refactoring and regex optimization.  A lot
+      of planning and work will be going into 3.30, and this is the first
+      release candidate.
+
    2.29
       Wed Oct 17 09:38:36 CDT 2012
       Fixed bug where list_dir() did not continue to recurse if it encountered

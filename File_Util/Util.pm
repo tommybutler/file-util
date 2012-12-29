@@ -6,11 +6,12 @@ use vars qw(
    $OS   $MODES   $READLIMIT   $MAXDIVES   $EMPTY_WRITES_OK
    $USE_FLOCK   @ONLOCKFAIL   $ILLEGAL_CHR   $CAN_FLOCK
    $NEEDS_BINMODE   $EBCDIC   $DIRSPLIT   $SL   $NL   $_LOCKS
+   $WINROOT   $ATOMIZER
 );
 use Exporter;
 use AutoLoader qw( AUTOLOAD );
 use Class::OOorNO qw( :all );
-$VERSION    = 3.29; # Wed Oct 17 15:45:01 CDT 2012
+$VERSION    = '3.30_001'; # DEVELOPER RELEASE # Mon Nov 12 21:48:57 CST 2012
 @ISA        = qw( Exporter   Class::OOorNO );
 @EXPORT_OK  = (
    @Class::OOorNO::EXPORT_OK, qw(
@@ -20,7 +21,7 @@ $VERSION    = 3.29; # Wed Oct 17 15:45:01 CDT 2012
       created   last_access   last_changed   last_modified   OS
    )
 );
-%EXPORT_TAGS = ( 'all'  => [ @EXPORT_OK ] );
+%EXPORT_TAGS = ( all  => [ @EXPORT_OK ] );
 
 BEGIN {
 
@@ -46,9 +47,9 @@ $NL =
          : $OS eq 'MACINTOSH' ? qq[\015]
             : qq[\012];
 $SL =
-   { 'DOS' => '\\', 'EPOC'   => '/', 'MACINTOSH' => ':',
-     'OS2' => '\\', 'UNIX'   => '/', 'WINDOWS'   => chr(92),
-     'VMS' => '/',  'CYGWIN' => '/', }->{ $OS }||'/';
+   { DOS => '\\', EPOC   => '/', MACINTOSH => ':',
+     OS2 => '\\', UNIX   => '/', WINDOWS   => chr(92),
+     VMS => '/',  CYGWIN => '/', }->{ $OS }||'/';
 
 $_LOCKS = {};
 
@@ -58,15 +59,18 @@ $_LOCKS = {};
    use constant OS => $OS;
 }
 
-$DIRSPLIT    = qr/[\x5C\/\:]/;
+$WINROOT     = qr/^(?: [[:alpha:]]{1} ) : (?: \x5C{1,2} )/x;
+$DIRSPLIT    = qr/$WINROOT | [\x5C\/\:]/x;
+$ATOMIZER    = qr/
+   (?<ROOT> (?:^ $WINROOT ) | (?: $DIRSPLIT ) )
+   (?<PATH> .*) $DIRSPLIT (?<FILENAME> .*) /x;
 $ILLEGAL_CHR = qr/[\x5C\/\|$NL\r\n\t\013\*\"\?\<\:\>]/;
+$READLIMIT   = 52428800; # set readlimit to a default of 50 megabytes
+$MAXDIVES    = 1000;     # maximum depth for recursive list_dir calls
 
-$READLIMIT  = 52428800; # set readlimit to a default of 50 megabytes
-$MAXDIVES   = 1000;     # maximum depth for recursive list_dir calls
+use Fcntl qw();
 
-use Fcntl qw( );
-
-{ local($@); eval <<'__canflock__'; $CAN_FLOCK = $@ ? 0 : 1; }
+{ local $@; eval <<'__canflock__'; $CAN_FLOCK = $@ ? 0 : 1; }
 flock(STDOUT, &Fcntl::LOCK_SH);
 flock(STDOUT, &Fcntl::LOCK_UN);
 __canflock__
@@ -74,21 +78,21 @@ __canflock__
 # try to use file locking, define flock race conditions policy
 $USE_FLOCK = 1; @ONLOCKFAIL = qw( NOBLOCKEX FAIL );
 
-$MODES->{'popen'} = {
-   'write'     => '>',  'trunc'    => '>',  'rwupdate'  => '+<',
-   'append'    => '>>', 'read'     => '<',  'rwclobber' => '+>',
-   'rwcreate'  => '+>', 'rwappend' => '+>>',
+$MODES->{popen} = {
+   write     => '>',  trunc    => '>',  rwupdate  => '+<',
+   append    => '>>', read     => '<',  rwclobber => '+>',
+   rwcreate  => '+>', rwappend => '+>>',
 };
 
-$MODES->{'sysopen'} = {
-   'read'      => '&Fcntl::O_RDONLY',
-   'write'     => '&Fcntl::O_WRONLY | &Fcntl::O_CREAT',
-   'append'    => '&Fcntl::O_WRONLY | &Fcntl::O_APPEND | &Fcntl::O_CREAT',
-   'trunc'     => '&Fcntl::O_WRONLY | &Fcntl::O_CREAT  | &Fcntl::O_TRUNC',
-   'rwcreate'  => '&Fcntl::O_RDWR | &Fcntl::O_CREAT',
-   'rwupdate'  => '&Fcntl::O_RDWR',
-   'rwclobber' => '&Fcntl::O_RDWR | &Fcntl::O_TRUNC | &Fcntl::O_CREAT',
-   'rwappend'  => '&Fcntl::O_RDWR | &Fcntl::O_APPEND | &Fcntl::O_CREAT',
+$MODES->{sysopen} = {
+   read      => '&Fcntl::O_RDONLY',
+   write     => '&Fcntl::O_WRONLY | &Fcntl::O_CREAT',
+   append    => '&Fcntl::O_WRONLY | &Fcntl::O_APPEND | &Fcntl::O_CREAT',
+   trunc     => '&Fcntl::O_WRONLY | &Fcntl::O_CREAT  | &Fcntl::O_TRUNC',
+   rwcreate  => '&Fcntl::O_RDWR | &Fcntl::O_CREAT',
+   rwupdate  => '&Fcntl::O_RDWR',
+   rwclobber => '&Fcntl::O_RDWR | &Fcntl::O_TRUNC | &Fcntl::O_CREAT',
+   rwappend  => '&Fcntl::O_RDWR | &Fcntl::O_APPEND | &Fcntl::O_CREAT',
 };
 
 
@@ -96,21 +100,27 @@ $MODES->{'sysopen'} = {
 # Constructor
 # --------------------------------------------------------
 sub new {
-   my($this)   = {}; bless($this, shift(@_));
-   my($in)     = $this->coerce_array(@_);
+   my $this = {};
 
-   my($opts)   = $this->shave_opts(\@_); $this->{'opts'} = $opts || {};
+   bless $this, shift @_;
 
-   $USE_FLOCK  = $in->{'use_flock'}
-      if exists $in->{'use_flock'} && $in->{'use_flock'};
+   my $in = $this->coerce_array( @_ );
 
-   $READLIMIT  = $in->{'readlimit'}
-      if defined $in->{'readlimit'}
-      && $$in{'readlimit'} !~ /\D/;
+   my $opts = $this->shave_opts( \@_ );
 
-   $MAXDIVES   = $in->{'max_dives'}
-      if defined $in->{'max_dives'}
-      && $$in{'max_dives'} !~ /\D/;
+   $this->{opts} = $opts || {};
+
+   $USE_FLOCK  = $in->{use_flock}
+      if exists $in->{use_flock}
+      && $in->{use_flock};
+
+   $READLIMIT  = $in->{readlimit}
+      if defined $in->{readlimit}
+      && $$in{readlimit} !~ /\D/;
+
+   $MAXDIVES   = $in->{max_dives}
+      if defined $in->{max_dives}
+      && $$in{max_dives} !~ /\D/;
 
    return $this;
 }
@@ -120,139 +130,129 @@ sub new {
 # File::Util::list_dir()
 # --------------------------------------------------------
 sub list_dir {
-   my($this) = shift(@_);
-   my($opts) = $this->shave_opts(\@_);
-   my($dir)  = shift(@_)||'.';
-   my($path) = $dir;
-   my($maxd) = $opts->{'--max-dives'} || $MAXDIVES;
-   my($r)    = 0;
-   my(@dirs) = (); my(@files) = (); my(@items) = ();
+   my $this = shift @_;
+   my $opts = $this->shave_opts( \@_ );
+   my $dir  = shift @_ || '.';
+   my $path = $dir;
+   my $maxd = $opts->{'--max-dives'} || $MAXDIVES;
+   my $r    = 0;
+   my ( @dirs, @files, @items );
 
-   return
-      $this->_throw
-         (
-            'no input',
-            {
-               'meth'      => 'list_dir',
-               'missing'   => 'a directory name',
-               'opts'      => $opts,
-            }
-         )
-      unless length($dir);
+   return $this->_throw(
+      'no input' => {
+         meth    => 'list_dir',
+         missing => 'a directory name',
+         opts    => $opts,
+      }
+   ) unless length $dir;
 
-   return($this->_throw('no such file', {'filename' => $dir})) unless -e $dir;
+   return $this->_throw( 'no such file', { filename => $dir } ) unless -e $dir;
 
    # whack off any trailing directory separator, except for root directories
-   # -account for both posix filesystem AND micro$oft directory notation
-   unless ( length($dir) == 1 || $dir =~ /^(?:[[:alpha:]]:)(?:\\|\/)$/o ) {
+   # -account for both posix filesystem AND micro$oft path notation
+   unless ( length $dir == 1 || $dir =~ /^$WINROOT$/o ) {
+
       # removes one or more dirsep at the end of $dir
       $dir =~ s/(?:$DIRSPLIT){1,}$//o;
    }
 
-   return
-      $this->_throw
-         (
-            'called opendir on a file',
-            {
-               'filename'  => $dir,
-               'opts'      => $opts,
-            }
-         )
-      unless (-d $dir);
+   return $this->_throw (
+      'called opendir on a file' => {
+         filename => $dir,
+         opts     => $opts,
+      }
+   ) unless -d $dir;
 
    # this directory recursion method keeps track of dives based on the parent
    # directory of $dir, rather than on $dir itself so that multiple
    # subdirectories within the same parent directory don't improperly increment
    # the number of dives made
-   if ($opts->{'--recursing'}) {
+   if ( $opts->{'--recursing'} ) {
 
-      my($pdir) = $dir; $pdir =~ s/(^.*)$DIRSPLIT.*/$1/;
+      my $pdir = $dir; $pdir =~ s/(^.*)$DIRSPLIT.*/$1/;
 
-      $this->{'traversed'}{ $pdir } = $pdir;
+      $this->{traversed}{ $pdir } = $pdir;
    }
-   else { $this->{'traversed'} = {} }
+   else { $this->{traversed} = {} }
 
-   if (scalar keys %{ $this->{'traversed'} } >= $maxd) {
+   # enforce maximum subdirectory dives, unless $MAXDIVES is equal to zero
+   if ( $MAXDIVES != 0 && ( scalar keys %{ $this->{traversed} } >= $maxd ) ) {
 
-      return $this->_throw
-         (
-            'maxdives exceeded',
-            {
-               'meth'      => 'list_dir',
-               'maxdives'  => $maxd,
-               'opts'      => $opts,
+      return $this->_throw(
+         'maxdives exceeded' => {
+            meth     => 'list_dir',
+            maxdives => $maxd,
+            opts     => $opts,
+         }
+      )
+   }
+
+   $r = 1 if $opts->{'--follow'} || $opts->{'--recurse'};
+
+   local *DIR;
+
+   opendir DIR, $dir
+      or return $this->_throw(
+            'bad opendir' => {
+               dirname    => $dir,
+               exception  => $!,
+               opts       => $opts,
             }
-         )
-   }
-
-   $r = 1 if ($opts->{'--follow'} || $opts->{'--recurse'});
-
-   local(*DIR);
-
-   opendir(DIR, $dir) or
-      return
-         $this->_throw
-            (
-               'bad opendir',
-               {
-                  'dirname'   => $dir,
-                  'exception' => $!,
-                  'opts'      => $opts,
-               }
-            );
+         );
 
    # read from beginning of the directory (doesn't seem necessary on any
    # platforms I've run code on, but just in case...)
-   rewinddir(DIR);
+   rewinddir DIR;
 
-   @files = exists($opts->{'--pattern'})
-      ? grep(/$opts->{'--pattern'}/, readdir(DIR))
-      : readdir(DIR);
+   @files = exists $opts->{'--pattern'}
+      ? grep /$opts->{'--pattern'}/, readdir DIR
+      : readdir DIR;
 
-   closedir(DIR) or return $this->_throw(
-      'close dir',
-      {
-         'dir'       => $dir,
-         'exception' => $!,
-         'opts'      => $opts,
-      }
-   );
+   closedir DIR
+      or return $this->_throw(
+         'close dir'  => {
+            dir       => $dir,
+            exception => $!,
+            opts      => $opts,
+         }
+      );
 
-   if ($opts->{'--no-fsdots'}) {
+   if ( $opts->{'--no-fsdots'} ) {
 
-      my(@shadow) = @files; @files = ();
+      my @shadow = @files; @files = ();
 
-      while (@shadow) {
+      while ( @shadow ) {
 
-         my($f) = shift(@shadow);
+         my $f = shift @shadow;
 
-         push(@files,$f) unless (
-               $this->strip_path($f) eq '.'
+         push @files, $f
+            unless (
+               $this->strip_path( $f ) eq '.'
                   or
-               $this->strip_path($f) eq '..'
+               $this->strip_path( $f ) eq '..'
             );
       }
    }
 
-   for (my($i) = 0; $i < @files; ++$i) {
+   for ( my $i = 0; $i < @files; ++$i ) {
 
-      my($listing) = ($opts->{'--with-paths'} or ($r==1))
+      my $listing = ( $opts->{'--with-paths'} or ($r==1) )
          ? $path . SL . $files[$i]
          : $files[$i];
 
-      if (-d $path . SL . $files[$i]) { push(@dirs, $listing) }
-      else { push(@items, $listing) }
+      if ( -d $path . SL . $files[ $i ] ) { push @dirs, $listing }
+      else { push @items, $listing }
    }
 
    if  (($r) and (not $opts->{'--override-follow'})) {
 
-      my(@shadow) = @dirs; @dirs = ();
+      my @shadow = @dirs; @dirs = ();
 
-      while (@shadow) {
+      while ( @shadow ) {
 
-         my($f) = shift(@shadow);
+         my $f = shift @shadow;
 
-         push(@dirs,$f)
+         push @dirs, $f
             unless
                (
                   $this->strip_path($f) eq '.'
@@ -261,15 +261,14 @@ sub list_dir {
                );
       }
 
-      for (my($i) = 0; $i < @dirs; ++$i) {
+      for ( my $i = 0; $i < @dirs; ++$i ) {
 
-         my(@lsts) = $this->list_dir
-            (
-               $dirs[$i],
-               '--with-paths',   '--dirs-as-ref',
-               '--files-as-ref', '--recursing',
-               '--no-fsdots',    '--max-dives=' . $maxd
-            );
+         my @lsts = $this->list_dir(
+            $dirs[ $i ], qw(
+            --with-paths   --dirs-as-ref
+            --files-as-ref --recursing --no-fsdots ),
+            qq{--max-dives=$maxd}
+         );
 
          push @dirs, @{ $lsts[0] }
             if UNIVERSAL::isa( $lsts[0], 'ARRAY' ) && scalar @{ $lsts[0] };
@@ -279,44 +278,44 @@ sub list_dir {
       }
    }
 
-   if ($opts->{'--sl-after-dirs'}) {
+   if ( $opts->{'--sl-after-dirs'} ) {
 
-      @dirs       = $this->_dropdots(@dirs,'--save-dots');
-      my($dots)   = shift(@dirs);
+      @dirs       = $this->_dropdots( @dirs, '--save-dots' );
+      my($dots)   = shift @dirs;
       @dirs       = map ( ($_ .= SL), @dirs );
-      @dirs       = (@{$dots},@dirs);
+      @dirs       = ( @{$dots}, @dirs );
    }
 
-   my($reta) = []; my($retb) = [];
+   my $reta = []; my $retb = [];
 
-   if ($opts->{'--ignore-case'}) {
+   if ( $opts->{'--ignore-case'} ) {
 
-      $reta = [ sort {uc $a cmp uc $b} @dirs  ];
-      $retb = [ sort {uc $a cmp uc $b} @items ];
+      $reta = [ sort { uc $a cmp uc $b } @dirs  ];
+      $retb = [ sort { uc $a cmp uc $b } @items ];
    }
    else {
 
-      $reta = [ sort {$a cmp $b} @dirs  ];
-      $retb = [ sort {$a cmp $b} @items ];
+      $reta = [ sort { $a cmp $b } @dirs  ];
+      $retb = [ sort { $a cmp $b } @items ];
    }
 
-   return(scalar(@$reta))
+   return scalar @$reta
       if $opts->{'--dirs-only'} && $opts->{'--count-only'};
 
-   return(scalar(@$retb))
+   return scalar @$retb
       if $opts->{'--files-only'} && $opts->{'--count-only'};
 
-   return(scalar(@$reta) + scalar(@$retb)) if $opts->{'--count-only'};
+   return scalar @$reta + scalar @$retb if $opts->{'--count-only'};
 
-   return($reta,$retb) if $opts->{'--as-ref'};
+   return $reta, $retb if $opts->{'--as-ref'};
 
-   $reta=[$reta] if $opts->{'--dirs-as-ref'};
-   $retb=[$retb] if $opts->{'--files-as-ref'};
+   $reta = [ $reta ] if $opts->{'--dirs-as-ref'};
+   $retb = [ $retb ] if $opts->{'--files-as-ref'};
 
-   return(@$reta) if $opts->{'--dirs-only'};
-   return(@$retb) if $opts->{'--files-only'};
+   return @$reta if $opts->{'--dirs-only'};
+   return @$retb if $opts->{'--files-only'};
 
-   return(@$reta,@$retb);
+   return @$reta, @$retb;
 }
 
 
@@ -324,7 +323,7 @@ sub list_dir {
 # File::Util::_dropdots()
 # --------------------------------------------------------
 sub _dropdots {
-   my($this) = shift(@_); my(@out) = (); my($opts) = $this->shave_opts(\@_);
+   my($this) = shift(@_); my(@out) = (); my($opts) = $this->shave_opts( \@_ );
    my(@shadow) = @_; my(@dots) = (); my($gottadot) = 0;
 
    while (@shadow) {
@@ -347,8 +346,8 @@ sub _dropdots {
 # File::Util::load_file()
 # --------------------------------------------------------
 sub load_file {
-   my($this) = shift(@_); my($opts) = $this->shave_opts(\@_);
-   my($in) = $this->coerce_array(@_); my(@dirs) = ();
+   my($this) = shift(@_); my($opts) = $this->shave_opts( \@_ );
+   my($in) = $this->coerce_array( @_ ); my(@dirs) = ();
    my($blocksize) = 1024; # 1.24 kb
    my($FH_passed) = 0; my($fh) = undef; my($file) = ''; my($path) = '';
    my($content)   = ''; my($FHstatus) = ''; my($mode) = 'read';
@@ -570,30 +569,32 @@ sub load_file {
 # File::Util::write_file()
 # --------------------------------------------------------
 sub write_file {
-   my($this)      = shift(@_);
-   my($opts)      = $this->shave_opts(\@_);
-   my($in)        = $this->coerce_array(@_);
-   my($filename)  = $in->{'file'}      || $in->{'filename'} || '';
-   my($content)   = $in->{'content'}   || '';
-   my($mode)      = $in->{'mode'}      || 'write';
-   my($bitmask)   = _bitmaskify($in->{'bitmask'}) || 0777;
-   my($path)      = '';
-   my(@dirs)      = ();
+   my $this     = shift @_;
+   my $opts     = $this->shave_opts( \@_ );
+   my $in       = $this->coerce_array( @_ );
+   my $filename = $in->{'file'}      || $in->{'filename'} || '';
+   my $content  = $in->{'content'}   || '';
+   my $mode     = $in->{'mode'}      || 'write';
+   my $bitmask  = _bitmaskify($in->{'bitmask'}) || 0777;
+   my $path     = '';
+   my @dirs     = ();
 
    $path = $filename;
 
-   local(*WRITE_FILE); $mode = 'trunc' if ($mode eq 'truncate');
+   local *WRITE_FILE;
+
+   $mode = 'trunc' if $mode eq 'truncate';
 
    # if the call to this method didn't include a filename to which the caller
    # wants us to write, then complain about it
    return $this->_throw(
       'no input',
       {
-         'meth'      => 'write_file',
-         'missing'   => 'a file name to create, write, or append',
-         'opts'      => $opts,
+         meth    => 'write_file',
+         missing => 'a file name to create, write, or append',
+         opts    => $opts,
       }
-   ) unless length($filename);
+   ) unless length $filename;
 
    # if prospective filename contains 2+ dir separators in sequence then
    # this is a syntax error we need to whine about
@@ -604,16 +605,16 @@ sub write_file {
          'purpose'   => 'the name of a file or directory',
          'opts'      => $opts,
       }
-   ) if ($filename =~ /(?:$DIRSPLIT){2,}/);
+   ) if $filename =~ /(?:$DIRSPLIT){2,}/;
 
    # if the call to this method didn't include any data which the caller
    # wants us to write or append to the file, then complain about it
    return $this->_throw(
       'no input',
       {
-         'meth'      => 'write_file',
-         'missing'   => 'the content you want to write or append',
-         'opts'      => $opts,
+         meth    => 'write_file',
+         missing => 'the content you want to write or append',
+         opts    => $opts,
       }
    ) if (
       (length($content) == 0)
@@ -666,10 +667,10 @@ sub write_file {
       )
    }
 
-   if (scalar(@dirs) > 0) { $filename = pop(@dirs); $path = join(SL, @dirs); }
+   if ( scalar @dirs > 0 ) { $filename = pop @dirs; $path = join SL, @dirs; }
 
-   if (length($path) > 0) {
-      $path = '.' . SL . $path if ($path !~ /(?:^\/)|(?:^\w\:)/o);
+   if ( length $path > 0 && $path !~ /^$DIRSPLIT/o ) {
+      $path = '.' . SL . $path;
    }
    else { $path = '.'; }
 
@@ -915,7 +916,9 @@ sub _release {
 sub valid_filename {
    my($f) = myargs(@_);
 
-   $f !~ /$ILLEGAL_CHR/ ? 1 : undef
+   $f =~ s/$WINROOT//; # windows abs paths would throw this off
+
+   $f !~ /$ILLEGAL_CHR/ ? 1 : undef;
 }
 
 
@@ -929,12 +932,12 @@ sub strip_path { my($f) = myargs(@_); pop @{['', split(/$DIRSPLIT/,$f)]}||'' }
 # File::Util::line_count()
 # --------------------------------------------------------
 sub line_count {
-   my($this,$file) = @_;
-   my($buff)   = '';
-   my($lines)  = 0;
-   my($cmd)    = '<' . $file;
+   my($this, $file) = @_;
+   my $buff   = '';
+   my $lines  = 0;
+   my $cmd    = '<' . $file;
 
-   local(*LINES);
+   local *LINES;
 
    open(LINES, $file) or
       return $this->_throw(
@@ -1021,7 +1024,7 @@ sub ebcdic { $EBCDIC }
 # File::Util::escape_filename()
 # --------------------------------------------------------
 sub escape_filename {
-   my($opts) = shave_opts(\@_);
+   my($opts) = shave_opts( \@_ );
    my($file,$escape,$also) = myargs(@_);
 
    return '' unless defined $file;
@@ -1049,8 +1052,8 @@ sub existent { my($f) = myargs(@_); defined $f ? -e $f : undef }
 # File::Util::touch()
 # --------------------------------------------------------
 sub touch {
-   my($this) = shift(@_); my($opts) = $this->shave_opts(\@_);
-   my($in) = $this->coerce_array(@_); my(@dirs) = ();
+   my($this) = shift(@_); my($opts) = $this->shave_opts( \@_ );
+   my($in) = $this->coerce_array( @_ ); my(@dirs) = ();
    my($file) = ''; my($path) = '';
    my($mode) = 'read';
 
@@ -1228,7 +1231,7 @@ sub last_changed {
 # File::Util::load_dir()
 # --------------------------------------------------------
 sub load_dir {
-   my($this) = shift(@_); my($opts) = $this->shave_opts(\@_);
+   my($this) = shift(@_); my($opts) = $this->shave_opts( \@_ );
    my($dir)  = shift(@_)||''; my(@files) = ();
    my($dir_hash) = {}; my($dir_list) = [];
 
@@ -1275,7 +1278,7 @@ sub load_dir {
 # --------------------------------------------------------
 sub make_dir {
    my($this) = shift(@_);
-   my($opts) = $this->shave_opts(\@_);
+   my($opts) = $this->shave_opts( \@_ );
    my($dir,$bitmask) = @_; $bitmask = _bitmaskify($bitmask) || 0777;
 
    if ($$opts{'--if-not-exists'}) {
@@ -1462,8 +1465,8 @@ sub needs_binmode { $NEEDS_BINMODE }
 # --------------------------------------------------------
 sub open_handle {
    my($this)      = shift(@_);
-   my($opts)      = $this->shave_opts(\@_);
-   my($in)        = $this->coerce_array(@_);
+   my($opts)      = $this->shave_opts( \@_ );
+   my($in)        = $this->coerce_array( @_ );
    my($filename)  = $in->{'file'}      || $in->{'filename'} || '';
    my($mode)      = $in->{'mode'}      || 'write';
    my($bitmask)   = _bitmaskify($in->{'bitmask'}) || 0777;
@@ -1863,7 +1866,7 @@ sub use_flock {
 # File::Util::_throw
 # --------------------------------------------------------
 sub _throw {
-   my($this) = shift(@_); my($opts) = $this->shave_opts(\@_);
+   my($this) = shift(@_); my($opts) = $this->shave_opts( \@_ );
    my(%fatal_rules) = ();
 
    # fatalality-handling rules passed to the failing caller trump the
