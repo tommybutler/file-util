@@ -12,38 +12,26 @@ and machines.
 CHANGES IN LAST FEW RELEASES
 (listed in reverse chronological order by date and subversion)
 
-   2.27
-      Sat Dec  6 13:10:00 CST 2008
-      Fixed a bug that caused root directories using Micro$oft filesystem
-      notation to be mis-read when using the '--dirs-only' flag for
-      File::Util::list_dir()
+   2.29
+      Wed Oct 17 09:38:36 CDT 2012
+      Fixed bug where list_dir() did not continue to recurse if it encountered
+      an error while running with the --fatals-as-warning flag.  If running
+      in default mode, it is normal behavior for File::Util to abort execution
+      on error, but when running with --fatals-as-warning flag, such errors
+      should not have caused recursion to fail.  (CPAN RT# 52319)
 
-   3.26
-      Tue Dec  2 20:07:09 CST 2008
-      Added to test suite in order to avoid errant test failures
-      when flock'ing on solaris.  This is a big deal, since the point of
-      File::Util is to be easy, and portable!
+      Changed the brackets surrounding error messages to "<<" and ">>" so that
+      the glyphs display in most terminals.
 
-      Added some yet more extra examples in the documentation.
+      Modified/updated documentation and test suite to accomodate these new
+      changes.
 
-   3.25
-      Mon Dec 1 15:11:20 CST 2008
-      Fixed a bug in File::Util::touch()
+   2.28
+      Sat Sep 29 17:38:47 CDT 2012
+      Adding a patch to fix breakage under Perl 5.17 (CPAN RT#31013)
 
-      Added some extra examples and corrected one minor error in the
-      documentation.
+      Fix spelling error in documentation and code comments (CPAN RT# #64854)
 
-   3.24
-      Wed May 23 16:27:20 CDT 2007
-      **Don't use this version.  It has a bug.  Use 3.25 or greater.
-
-      Added method File::Util::last_changed (get inode change time for a file)
-      Added method File::Util::touch (works like *nix touch command)
-
-      Both touch and last_changed are autoloaded methods
-
-      Applied patch from S. Muskiewicz that fixes the File::Util::last_modified
-      method that was using a similar but incorrect "-" file test operator.
 
 INSTALLATION
 To install this module type the following:
@@ -67,7 +55,8 @@ This module requires these other modules and libraries:
 
 
 AUTHOR
-   Tommy Butler <cpan@atrixnet.com>
+   Tommy Butler <email address not published>
+      Go to www.atrixnet.com/contact/ to send me an email.
 
 
 COPYRIGHT

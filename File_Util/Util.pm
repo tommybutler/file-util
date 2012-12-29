@@ -10,7 +10,7 @@ use vars qw(
 use Exporter;
 use AutoLoader qw( AUTOLOAD );
 use Class::OOorNO qw( :all );
-$VERSION    = 3.28; # Sat Sep 29 17:42:41 CDT 2012
+$VERSION    = 3.29; # Wed Oct 17 15:45:01 CDT 2012
 @ISA        = qw( Exporter   Class::OOorNO );
 @EXPORT_OK  = (
    @Class::OOorNO::EXPORT_OK, qw(
@@ -195,7 +195,7 @@ sub list_dir {
             (
                'bad opendir',
                {
-                  'dirname'    => $dir,
+                  'dirname'   => $dir,
                   'exception' => $!,
                   'opts'      => $opts,
                }
@@ -271,7 +271,11 @@ sub list_dir {
                '--no-fsdots',    '--max-dives=' . $maxd
             );
 
-         push(@dirs,@{$lsts[0]}); push(@items,@{$lsts[1]});
+         push @dirs, @{ $lsts[0] }
+            if UNIVERSAL::isa( $lsts[0], 'ARRAY' ) && scalar @{ $lsts[0] };
+
+         push @items, @{ $lsts[1] }
+            if UNIVERSAL::isa( $lsts[1], 'ARRAY' ) && scalar @{ $lsts[1] };
       }
    }
 
@@ -1946,8 +1950,7 @@ sub _throw {
 #%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#
 sub _errors {
    use vars qw($EBL $EBR);
-   ($EBL,$EBR) = (chr(187), chr(171));
-   ($EBL,$EBR) = ('{','}') if ($OS eq 'DOS');
+   ($EBL,$EBR) = ('<<', '>>');
    my($error_thrown) = shift(@_);
 
    # begin long table of helpful diag error messages
@@ -1956,7 +1959,7 @@ sub _errors {
 'no such file' => <<'__bad_open__',
 $in->{'_pak'} can't open
    $EBL$in->{'filename'}$EBR
-because no such file or directory exists.
+because it is inaccessible or does not exist.
 
 Origin:     This is *most likely* due to human error.
 Solution:   Cannot diagnose.  A human must investigate the problem.

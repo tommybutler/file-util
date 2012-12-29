@@ -1,5 +1,19 @@
 Revision history for Perl extension File::Util.pm
 
+   2.29
+      Wed Oct 17 09:38:36 CDT 2012
+      Fixed bug where list_dir() did not continue to recurse if it encountered
+      an error while running with the --fatals-as-warning flag.  If running
+      in default mode, it is normal behavior for File::Util to abort execution
+      on error, but when running with --fatals-as-warning flag, such errors
+      should not have caused recursion to fail.  (CPAN RT# 52319)
+
+      Changed the brackets surrounding error messages to "<<" and ">>" so that
+      the glyphs display in most terminals.
+
+      Modified/updated documentation and test suite to accomodate these new
+      changes.
+
    2.28
       Sat Sep 29 17:38:47 CDT 2012
       Adding a patch to fix breakage under Perl 5.17 (CPAN RT#31013)

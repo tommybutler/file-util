@@ -469,7 +469,15 @@ named file does not exist.
 =item I<Syntax:> C<list_dir( [directory name] , [--opts] )>
 
 Returns alphabetically sorted all file names in the directory specified if it
-exists.  Fails with an error message if no such directory is found.
+exists.  Fails with an error message if no such directory is found, or the
+directory is inaccessible.
+
+The behavior of this method has changed slightly after version 3.29.  If running
+with the C<--fatals-as-warning> flag, the previous behavior was to abort
+immediately.  This is not the case anymore.  If running with the
+C<--fatals-as-warning> flag, C<list_dir()> will still emit a warning when it
+encounters an otherwise fatal error, but it will also return whatever directory
+contents it is able to successfully access.
 
 =over
 
@@ -1984,7 +1992,7 @@ C<File::Util::write_file()>.
 
 =head1 AUTHOR
 
-Tommy Butler <L<cpan@atrixnet.com|mailto:cpan@atrixnet.com>>
+Tommy Butler <L<www.atrixnet.com/contact/|http://www.atrixnet.com/contact/>>
 
 =head1 COPYRIGHT
 

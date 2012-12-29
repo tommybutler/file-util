@@ -14,7 +14,7 @@ my($f) = File::Util->new('--fatals-as-errmsg');
 
 # start testing failure sequence
 ok($f->_throw('no such file' => { 'filename'  => __FILE__ }, '--fatals-as-errmsg' ),
-   q{/no such file or directory exists/},
+   q{/inaccessible or does not exist/},
    q{Bad failure return code for error: "no such file"}
 );
 
@@ -132,7 +132,7 @@ ok(
          'cmd'       => 'illegal cmd',
       }
    ),
-   q{/can't open this file for .illegal mode.:/},
+   q{/can't open this file for.+?illegal mode/},
    q{Bad failure return code for error: "bad open"}
 );
 
@@ -144,7 +144,7 @@ ok(
          'exception' => 'dummy',
       }
    ),
-   q{/couldn't close this file after .illegal mode./},
+   q{/couldn't close this file after.+?illegal mode/},
    q{Bad failure return code for error: "bad close"}
 );
 

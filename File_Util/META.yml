@@ -1,12 +1,23 @@
-# http://module-build.sourceforge.net/META-spec.html
-#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
-name:         File-Util
-version:      3.27
-version_from: Util.pm
-installdirs:  site
+--- #YAML:1.0
+name:               File-Util
+version:            3.29
+abstract:           Easy, versatile, portable file handling
+author:
+    - Tommy Butler <cpan@atrixnet.com>
+license:            unknown
+distribution_type:  module
+configure_requires:
+    ExtUtils::MakeMaker:  0
+build_requires:
+    ExtUtils::MakeMaker:  0
 requires:
-    Class::OOorNO:                 0.01
-    Exception::Handler:            1
-
-distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.30
+    Class::OOorNO:       0.01
+    Exception::Handler:  1
+no_index:
+    directory:
+        - t
+        - inc
+generated_by:       ExtUtils::MakeMaker version 6.57_05
+meta-spec:
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4
