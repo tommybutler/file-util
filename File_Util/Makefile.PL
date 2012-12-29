@@ -12,7 +12,6 @@ WriteMakefile
    'INSTALLDIRS'  => 'site',
    'PREREQ_PM'    =>
       {
-         'Class::OOorNO'      => 0.01_0,
          'Exception::Handler' => 1.00_0,
       },
    'linkext'      => { LINKTYPE => '' }, # no link needed

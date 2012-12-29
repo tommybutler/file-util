@@ -12,6 +12,24 @@ and machines.
 CHANGES IN LAST FEW RELEASES
 (listed in reverse chronological order, excluding development releases)
 
+   3.31
+      Tue Nov 20 16:33:10 CST 2012
+      Adds new method: File::Util::atomize() which explodes a fully-qualified
+      filename into it's root, path, and filename... which was necessary
+      to squish the long-standing bug in fully-qualified file names on
+      MS Windows... Also, the '--rpattern=^pat$' flag should works recursively
+      for you in File::Util::list_dir(), in order to provide you with patterns
+      that are applied at every level in your file tree, while preserving the
+      current behavior of the '--pattern=^pat$' flag, which is not applied
+      recursively.  Another bug bites the dust.
+
+      Fixes CPAN RT# 46368 and 64775, respectively
+
+      Lots of code cleanup, and more documentation forthcoming in next release
+      will be here very soon, primarily to document the small additions here
+      and also to clean up the documentation itslef (particularly the code
+      examples which need style-fixes).  This is a stable release.
+
    3.30_003
       Thu, Nov 15, 2012  5:59:38 PM
       Development release.  BETA.  Do not use for production!  This release

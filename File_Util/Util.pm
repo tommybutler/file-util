@@ -10,19 +10,20 @@ use vars qw(
    $USE_FLOCK  @ONLOCKFAIL $ILLEGAL_CHR  $CAN_FLOCK
    $EBCDIC     $DIRSPLIT   $_LOCKS       $NEEDS_BINMODE
    $WINROOT    $ATOMIZER   $SL   $NL     $EMPTY_WRITES_OK
+   $FSDOTS
 );
 
 use Exporter;
 use AutoLoader qw( AUTOLOAD );
 
-$VERSION    = '3.30_003'; # DEVELOPER RELEASE # Thu, Nov 15, 2012  5:59:38 PM
+$VERSION    = 3.31; # Tue Nov 20 16:33:10 CST 2012
 @ISA        = qw( Exporter );
 @EXPORT_OK  = qw(
    NL     can_flock   ebcdic       existent      needs_binmode
    SL     strip_path  can_read     can_write     valid_filename
    OS     bitmask     return_path  file_type     escape_filename
    isbin  created     last_access  last_changed  last_modified
-   size
+   size   atomize
 );
 
 %EXPORT_TAGS = ( all  => [ @EXPORT_OK ] );
@@ -53,7 +54,7 @@ $NL =
 $SL =
    { DOS => '\\', EPOC   => '/', MACINTOSH => ':',
      OS2 => '\\', UNIX   => '/', WINDOWS   => chr(92),
-     VMS => '/',  CYGWIN => '/', }->{ $OS }||'/';
+     VMS => '/',  CYGWIN => '/', }->{ $OS } || '/';
 
 $_LOCKS = {};
 
@@ -63,12 +64,14 @@ $_LOCKS = {};
    use constant OS => $OS;
 }
 
-$WINROOT     = qr/^(?: [[:alpha:]]{1} ) : (?: \x5C{1,2} )/x;
-$DIRSPLIT    = qr/$WINROOT | [\x5C\/\:]/x;
+$WINROOT     = qr/^(?: [[:alpha:]]{1} ) : (?: \\{1,2} )/x;
+$DIRSPLIT    = qr/$WINROOT | [\\:\/]/x;
 $ATOMIZER    = qr/
-   (?<ROOT> (?:^ $WINROOT ) | (?: $DIRSPLIT ) )
-   (?<PATH> .*) $DIRSPLIT (?<FILENAME> .*) /x;
-$ILLEGAL_CHR = qr/[\x5C\/\|$NL\r\n\t\013\*\"\?\<\:\>]/;
+   (^ $DIRSPLIT ){0,1}
+   (?: (.*) $DIRSPLIT ){0,1}
+   (.*) /x;
+$ILLEGAL_CHR = qr/[\/\|\\$NL\r\n\t\013\*\"\?\<\:\>]/;
+$FSDOTS      = qr/^\.{1,2}$/;
 $READLIMIT   = 52428800; # set readlimit to a default of 50 megabytes
 $MAXDIVES    = 1000;     # maximum depth for recursive list_dir calls
 
@@ -130,6 +133,22 @@ sub new {
 
 
 # --------------------------------------------------------
+# File::Util::atomize()
+# --------------------------------------------------------
+sub atomize {
+   my $fqfn = _myargs( @_ );
+
+   $fqfn =~ m/$ATOMIZER/;
+
+   my $root = $1 || '';
+   my $path = $2 || '';
+   my $file = $3 || '';
+
+   return( $root, $path, $file );
+}
+
+
+# --------------------------------------------------------
 # File::Util::list_dir()
 # --------------------------------------------------------
 sub list_dir {
@@ -149,7 +168,8 @@ sub list_dir {
       }
    ) unless length $dir;
 
-   return $this->_throw( 'no such file', { filename => $dir } ) unless -e $dir;
+   return $this->_throw( 'no such file' => { filename => $dir } )
+      unless -e $dir;
 
    # whack off any trailing directory separator, except for root directories
    # -account for both posix filesystem AND micro$oft path notation
@@ -211,6 +231,10 @@ sub list_dir {
       ? grep /$opts->{'--pattern'}/, readdir DIR
       : readdir DIR;
 
+   @files = exists $opts->{'--rpattern'}
+      ? grep /$opts->{'--rpattern'}/, @files
+      : @files;
+
    closedir DIR
       or return $this->_throw(
          'close dir'  => {
@@ -220,58 +244,38 @@ sub list_dir {
          }
       );
 
-   if ( $opts->{'--no-fsdots'} ) {
-
-      my @shadow = @files; @files = ();
-
-      while ( @shadow ) {
-
-         my $f = shift @shadow;
-
-         push @files, $f
-            unless (
-               $this->strip_path( $f ) eq '.'
-                  or
-               $this->strip_path( $f ) eq '..'
-            );
-      }
-   }
+   @files = grep { $_ !~ /$FSDOTS/ } @files if $opts->{'--no-fsdots'};
 
    for ( my $i = 0; $i < @files; ++$i ) {
 
-      my $listing = ( $opts->{'--with-paths'} or ($r==1) )
-         ? $path . SL . $files[$i]
-         : $files[$i];
+      my $listing = ( $opts->{'--with-paths'} || $r == 1 )
+         ? $path . SL . $files[ $i ]
+         : $files[ $i ];
 
-      if ( -d $path . SL . $files[ $i ] ) { push @dirs, $listing }
+      if ( -d $path . SL . $files[ $i ] ) {
+
+         push @dirs, $listing
+      }
       else { push @items, $listing }
    }
 
-   if  (($r) and (not $opts->{'--override-follow'})) {
+   if  ( $r && !$opts->{'--override-follow'} ) {
 
-      my @shadow = @dirs; @dirs = ();
-
-      while ( @shadow ) {
-
-         my $f = shift @shadow;
-
-         push @dirs, $f
-            unless
-               (
-                  $this->strip_path($f) eq '.'
-                     or
-                  $this->strip_path($f) eq '..'
-               );
-      }
+      @dirs = grep { $this->strip_path( $_ ) !~ /$FSDOTS/ } @dirs;
 
       for ( my $i = 0; $i < @dirs; ++$i ) {
 
-         my @lsts = $this->list_dir(
-            $dirs[ $i ], qw(
-            --with-paths   --dirs-as-ref
-            --files-as-ref --recursing --no-fsdots ),
-            qq{--max-dives=$maxd}
-         );
+         my @opts = qw(
+         --with-paths   --dirs-as-ref
+         --files-as-ref --recursing --no-fsdots );
+
+         # pattern should work when recursing!
+         push @opts, qq(--rpattern=$opts->{'--rpattern'})
+            if $opts->{'--rpattern'};
+
+         push @opts, qq(--max-dives=$maxd);
+
+         my @lsts = $this->list_dir( $dirs[ $i ], @opts );
 
          push @dirs, @{ $lsts[0] }
             if UNIVERSAL::isa( $lsts[0], 'ARRAY' ) && scalar @{ $lsts[0] };
@@ -283,10 +287,8 @@ sub list_dir {
 
    if ( $opts->{'--sl-after-dirs'} ) {
 
-      @dirs       = $this->_dropdots( @dirs, '--save-dots' );
-      my($dots)   = shift @dirs;
-      @dirs       = map ( ($_ .= SL), @dirs );
-      @dirs       = ( @{$dots}, @dirs );
+      # append directory separator to everything but the "dots"
+      $_ .= SL for grep { $_ !~ /$FSDOTS/ } @dirs;
    }
 
    my $reta = []; my $retb = [];
@@ -339,7 +341,7 @@ sub _dropdots {
 
       my $dir_item = shift @copy;
 
-      if ( $dir_item eq '.' || $dir_item eq '..' )  {
+      if ( $dir_item =~ /$FSDOTS/ ) {
 
          ++$gottadot;
 
@@ -369,25 +371,12 @@ sub load_file {
    my $blocksize  = 1024; # 1.24 kb
    my $FH_passed  = 0;
 
-   my ( $file, $path, $content, $FHstatus, $mode ) = ( '', '', '', '', 'read' );
+   my ( $file, $root, $path, $clean_name, $content, $FHstatus, $mode  ) =
+      ( '',    '',    '',    '',          '',       '',        'read' );
 
    if ( scalar @_ == 1 ) {
 
       $file = shift @_ || '';
-
-      @dirs = split /$DIRSPLIT/, $file;
-
-      if ( scalar @dirs > 0 ) {
-
-         $file = pop @dirs;
-         $path = join SL, @dirs;
-      }
-
-      if ( length $path > 0 ) {
-
-         $path = '.' . SL . $path if  $path !~ /(?:^\/)|(?:^\w\:)/o;
-      }
-      else { $path = '.'; }
 
       return $this->_throw(
          'no input',
@@ -396,7 +385,32 @@ sub load_file {
             missing => 'a file name or file handle reference',
             opts    => $opts,
          }
-      ) if length $path . SL . $file == 0;
+      ) unless length $file;
+
+      ( $root, $path, $file ) = atomize( $file );
+
+      @dirs = split /$DIRSPLIT/, $path;
+
+      unshift @dirs, $root if $root;
+
+      # cleanup file name - if path is relative, normalize it
+      #    - /foo/bar/baz.txt stays as /foo/bar/baz.txt
+      #    - foo/bar/baz.txt  becomes ./foo/bar/baz.txt
+      #    - baz.txt          stays as baz.txt
+      if ( !length $root ) { # if no root, path will be modified...
+
+         if ( !length $path ) { # if no path, path normalized
+
+            $path = '.' . SL;
+         }
+         else { # otherwise path normalized at end
+
+            $path .= SL;
+         }
+      }
+
+      # final clean filename assembled
+      $clean_name = $root . $path . $file;
    }
    else {
 
@@ -436,7 +450,7 @@ sub load_file {
                'readlimit exceeded',
                {
                   filename => '<FH>',
-                  size     => qq[[truncated at $bytes_read]],
+                  size     => qq{[truncated at $bytes_read]},
                   opts     => $opts,
                }
             );
@@ -456,10 +470,10 @@ sub load_file {
    return $this->_throw(
       'no such file',
       {
-         filename => $path . SL . $file,
+         filename => $clean_name,
          opts     => $opts,
       }
-   ) unless -e $path . SL . $file;
+   ) unless -e $clean_name;
 
    # it's good to know beforehand whether or not we have permission to open
    # and read from this file allowing us to handle such an exception before
@@ -469,37 +483,37 @@ sub load_file {
    return $this->_throw(
       'cant dread',
       {
-         filename => $path . SL . $file,
-         dirname  => $path . SL,
+         filename => $clean_name,
+         dirname  => $root . $path,
          opts     => $opts,
       }
-   ) unless -r $path . SL;
+   ) unless -r $root . $path;
 
    # now check the readability of the file itself
    return $this->_throw(
       'cant fread',
       {
-         filename => $path . SL . $file,
-         dirname  => $path . SL,
+         filename => $clean_name,
+         dirname  => $root . $path,
          opts     => $opts,
       }
-   ) unless -r $path . SL . $file;
+   ) unless -r $clean_name;
 
    # if the file is a directory it will not be opened
    return $this->_throw(
       'called open on a dir',
       {
-         filename => $path . SL . $file,
+         filename => $clean_name,
          opts     => $opts,
       }
-   ) if -d $path . SL . $file;
+   ) if -d $clean_name;
 
-   my($fsize) = -s $path . SL . $file;
+   my $fsize = -s $clean_name;
 
    return $this->_throw(
       'readlimit exceeded',
       {
-         filename => $path . SL . $file,
+         filename => $clean_name,
          size     => $fsize,
          opts     => $opts,
       }
@@ -519,7 +533,7 @@ sub load_file {
 
    # open the file for reading (note the '<' syntax there) or fail with a
    # error message if our attempt to open the file was unsuccessful
-   my $cmd = '<' . $path . SL . $file;
+   my $cmd = '<' . $clean_name;
 
    # lock file before I/O on platforms that support it
    if ( $$opts{'--no-lock'} || $$this{opts}{'--no-lock'} ) {
@@ -529,7 +543,7 @@ sub load_file {
          return $this->_throw(
             'bad open',
             {
-               filename  => $path . SL . $file,
+               filename  => $clean_name,
                mode      => $mode,
                exception => $!,
                cmd       => $cmd,
@@ -542,7 +556,7 @@ sub load_file {
          return $this->_throw(
             'bad open',
             {
-               filename  => $path . SL . $file,
+               filename  => $clean_name,
                mode      => $mode,
                exception => $!,
                cmd       => $cmd,
@@ -550,13 +564,13 @@ sub load_file {
             }
          );
 
-      $this->_seize( $path . SL . $file, $fh );
+      $this->_seize( $clean_name, $fh );
    }
 
    # call binmode on binary files for portability accross platforms such
    # as MS flavor OS family
 
-   CORE::binmode( $fh ) if -B $path . SL . $file;
+   CORE::binmode( $fh ) if -B $clean_name;
 
    # assign the content of the file to this lexically scoped scalar variable
    # (memory for *that* variable will be freed when execution leaves this
@@ -572,7 +586,7 @@ sub load_file {
       close $fh or return $this->_throw(
          'bad close',
          {
-            filename  => $path . SL . $file,
+            filename  => $clean_name,
             mode      => $mode,
             exception => $!,
             opts      => $opts,
@@ -581,12 +595,12 @@ sub load_file {
    }
    else {
       # release shadow-ed locks on the file
-      $this->_release($fh);
+      $this->_release( $fh );
 
-      close($fh) or return $this->_throw(
+      close $fh or return $this->_throw(
          'bad close',
          {
-            filename  => $path . SL . $file,
+            filename  => $clean_name,
             mode      => $mode,
             exception => $!,
             opts      => $opts,
@@ -611,14 +625,15 @@ sub write_file {
    my $this     = shift @_;
    my $opts     = $this->_remove_opts( \@_ );
    my $in       = $this->_names_values( @_ );
-   my $filename = $in->{file}    || $in->{filename} || '';
+   my $file     = $in->{file}    || $in->{filename} || '';
    my $content  = $in->{content} || '';
    my $mode     = $in->{mode}    || 'write';
    my $bitmask  = _bitmaskify( $in->{bitmask} ) || 0777;
-   my $path     = '';
-   my @dirs     = ();
+   my $raw_name = $file;
+   my ( $root, $path, $clean_name, @dirs ) =
+      ( '',    '',    '',          ()    );
 
-   $path = $filename;
+   ( $root, $path, $file ) = atomize ( $file );
 
    local *WRITE_FILE;
 
@@ -633,18 +648,24 @@ sub write_file {
          missing => 'a file name to create, write, or append',
          opts    => $opts,
       }
-   ) unless length $filename;
+   ) unless length $file;
 
    # if prospective filename contains 2+ dir separators in sequence then
    # this is a syntax error we need to whine about
-   return $this->_throw(
-      'bad chars',
-      {
-         string  => $filename,
-         purpose => 'the name of a file or directory',
-         opts    => $opts,
-      }
-   ) if $filename =~ /(?:$DIRSPLIT){2,}/;
+   {
+      my $try_filename = $raw_name;
+
+      $try_filename =~ s/$WINROOT//; # windows abs paths would throw this off
+
+      return $this->_throw(
+         'bad chars',
+         {
+            string  => $raw_name,
+            purpose => 'the name of a file or directory',
+            opts    => $opts,
+         }
+      ) if $try_filename =~ /(?:$DIRSPLIT){2,}/;
+   }
 
    # if the call to this method didn't include any data which the caller
    # wants us to write or append to the file, then complain about it
@@ -665,21 +686,20 @@ sub write_file {
       !$opts->{'--empty-writes-OK'}
    );
 
-   # remove any possible trailing directory separator
-   $filename =~ s/$DIRSPLIT$//;
-
    # check if file already exists in the form of a directory
    return $this->_throw(
       'cant write_file on a dir',
       {
-         filename => $filename,
+         filename => $raw_name,
          opts     => $opts,
       }
-   ) if -d $filename;
+   ) if -d $raw_name;
 
    # determine existance of the file path, make directory(ies) for the
    # path if the full directory path doesn't exist
-   @dirs = split /$DIRSPLIT/, $filename;
+   @dirs = split /$DIRSPLIT/, $path;
+
+   unshift @dirs, $root if $root;
 
    # if prospective file name has illegal chars then complain
    foreach ( @dirs ) {
@@ -701,58 +721,67 @@ sub write_file {
          'bad openmode popen',
          {
             meth     => 'write_file',
-            filename => $filename,
+            filename => $raw_name,
             badmode  => $mode,
             opts     => $opts,
          }
       )
    }
 
-   if ( scalar @dirs > 0 ) { $filename = pop @dirs; $path = join SL, @dirs; }
+   # cleanup file name - if path is relative, normalize it
+   #    - /foo/bar/baz.txt stays as /foo/bar/baz.txt
+   #    - foo/bar/baz.txt  becomes ./foo/bar/baz.txt
+   #    - baz.txt          stays as baz.txt
+   if ( !length $root ) { # if no root, path will be modified...
 
-   if ( length $path > 0 && $path !~ /^$DIRSPLIT/o ) {
+      if ( !length $path ) { # if no path, path normalized
 
-      $path = '.' . SL . $path;
+         $path = '.' . SL;
+      }
+      else { # otherwise path normalized at end
+
+         $path .= SL;
+      }
    }
-   else { $path = '.'; }
+
+   # final clean filename assembled
+   $clean_name = $root . $path . $file;
 
    # create path preceding file if path doesn't exist
 
    $this->make_dir(
-      $path,
+      $root . $path,
       exists $in->{dbitmask}
          ? _bitmaskify( $in->{dbitmask} )
          : 0777
-   ) unless -e $path;
+   ) unless -e $root . $path;
 
-   my $openarg = qq[$path$SL$filename];
-
-   if ( -e $openarg ) {
+   # if file already exists, check if we can write to it
+   if ( -e $clean_name ) {
 
       return $this->_throw(
          'cant fwrite',
          {
-            filename => $openarg,
-            dirname  => $path,
+            filename => $clean_name,
+            dirname  => $root . $path,
             opts     => $opts,
          }
-      ) unless -w $openarg;
+      ) unless -w $clean_name;
    }
    else {
 
-      # if file doesn't exist, the error is one of creation
-
+      # if file doesn't exist, see if we can create it
       return $this->_throw(
          'cant fcreate',
          {
-            filename => $openarg,
-            dirname  => $path,
+            filename => $clean_name,
+            dirname  => $root . $path,
             opts     => $opts,
          }
-      ) unless -w $path . SL;
+      ) unless -w $root . $path;
    }
 
-   # if you use the --no-lock option you could be taking on a big risk
+   # if you use the --no-lock option, please consider the risks
 
    if ( $$opts{'--no-lock'} || !$USE_FLOCK ) {
 
@@ -760,20 +789,20 @@ sub write_file {
       $mode = $$MODES{popen}{ $mode };
 
       # only non-existent files get bitmask arguments
-      if ( -e $openarg ) {
+      if ( -e $clean_name ) {
 
          sysopen(
             WRITE_FILE,
-            $openarg,
+            $clean_name,
             eval( $$MODES{sysopen}{ $mode } )
          )
          or return $this->_throw(
                'bad open',
                {
-                  filename  => $openarg,
+                  filename  => $clean_name,
                   mode      => $mode,
                   exception => $!,
-                  cmd       => qq{$openarg, $$MODES{sysopen}{ $mode }},
+                  cmd       => qq{$clean_name, $$MODES{sysopen}{ $mode }},
                   opts      => $opts,
                }
             );
@@ -782,17 +811,17 @@ sub write_file {
 
          sysopen(
             WRITE_FILE,
-            $openarg,
+            $clean_name,
             eval( $$MODES{sysopen}{ $mode } ),
             $bitmask
          )
          or return $this->_throw(
             'bad open',
             {
-               filename  => $openarg,
+               filename  => $clean_name,
                mode      => $mode,
                exception => $!,
-               cmd       => qq[$openarg, $$MODES{sysopen}{$mode}, $bitmask],
+               cmd       => qq[$clean_name, $$MODES{sysopen}{$mode}, $bitmask],
                opts      => $opts,
             }
          );
@@ -800,38 +829,38 @@ sub write_file {
    }
    else {
       # open read-only first to safely check if we can get a lock.
-      if ( -e $openarg ) {
+      if ( -e $clean_name ) {
 
-         open WRITE_FILE, '<' . $openarg or
+         open WRITE_FILE, '<' . $clean_name or
             return $this->_throw(
                'bad open',
                {
-                  filename  => $openarg,
+                  filename  => $clean_name,
                   mode      => 'read',
                   exception => $!,
-                  cmd       => $mode . $openarg,
+                  cmd       => $mode . $clean_name,
                   opts      => $opts,
                }
             );
 
          # lock file before I/O on platforms that support it
-         my $lockstat = $this->_seize( $openarg, *WRITE_FILE );
+         my $lockstat = $this->_seize( $clean_name, *WRITE_FILE );
 
          return $lockstat unless $lockstat;
 
          sysopen(
             WRITE_FILE,
-            $openarg,
+            $clean_name,
             eval( $$MODES{sysopen}{ $mode } )
          )
          or return $this->_throw(
             'bad open',
             {
-               filename  => $openarg,
+               filename  => $clean_name,
                mode      => $mode,
                opts      => $opts,
                exception => $!,
-               cmd       => qq[$openarg, $$MODES{sysopen}{ $mode }],
+               cmd       => qq[$clean_name, $$MODES{sysopen}{ $mode }],
             }
          );
       }
@@ -839,23 +868,23 @@ sub write_file {
 
          sysopen(
             WRITE_FILE,
-            $openarg,
+            $clean_name,
             eval( $$MODES{sysopen}{ $mode } ),
             $bitmask
          )
          or return $this->_throw(
             'bad open',
             {
-               filename  => $openarg,
+               filename  => $clean_name,
                mode      => $mode,
                opts      => $opts,
                exception => $!,
-               cmd       => qq[$openarg, $$MODES{sysopen}{$mode}, $bitmask],
+               cmd       => qq[$clean_name, $$MODES{sysopen}{$mode}, $bitmask],
             }
          );
 
          # lock file before I/O on platforms that support it
-         my $lockstat = $this->_seize( $openarg, *WRITE_FILE );
+         my $lockstat = $this->_seize( $clean_name, *WRITE_FILE );
 
          return $lockstat unless $lockstat;
       }
@@ -866,7 +895,7 @@ sub write_file {
          truncate( WRITE_FILE, 0 ) or return $this->_throw(
             'bad systrunc',
             {
-               filename  => $openarg,
+               filename  => $clean_name,
                exception => $!,
                opts      => $opts,
             }
@@ -886,7 +915,7 @@ sub write_file {
       return $this->_throw(
          'bad close',
          {
-            filename  => $openarg,
+            filename  => $clean_name,
             mode      => $mode,
             exception => $!,
             opts      => $opts,
@@ -1346,38 +1375,44 @@ sub load_dir {
 # File::Util::make_dir()
 # --------------------------------------------------------
 sub make_dir {
-   my($this) = shift(@_);
-   my($opts) = $this->_remove_opts( \@_ );
-   my($dir,$bitmask) = @_; $bitmask = _bitmaskify($bitmask) || 0777;
+   my $this = shift @_;
+   my $opts = $this->_remove_opts( \@_ );
+   my( $dir, $bitmask ) = @_;
 
-   if ($$opts{'--if-not-exists'}) {
-      if (-e $dir) {
+   $bitmask = _bitmaskify( $bitmask ) || 0777;
+
+   if ( $$opts{'--if-not-exists'} ) {
+
+      if ( -e $dir ) {
+
          return $dir if -d $dir;
 
          return $this->_throw(
             'called mkdir on a file',
             {
-               'filename'  => $dir,
-               'dirname'   => join(SL,(split(/$DIRSPLIT/,$dir))[0 .. -1]) . SL
+               filename => $dir,
+               dirname  => join( SL, split /$DIRSPLIT/, $dir ) . SL
             }
          );
       }
    }
    else {
-      if (-e $dir) {
+
+      if ( -e $dir ) {
+
          return $this->_throw(
             'called mkdir on a file',
             {
-               'filename'  => $dir,
-               'dirname'   => join(SL,(split(/$DIRSPLIT/,$dir))[0 .. -1]) . SL
+               filename => $dir,
+               dirname  => join( SL, split /$DIRSPLIT/, $dir ) . SL
             }
          ) unless -d $dir;
 
          return $this->_throw(
             'make_dir target exists',
             {
-               'dirname'  => $dir,
-               'filetype'  => [ $this->file_type($dir) ],
+               dirname  => $dir,
+               filetype => [ $this->file_type( $dir ) ],
             }
          );
       }
@@ -1388,67 +1423,77 @@ sub make_dir {
    return $this->_throw(
       'no input',
       {
-         'meth'      => 'make_dir',
-         'missing'   => 'a directory name',
+         meth    => 'make_dir',
+         missing => 'a directory name',
       }
-   ) unless (defined($dir) && length($dir));
+   ) unless defined $dir && length $dir;
 
    # if prospective directory name contains 2+ dir separators in sequence then
    # this is a syntax error we need to whine about
-   return $this->_throw(
-      'bad chars',
-      {
-         'string'    => $dir,
-         'purpose'   => 'the name of a directory',
-      }
-   ) if ($dir =~ /$DIRSPLIT{2,}/);
+   {
+      my $try_dir = $dir;
+
+      $try_dir =~ s/$WINROOT//; # windows abs paths would throw this off
+
+      return $this->_throw(
+         'bad chars',
+         {
+            string  => $dir,
+            purpose => 'the name of a directory',
+         }
+      ) if $try_dir =~ /(?:$DIRSPLIT){2,}/;
+   }
 
    $dir =~ s/$DIRSPLIT$// unless $dir eq $DIRSPLIT;
 
-   my(@dirs_in_path) = split(/$DIRSPLIT/, $dir);
+   my @dirs_in_path = split /$DIRSPLIT/, $dir;
 
    # for absolute pathnames
-   if (substr($dir,0,1) eq SL) {
-      $dirs_in_path[0] = SL;
-   }
+   $dirs_in_path[0] = SL if substr $dir, 0, 1 eq SL;
 
-   for (my($i) = 0; $i < scalar @dirs_in_path; ++$i) {
-      next if $i == 0 && $dirs_in_path[$i] eq SL;
+   for ( my $i = 0; $i < scalar @dirs_in_path; ++$i ) {
+
+      next if $i == 0 && $dirs_in_path[ $i ] eq SL;
 
       # if prospective directory name contains illegal chars then complain
       return $this->_throw(
          'bad chars',
          {
-            'string'    => $dirs_in_path[$i],
+            'string'    => $dirs_in_path[ $i ],
             'purpose'   => 'the name of a directory',
          }
-      ) unless $this->valid_filename($dirs_in_path[$i])
+      ) unless $this->valid_filename( $dirs_in_path[ $i ] )
    }
 
    # qualify each subdir in @dirs_in_path by prepending its preceeding dir
    # names to it. Above, "/foo/bar/baz" becomes ("/", "foo", "bar", "baz")
    # and below it becomes ("/", "/foo", "/foo/bar", "/foo/bar/baz")
 
-   if (scalar(@dirs_in_path) > 1) {
-      for (my($depth) = 1; $depth < scalar @dirs_in_path; ++$depth) {
-         if ($dirs_in_path[$depth-1] eq SL) {
-            $dirs_in_path[$depth] = SL . $dirs_in_path[$depth]
+   if ( @dirs_in_path > 1 ) {
+      for ( my $depth = 1; $depth < @dirs_in_path; ++$depth ) {
+
+         if ( $dirs_in_path[ $depth-1 ] eq SL ) {
+
+            $dirs_in_path[ $depth ] = SL . $dirs_in_path[ $depth ]
          }
          else {
-            $dirs_in_path[$depth] = join(SL, @dirs_in_path[($depth-1)..$depth])
+
+            $dirs_in_path[ $depth ] =
+               join SL, @dirs_in_path[ ( $depth - 1 ) .. $depth ]
          }
       }
    }
 
-   my($i) = 0;
+   my $i = 0;
 
-   foreach (@dirs_in_path) {
-      my($dir) = $_;
-      my($up)    = ($i > 0) ? $dirs_in_path[$i-1] : '..';
+   foreach ( @dirs_in_path ) {
+      my $dir = $_;
+      my $up  = ( $i > 0 ) ? $dirs_in_path[ $i - 1 ] : '..';
 
       ++$i;
 
-      if (-e $dir and !-d $dir) {
+      if ( -e $dir && !-d $dir ) {
+
          return $this->_throw(
             'called mkdir on a file',
             {
@@ -1466,23 +1511,23 @@ sub make_dir {
       return $this->_throw(
          'cant dcreate',
          {
-            'dirname'  => $dir,
-            'parentd'   => $up,
+            dirname  => $dir,
+            parentd  => $up,
          }
       ) unless -w $up;
 
-      mkdir($dir, $bitmask) or
+      mkdir( $dir, $bitmask ) or
          return $this->_throw(
             'bad make_dir',
             {
-               'exception' => $!,
-               'dirname'   => $dir,
-               'bitmask'   => $bitmask,
+               exception => $!,
+               dirname   => $dir,
+               bitmask   => $bitmask,
             }
          );
    }
 
-   $dir;
+   return $dir;
 }
 
 
@@ -1499,7 +1544,7 @@ sub max_dives {
       $MAXDIVES = $arg;
    }
 
-   $MAXDIVES
+   return $MAXDIVES;
 }
 
 
@@ -1513,13 +1558,13 @@ sub readlimit {
 
       return File::Util->new()->_throw
          (
-            'bad readlimit', { bad => $arg }
+            'bad readlimit' => { bad => $arg }
          ) if $arg !~ /\D/o;
 
       $READLIMIT = $arg;
    }
 
-   $READLIMIT
+   return $READLIMIT;
 }
 
 
@@ -1533,17 +1578,18 @@ sub needs_binmode { $NEEDS_BINMODE }
 # File::Util::open_handle()
 # --------------------------------------------------------
 sub open_handle {
-   my($this)      = shift(@_);
-   my($opts)      = $this->_remove_opts( \@_ );
-   my($in)        = $this->_names_values( @_ );
-   my($filename)  = $in->{'file'}      || $in->{'filename'} || '';
-   my($mode)      = $in->{'mode'}      || 'write';
-   my($bitmask)   = _bitmaskify($in->{'bitmask'}) || 0777;
-   my($fh)        = undef;
-   my($path)      = '';
-   my(@dirs)      = ();
+   my $this     = shift @_;
+   my $opts     = $this->_remove_opts( \@_ );
+   my $in       = $this->_names_values( @_ );
+   my $file     = $in->{'file'}      || $in->{'filename'} || '';
+   my $mode     = $in->{'mode'}      || 'write';
+   my $raw_name = $file;
+   my $bitmask  = _bitmaskify($in->{'bitmask'}) || 0777;
 
-   $path = $filename;
+   my ( $root, $path, $clean_name, @dirs, $fh   ) =
+      ( '',    '',    '',          (),    undef );
+
+   ( $root, $path, $file ) = atomize ( $file );
 
    # begin user input validation/sanitation sequence
 
@@ -1552,59 +1598,65 @@ sub open_handle {
    return $this->_throw(
       'no input',
       {
-         'meth'      => 'open_handle',
-         'missing'   => 'a file name to create, write, read/write, or append',
-         'opts'      => $opts,
+         meth    => 'open_handle',
+         missing => 'a file name to create, write, read/write, or append',
+         opts    => $opts,
       }
-   ) unless length($filename);
+   ) unless length $file;
 
    # if prospective filename contains 2+ dir separators in sequence then
    # this is a syntax error we need to whine about
-   return $this->_throw(
-      'bad chars',
-      {
-         'string'    => $filename,
-         'purpose'   => 'the name of a file or directory',
-         'opts'      => $opts,
-      }
-   ) if ($filename =~ /(?:$DIRSPLIT){2,}/);
+   {
+      my $try_filename = $raw_name;
 
-   # remove trailing directory separator
-   $filename =~ s/$DIRSPLIT$//;
+      $try_filename =~ s/$WINROOT//; # windows abs paths would throw this off
 
-   # determine existance of the file path, make directory(ies) for the
-   # path if the full directory path doesn't exist
-   @dirs = split(/$DIRSPLIT/, $filename);
-
-   # if prospective file name has illegal chars then complain
-   foreach (@dirs) {
       return $this->_throw(
          'bad chars',
          {
-            'string'    => $_,
-            'purpose'   => 'the name of a file or directory',
-            'opts'      => $opts,
+            string  => $raw_name,
+            purpose => 'the name of a file or directory',
+            opts    => $opts,
          }
-      ) if (!$this->valid_filename($_));
+      ) if $try_filename =~ /(?:$DIRSPLIT){2,}/;
+   }
+
+   # determine existance of the file path, make directory(ies) for the
+   # path if the full directory path doesn't exist
+   @dirs = split /$DIRSPLIT/, $path;
+
+   unshift @dirs, $root if $root;
+
+   # if prospective file name has illegal chars then complain
+   foreach ( @dirs ) {
+
+      return $this->_throw(
+         'bad chars',
+         {
+            string  => $_,
+            purpose => 'the name of a file or directory',
+            opts    => $opts,
+         }
+      ) if !$this->valid_filename( $_ );
    }
 
    # make sure that open mode is a valid mode
    if (
-      !exists($opts->{'--use-sysopen'}) &&
-      !defined($opts->{'--use-sysopen'})
+      !exists $opts->{'--use-sysopen'} &&
+      !defined $opts->{'--use-sysopen'}
    ) {
       # native Perl open modes
       unless (
-         exists($$MODES{'popen'}{ $mode }) &&
-         defined($$MODES{'popen'}{ $mode })
+         exists $$MODES{'popen'}{ $mode } &&
+         defined $$MODES{'popen'}{ $mode }
       ) {
          return $this->_throw(
             'bad openmode popen',
             {
-               'meth'      => 'open_handle',
-               'filename'  => $filename,
-               'badmode'   => $mode,
-               'opts'      => $opts,
+               meth     => 'open_handle',
+               filename => $raw_name,
+               badmode  => $mode,
+               opts     => $opts,
             }
          )
       }
@@ -1612,35 +1664,47 @@ sub open_handle {
    else {
       # system open modes
       unless (
-         exists($$MODES{'sysopen'}{ $mode }) &&
-         defined($$MODES{'sysopen'}{ $mode })
+         exists $$MODES{'sysopen'}{ $mode } &&
+         defined $$MODES{'sysopen'}{ $mode }
       ) {
          return $this->_throw(
             'bad openmode sysopen',
             {
-               'meth'      => 'open_handle',
-               'filename'  => $filename,
-               'badmode'   => $mode,
-               'opts'      => $opts,
+               meth     => 'open_handle',
+               filename => $raw_name,
+               badmode  => $mode,
+               opts     => $opts,
             }
          )
       }
    }
 
-   if (scalar(@dirs) > 0) { $filename = pop(@dirs); $path = join(SL, @dirs); }
+   # cleanup file name - if path is relative, normalize it
+   #    - /foo/bar/baz.txt stays as /foo/bar/baz.txt
+   #    - foo/bar/baz.txt  becomes ./foo/bar/baz.txt
+   #    - baz.txt          stays as baz.txt
+   if ( !length $root ) { # if no root, path will be modified...
 
-   if (length($path) > 0) {
-      $path = '.' . SL . $path if ($path !~ /(?:^\/)|(?:^\w\:)/o);
+      if ( !length $path ) { # if no path, path normalized
+
+         $path = '.' . SL;
+      }
+      else { # otherwise path normalized at end
+
+         $path .= SL;
+      }
    }
-   else { $path = '.'; }
+
+   # final clean filename assembled
+   $clean_name = $root . $path . $file;
 
    # create path preceding file if path doesn't exist
    $this->make_dir(
-      $path,
-      exists $in->{'dbitmask'} ? _bitmaskify($in->{'dbitmask'}) : 0777
-   ) unless -e $path;
-
-   my($openarg) = qq[$path$SL$filename];
+      $root . $path,
+      exists $in->{'dbitmask'}
+         ? _bitmaskify( $in->{'dbitmask'} )
+         : 0777
+   ) unless -e $root . $path;
 
    # sanity checks based on requested mode
    if (
@@ -1653,15 +1717,16 @@ sub open_handle {
       # Check whether or not we have permission to open and perform writes
       # on this file.
 
-      if (-e $openarg) {
+      if ( -e $clean_name ) {
+
          return $this->_throw(
             'cant fwrite',
             {
-               'filename'  => $openarg,
-               'dirname'   => $path,
-               'opts'      => $opts,
+               filename => $clean_name,
+               dirname  => $root . $path,
+               opts     => $opts,
             }
-         ) unless (-w $openarg);
+         ) unless -w $clean_name;
       }
       else {
          # If file doesn't exist and the path isn't writable, the error is
@@ -1669,79 +1734,78 @@ sub open_handle {
          return $this->_throw(
             'cant fcreate',
             {
-               'filename'  => $openarg,
-               'dirname'   => $path,
-               'opts'      => $opts,
+               filename => $clean_name,
+               dirname  => $root . $path,
+               opts     => $opts,
             }
-         ) unless (-w $path . SL);
+         ) unless -w $root . $path;
       }
    }
-   elsif ($mode eq 'read' || $mode eq 'rwupdate') {
+   elsif ( $mode eq 'read' || $mode eq 'rwupdate' ) {
       # Check whether or not we have permission to open and perform reads
       # on this file, starting with file's housing directory.
       return $this->_throw(
          'cant dread',
          {
-            'filename'  => $path . SL . $filename,
-            'dirname'   => $path,
-            'opts'      => $opts,
+            filename => $clean_name,
+            dirname  => $root . $path,
+            opts     => $opts,
          }
-      ) unless (-r $path . SL);
+      ) unless -r $path;
 
       # Seems obvious, but we can't read non-existent files
       return $this->_throw(
          'cant fread not found',
          {
-            'filename'  => $path . SL . $filename,
-            'dirname'   => $path,
-            'opts'      => $opts,
+            filename => $clean_name,
+            dirname  => $root . $path,
+            opts     => $opts,
          }
-      ) unless (-e $path . SL . $filename);
+      ) unless -e $clean_name;
 
       # Check the readability of the file itself
       return $this->_throw(
          'cant fread',
          {
-            'filename'  => $path . SL . $filename,
-            'dirname'   => $path,
-            'opts'      => $opts,
+            filename => $clean_name,
+            dirname  => $root . $path,
+            opts     => $opts,
          }
-      ) unless (-r $path . SL . $filename);
+      ) unless -r $clean_name;
    }
    else {
       return $this->_throw(
          'no input',
          {
-            'meth'      => 'open_handle',
-            'missing'   => q{a valid IO mode. (eg- 'read', 'write'...)},
-            'opts'      => $opts,
+            meth    => 'open_handle',
+            missing => q{a valid IO mode. (eg- 'read', 'write'...)},
+            opts    => $opts,
          }
-      )
+      );
    }
    # input validation sequence finished
 
    # we need a unique filehandle
    do { $fh = int(rand(time)) . $$; $fh = eval('*' . 'OPEN_TO_FH' . $fh) }
-   while ( fileno($fh) );
+   while ( fileno $fh );
 
-   # if you use the '--no-lock' option you are probably inefficient
-   if ($$opts{'--no-lock'} || !$USE_FLOCK) {
+   if ( $$opts{'--no-lock'} || !$USE_FLOCK ) {
       if (
-         !exists($opts->{'--use-sysopen'}) &&
-         !defined($opts->{'--use-sysopen'})
+         !exists $opts->{'--use-sysopen'} &&
+         !defined $opts->{'--use-sysopen'}
       ) { # perl open
          # get open mode
          $mode = $$MODES{'popen'}{ $mode };
 
-         open($fh, $mode . $openarg) or
+         open $fh, $mode . $clean_name or
             return $this->_throw(
                'bad open',
                {
-                  'filename'  => $openarg,
-                  'mode'      => $mode,
-                  'exception' => $!,
-                  'cmd'       => $mode . $openarg,
-                  'opts'      => $opts,
+                  filename  => $clean_name,
+                  mode      => $mode,
+                  exception => $!,
+                  cmd       => $mode . $clean_name,
+                  opts      => $opts,
                }
             );
       }
@@ -1749,140 +1813,141 @@ sub open_handle {
          # get open mode
          $mode = $$MODES{'sysopen'}{ $mode };
 
-         sysopen($fh, $openarg, eval($$MODES{'sysopen'}{ $mode })) or
+         sysopen( $fh, $clean_name, eval( $$MODES{'sysopen'}{ $mode } ) ) or
             return $this->_throw(
                'bad open',
                {
-                  'filename'  => $openarg,
-                  'mode'      => $mode,
-                  'exception' => $!,
-                  'cmd'       => qq{$openarg, $$MODES{'sysopen'}{ $mode }},
-                  'opts'      => $opts,
+                  filename  => $clean_name,
+                  mode      => $mode,
+                  exception => $!,
+                  cmd       => qq{$clean_name, $$MODES{'sysopen'}{ $mode }},
+                  opts      => $opts,
                }
             );
       }
    }
    else {
       if (
-         !exists($opts->{'--use-sysopen'}) &&
-         !defined($opts->{'--use-sysopen'})
+         !exists $opts->{'--use-sysopen'} &&
+         !defined $opts->{'--use-sysopen'}
       ) { # perl open
          # open read-only first to safely check if we can get a lock.
-         if (-e $openarg) {
+         if ( -e $clean_name ) {
 
-            open($fh, '<' . $openarg) or
+            open $fh, '<' . $clean_name or
                return $this->_throw(
                   'bad open',
                   {
-                     'filename'  => $openarg,
-                     'mode'      => 'read',
-                     'exception' => $!,
-                     'cmd'       => $mode . $openarg,
-                     'opts'      => $opts,
+                     filename  => $clean_name,
+                     mode      => 'read',
+                     exception => $!,
+                     cmd       => $mode . $clean_name,
+                     opts      => $opts,
                   }
                );
 
             # lock file before I/O on platforms that support it
-            my($lockstat) = $this->_seize($openarg, $fh);
+            my $lockstat = $this->_seize( $clean_name, $fh );
 
-            return($lockstat) unless $lockstat;
+            return $lockstat unless $lockstat;
 
-            if ($mode ne 'read') {
-               open($fh, $$MODES{'popen'}{ $mode } . $openarg) or
+            if ( $mode ne 'read' ) {
+
+               open $fh, $$MODES{'popen'}{ $mode } . $clean_name or
                   return $this->_throw(
                      'bad open',
                      {
-                        'exception' => $!,
-                        'filename'  => $openarg,
-                        'mode'      => $mode,
-                        'opts'      => $opts,
-                        'cmd'       => $$MODES{'popen'}{ $mode } . $openarg,
+                        exception => $!,
+                        filename  => $clean_name,
+                        mode      => $mode,
+                        opts      => $opts,
+                        cmd       => $$MODES{'popen'}{ $mode } . $clean_name,
                      }
                   );
             }
          }
          else {
-            open($fh, $$MODES{'popen'}{ $mode } . $openarg) or
+            open $fh, $$MODES{'popen'}{ $mode } . $clean_name or
                return $this->_throw(
                   'bad open',
                   {
-                     'exception' => $!,
-                     'filename'  => $openarg,
-                     'mode'      => $mode,
-                     'opts'      => $opts,
-                     'cmd'       => $$MODES{'popen'}{ $mode } . $openarg,
+                     exception => $!,
+                     filename  => $clean_name,
+                     mode      => $mode,
+                     opts      => $opts,
+                     cmd       => $$MODES{'popen'}{ $mode } . $clean_name,
                   }
                );
 
             # lock file before I/O on platforms that support it
-            my($lockstat) = $this->_seize($openarg, $fh);
+            my $lockstat = $this->_seize( $clean_name, $fh );
 
-            return($lockstat) unless $lockstat;
+            return $lockstat unless $lockstat;
          }
       }
       else { # sysopen
          # open read-only first to safely check if we can get a lock.
-         if (-e $openarg) {
+         if ( -e $clean_name ) {
 
-            open($fh, '<' . $openarg) or
+            open $fh, '<' . $clean_name or
                return $this->_throw(
                   'bad open',
                   {
-                     'filename'  => $openarg,
-                     'mode'      => 'read',
-                     'exception' => $!,
-                     'cmd'       => $mode . $openarg,
-                     'opts'      => $opts,
+                     filename  => $clean_name,
+                     mode      => 'read',
+                     exception => $!,
+                     cmd       => $mode . $clean_name,
+                     opts      => $opts,
                   }
                );
 
             # lock file before I/O on platforms that support it
-            my($lockstat) = $this->_seize($openarg, $fh);
+            my $lockstat = $this->_seize( $clean_name, $fh );
 
-            return($lockstat) unless $lockstat;
+            return $lockstat unless $lockstat;
 
-            sysopen($fh, $openarg, eval($$MODES{'sysopen'}{ $mode }))
+            sysopen( $fh, $clean_name, eval( $$MODES{'sysopen'}{ $mode } ) )
                or return $this->_throw(
                   'bad open',
                   {
-                     'filename'  => $openarg,
-                     'mode'      => $mode,
-                     'opts'      => $opts,
-                     'exception' => $!,
-                     'cmd'       => qq{$openarg, $$MODES{'sysopen'}{ $mode }},
+                     filename  => $clean_name,
+                     mode      => $mode,
+                     opts      => $opts,
+                     exception => $!,
+                     cmd       => qq{$clean_name, $$MODES{'sysopen'}{ $mode }},
                   }
                );
          }
          else { # only non-existent files get bitmask arguments
             sysopen(
                $fh,
-               $openarg,
-               eval($$MODES{'sysopen'}{ $mode }),
+               $clean_name,
+               eval( $$MODES{'sysopen'}{ $mode } ),
                $bitmask
             ) or return $this->_throw(
                'bad open',
                {
-                  'filename'  => $openarg,
-                  'mode'      => $mode,
-                  'opts'      => $opts,
-                  'exception' => $!,
-                  'cmd'   => qq{$openarg, $$MODES{'sysopen'}{$mode}, $bitmask},
+                  filename  => $clean_name,
+                  mode      => $mode,
+                  opts      => $opts,
+                  exception => $!,
+                  cmd => qq{$clean_name, $$MODES{'sysopen'}{$mode}, $bitmask},
                }
             );
 
             # lock file before I/O on platforms that support it
-            my($lockstat) = $this->_seize($openarg, $fh);
+            my $lockstat = $this->_seize( $clean_name, $fh );
 
-            return($lockstat) unless $lockstat;
+            return $lockstat unless $lockstat;
          }
       }
    }
 
    # call binmode on the filehandle if it was requested
-   CORE::binmode($fh) if $in->{'binmode'} || $opts->{'--binmode'};
+   CORE::binmode( $fh ) if $in->{'binmode'} || $opts->{'--binmode'};
 
    # return file handle reference to the caller
-   $fh;
+   return $fh;
 }
 
 
@@ -1890,14 +1955,18 @@ sub open_handle {
 # File::Util::unlock_open_handle()
 # --------------------------------------------------------
 sub unlock_open_handle {
-   my($this,$fh) = @_;
+   my( $this, $fh ) = @_;
 
    return 1 if !$USE_FLOCK;
 
-   return($this->_throw('not a filehandle.', {'argtype' => ref(\$fh||'')}))
-      unless ($fh && ref(\$fh||'') eq 'GLOB');
+   my $ref_type = ref \$fh || '';
 
-   if ($CAN_FLOCK) { return flock($fh, &Fcntl::LOCK_UN) } 1;
+   return $this->_throw( 'not a filehandle' => { argtype => $ref_type } )
+      unless $fh && $ref_type eq 'GLOB';
+
+   return flock( $fh, &Fcntl::LOCK_UN ) if $CAN_FLOCK;
+
+   return 1;
 }
 
 
