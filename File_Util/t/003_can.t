@@ -13,7 +13,7 @@ use File::Util;
 my($f) = File::Util->new();
 
 # check to see if non-autoloaded File::Util methods are can-able ;O)
-map { ok(ref(UNIVERSAL::can($f,$_)),'CODE') } qw
+map { ok( ref( UNIVERSAL::can( $f, $_ ) ), 'CODE' ) } qw
    (
       _dropdots
       _errors

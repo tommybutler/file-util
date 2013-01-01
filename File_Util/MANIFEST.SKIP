@@ -2,3 +2,9 @@
 ^.*.swo
 ^.*~
 ^\.build/
+^\_build/
+^Build$
+^Makefile$
+^blib/
+^MYMETA.*
+^misc/

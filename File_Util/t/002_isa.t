@@ -1,4 +1,3 @@
-
 use strict;
 use Test;
 
@@ -10,9 +9,9 @@ BEGIN { $| = 1 }
 use lib './';
 use File::Util;
 
-my($f) = File::Util->new();
+my $f = File::Util->new();
 
 # check to see if File::Util ISA [foo, etc.]
-ok(UNIVERSAL::isa($f,'File::Util'));
+ok( UNIVERSAL::isa( $f, 'File::Util' ) );
 
 exit;

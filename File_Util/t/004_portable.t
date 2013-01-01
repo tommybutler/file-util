@@ -14,19 +14,19 @@ use File::Util qw
       valid_filename   strip_path   needs_binmode
    );
 
-my($f) = File::Util->new();
+my $f = File::Util->new();
 
 # check asignability
-my($NL) = NL; my($SL) = SL;
+my $NL = NL; my $SL = SL;
 
 # newlines
 ok(NL eq $NL);                                                         # test 1
 
 # binmode necessary?
-ok(needs_binmode, NL eq qq[\015\012] ? 1 : 0);                         # test 2
+ok( needs_binmode, NL eq qq[\015\012] ? 1 : 0 );                       # test 2
 
 # path seperator
-ok(SL eq $SL);                                                         # test 3
+ok( SL eq $SL );                                                       # test 3
 
 # test file escaping with substitute escape char
 # with additional char to escape as well.

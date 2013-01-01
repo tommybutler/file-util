@@ -10,10 +10,10 @@ BEGIN { $| = 1 }
 use lib './';
 use File::Util qw( SL NL existent );
 
-my($f)    = File::Util->new('--fatals-as-status');
-my($fh)   = undef;
-my($testbed) = 't' . SL . $$;
-my($skip) = !$f->can_write('.') ||
+my $f     = File::Util->new('--fatals-as-status');
+my $fh    = undef;
+my $testbed  = 't' . SL . $$;
+my $skip  = !$f->can_write('.') ||
             !$f->can_write('t');
 
 $skip = $skip ? &skipmsg() : $skip;
@@ -38,18 +38,18 @@ skip($skip, sub { $f->existent($testbed) }, 1, $skip);
 # make a temporary file
 my $tmpf = $testbed . SL . 'tmptst';
 
-skip( $skip, sub { $f->write_file('file' => $tmpf, 'content' => $$ . NL); }, 1, $skip );
+skip( $skip, sub { $f->write_file( file => $tmpf, content => $$ . NL); }, 1, $skip );
 
 # 5
 # File::Util::touch() a file, and see if it was created ok
 skip(
 	$skip,
 	sub {
-        my($tmpf) = $testbed . SL . 'touched';
-		$f->touch($tmpf);
-        my($return) = $f->existent($tmpf);
-        unlink($tmpf);
-        return($return);
+        my $tmpf = $testbed . SL . 'touched';
+        $f->touch($tmpf);
+        my $return = $f->existent($tmpf);
+        unlink $tmpf;
+        return $return;
 	}, 1, $skip
 );
 
@@ -60,8 +60,8 @@ skip(
 	$skip,
 	sub {
       $fh = $f->open_handle(
-         'file' => $tmpf,
-         'mode' => 'append',
+         file => $tmpf,
+         mode => 'append',
          qw(--fatals-as-errmsg --warn-also)
       );
       $skip = &skipmsg() unless ($fh && length($fh) > 1);
@@ -89,9 +89,9 @@ skip (
 	$skip,
 	sub {
 		$f->write_file(
-			'filename' => $tmpf,
-			'content'  => ( $^O || 'foo' ) . NL,
-			'mode'     => 'append',
+			filename => $tmpf,
+			content  => ( $^O || 'foo' ) . NL,
+			mode     => 'append',
 		)
 	}, 1, $skip
 );
@@ -122,7 +122,7 @@ skip($skip, sub { $f->make_dir($newdir, '--if-not-exists') }, $newdir, $skip);
 
 # read directories
 unless ($skip) {
-	my(@items) = $f->list_dir($testbed, '--follow');
+	my @items = $f->list_dir($testbed, '--follow');
 
 	# remove directories, temp file, testbed.
 	foreach (reverse(sort({ length($a) <=> length($b) } @items)), $testbed) {
