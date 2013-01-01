@@ -1,0 +1,40 @@
+NEWS for File::Util
+
+Mon Dec 31 23:25:00 CST 2012
+   This latest release (v 3.33) is not a feature release.  It's a
+   documentation update, a few bug fixes, several code optimizations, and
+   code cleanup.  Mostly, it is a great step forward in the CPAN package
+   itself.  Read on for more details...
+
+   Please have a look at the CHANGES file, because there have been and will
+   continue to be big changes/improvements to File::Util both in terms of the
+   code itself and the CPAN distribution package releases.
+
+   File::Util is now migrated to git and uses Dist::Zilla to create a
+   build environment that works better in windows platforms.  This
+   brought about the moving the content of Util.pod back into Util.pm
+   which does have its benefits, but makes the actual file size larger
+   than I want; I'll probably soon make a cookbook and slim down the main
+   documentation a bit, since it's very exhaustive, and bring things back
+   into the file sizes I like to see.  Compile times and run times have
+   not been affected by the POD move.
+
+   File::Util now must pass Perl::Critic tests as well, therefore the
+   so-called CPANTS "kwalitee" of the code has been markedly increased.
+
+   File::Util will be signed with a Module::Signature from now on, as
+   long as this doesn't introduce failures in the build/test phases for
+   CPAN testers and end users alike.
+
+   These changes are part of an overall effort to "keep moving forward",
+   make things better, and also make the distribution compliant with
+   Fedora and Debian packaging standards.  File::Util already has a
+   maintained package for Ubuntu.
+
+   There's a writeup of my most recent reflections on File::Util that I
+   posted on Perl Monks which explains some of my new goals for the
+   distribution, the code, and the future of File::Util.  You can read it at
+   http://www.perlmonks.org/?node_id=1011110
+
+   Happy new year!
+      - Tommy Butler

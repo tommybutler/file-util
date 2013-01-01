@@ -1,8 +1,25 @@
 Revision history for Perl extension File::Util.pm
 
+   3.33
+      Mon Dec 31 23:37:40 CST 2012
+      Moves everything out of autoloader that was previously in autoloader,
+      with the exception of the assisted error handling.  In light of modern
+      computing, the optimizations are so minimal as to be negligible now.
+      There's more benefit to be had by having all methods available
+      at compile time.
+
+      Documentation updates.
+
+      Code cleanups.  Package cleanup.  Preparations to add new features.
+      Working to make the distribution compliant with Fedora and Debian
+      packaging standards.  File::Util already has a maintained package for
+      Ubuntu.
+
    3.32
       Wed Nov 28 21:42:59 CST 2012
-      Emergency break fix for abs paths on *nix
+      Emergency break fix for abs paths on *nix which came about as a
+      regression bug introduced when abs paths were fixed for windows
+      platforms.
 
    3.31
       Tue Nov 20 16:33:10 CST 2012

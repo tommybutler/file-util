@@ -467,7 +467,7 @@ sub load_file {
       }
 
       # return an array of all lines in the file if the call to this method/
-      # subroutine asked for an array eg- my(@file) = load_file('file');
+      # subroutine asked for an array eg- my @file = load_file('file');
       # otherwise, return a scalar value containing all of the file's content
       return split /$NL|\r|\n/o, $content
          if $opts->{'--as-list'};
@@ -610,7 +610,7 @@ sub load_file {
    }
 
    # return an array of all lines in the file if the call to this method/
-   # subroutine asked for an array eg- my(@file) = load_file('file');
+   # subroutine asked for an array eg- my @file = load_file('file');
    # otherwise, return a scalar value containing all of the file's content
    return split /$NL|\r|\n/o, $content
       if $opts->{'--as-lines'};
@@ -1101,8 +1101,8 @@ sub ebcdic { $EBCDIC }
 # File::Util::escape_filename()
 # --------------------------------------------------------
 sub escape_filename {
-   my($opts) = _remove_opts( \@_ );
-   my($file,$escape,$also) = _myargs( @_ );
+   my $opts = _remove_opts( \@_ );
+   my( $file, $escape, $also ) = _myargs( @_ );
 
    return '' unless defined $file;
 
@@ -1110,7 +1110,7 @@ sub escape_filename {
 
    $file = strip_path($file) if $opts->{'--strip-path'};
 
-   if ($also) { $file =~ s/\Q$also\E/$escape/g }
+   if ( $also ) { $file =~ s/\Q$also\E/$escape/g }
 
    $file =~ s/$ILLEGAL_CHR/$escape/g;
    $file =~ s/$DIRSPLIT/$escape/g;
@@ -1240,12 +1240,12 @@ sub file_type {
 # File::Util::flock_rules()
 # --------------------------------------------------------
 sub flock_rules {
-   my($this)   = shift(@_);
-   my(@rules)  = _myargs( @_ );
+   my $this   = shift(@_);
+   my @rules  = _myargs( @_ );
 
    return @ONLOCKFAIL unless scalar @rules;
 
-   my(%valid) = qw/
+   my %valid = qw/
       NOBLOCKEX   NOBLOCKEX
       NOBLOCKSH   NOBLOCKSH
       BLOCKEX     BLOCKEX

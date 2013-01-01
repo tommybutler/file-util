@@ -1,0 +1,20 @@
+TODO List for File::Util
+
+1) [DONE] Set up formal (not just private) GIT repository
+
+2) Separate documenation examples into a cookbook (POD)
+
+3) Gradually transform methods to accept input parameters in a
+   *::Class-like style (hashrefs, etc) while preserving backward
+   compatibility
+
+4) Support for Perl IO "layers", which just hasn't been requested but
+   should be there for completeness
+
+5) Transform (where useful) various methods to accept callbacks.
+   File::Util::list_dir() is the primary target
+
+6) Set up File::Util::list_dir() to take a listref of regexes
+
+7) Continue improving the distribution so as to make it compliant
+   with Fedora packaging standards; it is already an Ubuntu package
