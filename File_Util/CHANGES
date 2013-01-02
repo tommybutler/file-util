@@ -1,5 +1,11 @@
 Revision history for Perl extension File::Util.pm
 
+   3.34
+      Tue Jan  1 21:22:02 CST 2013
+      Another emergency break fix.  This time a bug was hiding in
+      File::Util::open_handle().  Fixed.  Test coverage will be added next
+      to prevent regression --with my deepest apologies.
+
    3.33
       Mon Dec 31 23:37:40 CST 2012
       Moves everything out of autoloader that was previously in autoloader,

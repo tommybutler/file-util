@@ -16,7 +16,7 @@ use vars qw(
 use Exporter;
 use AutoLoader qw( AUTOLOAD );
 
-$VERSION    = 3.33;
+$VERSION    = 3.34;
 $AUTHORITY  = 'cpan:TOMMY';
 @ISA        = qw( Exporter );
 @EXPORT_OK  = qw(
@@ -631,12 +631,11 @@ sub write_file {
    my $mode     = $in->{mode}    || 'write';
    my $bitmask  = $in->{bitmask} || oct 777;
    my $raw_name = $file;
+   my $write_fh; # will be the lexical file handle local to this block
    my ( $root, $path, $clean_name, @dirs ) =
       ( '',    '',    '',          ()    );
 
    ( $root, $path, $file ) = atomize ( $file );
-
-   my $write_fh; # will be the lexical file handle local to this block
 
    $mode = 'trunc' if $mode eq 'truncate';
 
@@ -1570,10 +1569,9 @@ sub open_handle {
    my $in       = $this->_names_values( @_ );
    my $file     = $in->{file} || $in->{filename} || '';
    my $mode     = $in->{mode} || 'write';
-   my $raw_name = $file;
    my $bitmask  = $in->{bitmask} || oct 777;
-   my $fh; # lexical filehandle scoped to this method
-
+   my $raw_name = $file;
+   my $fh; # will be the lexical file handle scoped to this method
    my ( $root, $path, $clean_name, @dirs ) =
       ( '',    '',    '',          ()    );
 
@@ -1672,16 +1670,13 @@ sub open_handle {
    #    - /foo/bar/baz.txt stays as /foo/bar/baz.txt
    #    - foo/bar/baz.txt  becomes ./foo/bar/baz.txt
    #    - baz.txt          stays as baz.txt
-   if ( !length $root ) { # if no root, path will be modified...
+   if ( !length $root && !length $path ) {
 
-      if ( !length $path ) { # if no path, path normalized
+      $path = '.' . SL;
+   }
+   else { # otherwise path normalized at end
 
-         $path = '.' . SL;
-      }
-      else { # otherwise path normalized at end
-
-         $path .= SL;
-      }
+      $path .= SL;
    }
 
    # final clean filename assembled

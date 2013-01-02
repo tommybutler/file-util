@@ -64,16 +64,19 @@ skip(
          mode => 'append',
          qw(--fatals-as-errmsg --warn-also)
       );
-      $skip = &skipmsg() unless ($fh && length($fh) > 1);
-      return 1; # stupid solaris testers won't play fair
-   },
-   1,
-   $skip
+
+      # return 1; # stupid solaris testers won't play fair
+      # ^^^ hopefully those days are over; this hack let a nast error slip thu
+
+      return $^O =~ /solaris/i && !ref $fh ? 1 : ref $fh
+      # ^^^ almost as bad, but good enough for now ^^^
+
+   }, 'GLOB', $skip
 );
 
 # 7
 # make sure it's still open
-skip($skip, eval(q{fileno($fh)}), '/^\d/', $skip);
+skip($skip, sub { defined fileno $fh }, 1, $skip);
 
 # write to it, close it, write to it in append mode
 unless ($skip) { print( $fh 'Hello world!' . NL ); close($fh); }
