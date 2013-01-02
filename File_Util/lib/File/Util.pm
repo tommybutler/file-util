@@ -2766,35 +2766,35 @@ and machines.
 =head1 SYNOPSIS
 
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
 
-   my($content) = $f->load_file('foo.txt');
+   my $content = $f->load_file('foo.txt');
 
    $content =~ s/this/that/g;
 
    $f->write_file(
-      'file' => 'bar.txt',
-      'content' => $content,
-      'bitmask' => 0644
+      file => 'bar.txt',
+      content => $content,
+      bitmask => 0644
    );
 
    $f->write_file(
-      'file' => 'file.bin', 'content' => $binary_content, '--binmode'
+      file => 'file.bin', content => $binary_content, '--binmode'
    );
 
-   my(@lines) = $f->load_file('randomquote.txt', '--as-lines');
-   my($line)  = int(rand(scalar @lines));
+   my @lines = $f->load_file('randomquote.txt', '--as-lines');
+   my $line  = int rand scalar @lines;
 
-   print $lines[$line];
+   print $lines[ $line ];
 
-   my(@files) = $f->list_dir('/var/tmp', qw/ --files-only --recurse /);
-   my(@textfiles) = $f->list_dir('/var/tmp', '--pattern=\.txt$');
+   my @files = $f->list_dir('/var/tmp', qw/ --files-only --recurse /);
+   my @textfiles = $f->list_dir('/var/tmp', '--pattern=\.txt$');
 
-   if ($f->can_write('wibble.log')) {
+   if ( $f->can_write('wibble.log') ) {
 
-      my($HANDLE) = $f->open_handle(
-         'file' => 'wibble.log',
-         'mode' => 'append'
+      my $HANDLE = $f->open_handle(
+         file => 'wibble.log',
+         mode => 'append'
       );
 
       print $HANDLE "Hello World! It's ", scalar localtime;
@@ -2802,7 +2802,7 @@ and machines.
       close $HANDLE
    }
 
-   my($log_line_count) = $f->line_count('/var/log/httpd/access_log');
+   my $log_line_count = $f->line_count('/var/log/httpd/access_log');
 
    print "My file has a bitmask of " . $f->bitmask('my.file');
 
@@ -2811,7 +2811,7 @@ and machines.
    warn 'This file is binary!' if $f->isbin('my.file');
 
    print "My file was last modified on " .
-      scalar localtime($f->last_modified('my.file'));
+      scalar localtime $f->last_modified('my.file');
 
    # ...and _lots_ more
 
@@ -2819,15 +2819,13 @@ and machines.
 
 To install this module type the following at the command prompt:
 
-   perl Makefile.PL
-   make
-   make test
-   make install
+   perl Build.PL
+   perl Build
+   perl Build test
+   sudo perl Build install
 
-On windows machines use nmake rather than make; those running cygwin don't have
-to worry about this.  If you don't know what cygwin is, use nmake and check out
-http://cygwin.com/ after you're done installing this module if you want to
-find out.
+On Windows systems, the "sudo" part of the command may be omitted, but you
+will need to run the rest of the install command with Administrative privileges
 
 =head1 ISA
 
@@ -2835,18 +2833,18 @@ find out.
 
 =item L<Exporter>
 
-=item L<Class::OOorNO>
-
 =back
 
 =head1 EXPORTED SYMBOLS
 
-Exports nothing by default.
+Exports nothing by default.  File::Util respects your namespace.
 
 =head2 EXPORT_OK
 
 The following symbols comprise C<@File::Util::EXPORT_OK>), and as such are
 available for import to your namespace only upon request.
+
+C<atmoize>            I<(see L<atmoize|/atmoize>)>
 
 C<bitmask>            I<(see L<bitmask|/bitmask>)>
 
@@ -2897,13 +2895,49 @@ available for import.
 
 =head1 METHODS
 
-B<Note:> Some of the methods listed will state that they are autoloaded methods.
-Autloaded methods are not compiled at runtime as part of your process and only
-get created if called somewhere in your program.  I<(see L<AutoLoader>.)>
+B<Note:> In the past, some of the methods listed would state that they were
+autoloaded methods.  This mechanism has been changed.  Only the error handling
+and help messages are AutoLoad'ed now.  I<(see L<AutoLoader>.)> if you want
+to know more about AutoLoading in Perl.  See the CHANGES file distributed
+with File::Util for an explanation of why this change was made.
 
 Methods listed in alphabetical order.
 
 =head2 C<bitmask>
+
+=over
+
+=item I<Syntax:> C<atomize( [file/path or file_name] )>
+
+This method is used internally by File::Util to portably handle absolute
+filenames on different platforms, but it can be a useful tool for you as well.
+
+This method takes a single string as its argument.  The string is expected
+to be a fully-qualified (absolute) or relative path to a file or directory.
+It carefully splits the string into three parts: The root of the path, the
+rest of the path, and the final file/directory named in the string.
+
+Depending on the input, the root and/or path may be empty strings.  The
+following table can serve as a guide in what to expect from C<atomize()>
+
+   +-------------------------+----------+--------------------+----------------+
+   |  INPUT                  |   ROOT   |   PATH-COMPONENT   |   FILE/DIR     |
+   +-------------------------+----------+--------------------+----------------+
+   |  C:\foo\bar\baz.txt     |   C:\    |   foo\bar          |   baz.txt      |
+   |  /foo/bar/baz.txt       |   /      |   foo/bar          |   baz.txt      |
+   |  ./a/b/c/d/e/f/g.txt    |          |   ./a/b/c/d/e/f    |   g.txt        |
+   |  :a:b:c:d:e:f:g.txt     |   :      |   a:b:c:d:e:f      |   g.txt        |
+   |  ../wibble/wombat.ini   |          |   ../wibble        |   wombat.ini   |
+   |  ..\woot\noot.doc       |          |   ..\woot          |   noot.doc     |
+   |  ../../zoot.conf        |          |   ../..            |   zoot.conf    |
+   |  /root                  |   /      |                    |   root         |
+   |  /etc/sudoers           |   /      |   etc              |   sudoers      |
+   |  /                      |   /      |                    |                |
+   |  D:\                    |   D:\    |                    |                |
+   |  D:\autorun.inf         |   D:\    |                    |   autorun.inf  |
+   +-------------------------+----------+--------------------+----------------+
+
+=back
 
 =over
 
@@ -2912,7 +2946,7 @@ Methods listed in alphabetical order.
 Gets the bitmask of the named file, provided the file exists. If the file
 exists, the bitmask of the named file is returned in four digit octal
 notation e.g.- C<0644>.  Otherwise, returns C<undef> if the file does I<not>
-exist.  This is an autoloaded method.
+exist.
 
 =back
 
@@ -2924,9 +2958,9 @@ exist.  This is an autoloaded method.
 
 Returns 1 if the current system claims to support C<flock()> I<and> if the
 Perl process can successfully call it.  I<(see L<perlfunc/flock>.)>  Unless
-both of these conditions are true a zero value (0) is returned.  This is
-an autoloaded method.  This is a constant subroutine.  It accepts no arguments
-and will always return the same value for the system on which it is executed.
+both of these conditions are true a zero value (0) is returned.  This is a
+constant method.  It accepts no arguments and will always return the same
+value for the system on which it is executed.
 
 B<Note:> Perl will try to support or emulate flock whenever it can via
 available system calls, namely C<flock>; C<lockf>; or with C<fcntl>.
@@ -2944,8 +2978,7 @@ according to the applied permissions of the file system on which the file
 resides.  Otherwise a value of undef is returned.
 
 This works the same as Perl's built-in C<-r> file test operator,
-I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.  This
-is an autoloaded method.
+I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.
 
 =back
 
@@ -2960,8 +2993,7 @@ according to the applied permissions of the file system on which the file
 resides.  Otherwise a value of undef is returned.
 
 This works the same as Perl's built-in C<-w> file test operator,
-I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.  This
-is an autoloaded method.
+I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.
 
 =back
 
@@ -2974,7 +3006,6 @@ is an autoloaded method.
 Returns the time of creation for the named file in non-leap seconds since
 whatever your system considers to be the epoch.  Suitable for feeding to
 Perl's built-in functions "gmtime" and "localtime".  I<(see L<perlfunc/time>.)>
-This is an autoloaded method.
 
 =back
 
@@ -2985,9 +3016,9 @@ This is an autoloaded method.
 =item I<Syntax:> C<ebcdic>
 
 Returns 1 if the machine on which the code is running uses EBCDIC, or returns
-0 if not.  I<(see L<perlebcdic>.)>  This is an autoloaded method.  This is a
-constant subroutine.  It accepts no arguments and will always return the same
-value for the system on which it is executed.
+0 if not.  I<(see L<perlebcdic>.)>  This is a constant method.  It accepts
+no arguments and will always return the same value for the system on which it
+is executed.
 
 =back
 
@@ -3001,7 +3032,7 @@ Returns it's argument in an escaped form that is suitable for use as a filename.
 Illegal characters (i.e.- any type of newline character, tab, vtab, and the
 following C<< / | * " ? < : > \ >>), are replaced with [escape char] or
 "B<_>" if no [escape char] is specified.  Returns an empty string if no
-arguments are provided.  This is an autoloaded method.
+arguments are provided.
 
 =back
 
@@ -3015,8 +3046,7 @@ Returns 1 if the named file (or directory) exists.  Otherwise a value of
 undef is returned.
 
 This works the same as Perl's built-in C<-e> file test operator,
-I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.  This
-is an autoloaded method.
+I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.
 
 =back
 
@@ -3028,7 +3058,7 @@ is an autoloaded method.
 
 Returns a list of keywords corresponding to each of Perl's built in file tests
 (those specific to file types) for which the named file returns true.
-I<(see L<perlfunc/-X>.)>  This is an autoloaded method.
+I<(see L<perlfunc/-X>.)>
 
 The keywords and their definitions appear below; the order of keywords returned
 is the same as the order in which the are listed here:
@@ -3145,8 +3175,6 @@ the file anyway and no failures will occur or warings be issued.
 
 =back
 
-This is an autoloaded method.
-
 =back
 
 =head2 C<isbin>
@@ -3160,8 +3188,7 @@ is returned, indicating that the named file either does not exist or is of
 another file type.
 
 This works the same as Perl's built-in C<-B> file test operator,
-I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.  This
-is an autoloaded method.
+I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.
 
 =back
 
@@ -3174,7 +3201,6 @@ is an autoloaded method.
 Returns the last accessed time for the named file in non-leap seconds since
 whatever your system considers to be the epoch.  Suitable for feeding to
 Perl's built-in functions "gmtime" and "localtime".  I<(see L<perlfunc/time>.)>
-This is an autoloaded method.
 
 =back
 
@@ -3187,7 +3213,6 @@ This is an autoloaded method.
 Returns the inode change time for the named file in non-leap seconds since
 whatever your system considers to be the epoch.  Suitable for feeding to
 Perl's built-in functions "gmtime" and "localtime".  I<(see L<perlfunc/time>.)>
-This is an autoloaded method.
 
 =back
 
@@ -3200,7 +3225,6 @@ This is an autoloaded method.
 Returns the last modified time for the named file in non-leap seconds since
 whatever your system considers to be the epoch.  Suitable for feeding to
 Perl's built-in functions "gmtime" and "localtime".  I<(see L<perlfunc/time>.)>
-This is an autoloaded method.
 
 =back
 
@@ -3328,7 +3352,7 @@ in as well.
 =item I<Syntax:> C<load_dir( [directory name] , [--ds-type] )>
 
 Returns a data structure containing the contents of each file present in the
-named directory.  This is an autoloaded method.
+named directory.
 
 The type of data structure returned is determined by the optional data-type
 switch.  Only one option may be used for a given call to this method.
@@ -3497,8 +3521,6 @@ result as it is impossible to create a directory that already exists.
 
 =back
 
-This is an autoloaded method.
-
 =back
 
 =head2 C<max_dives>
@@ -3521,8 +3543,6 @@ argument to this method will cause it to fail with an error message.
 
 I<(see L<list_dir|/list_dir>)>
 
-This is an autoloaded method.
-
 =back
 
 =head2 C<needs_binmode>
@@ -3533,9 +3553,9 @@ This is an autoloaded method.
 
 Returns 1 if the machine on which the code is running requires that C<binmode()>
 I<(a built-in function)> be called on open file handles, or returns 0 if not.
-I<(see L<perlfunc/binmode>.)>  This is an autoloaded method.  This is a constant
-subroutine.  It accepts no arguments and will always return the same value for
-the system on which it is executed.
+I<(see L<perlfunc/binmode>.)>  This is a constant method.  It accepts no
+arguments and will always return the same value for the system on which it
+is executed.
 
 =back
 
@@ -3806,8 +3826,6 @@ can't mix native Perl I/O with system I/O.
 
 =back
 
-This is an autoloaded method.
-
 =back
 
 =head2 C<readlimit>
@@ -3826,8 +3844,6 @@ to set the limit to 10 megabytes, call the method with an argument of 10485760.
 If this method is called without an argument, the read limit currently in force
 for the File::Util object will be returned.
 
-This is an autoloaded method.
-
 =back
 
 =head2 C<return_path>
@@ -3839,8 +3855,6 @@ This is an autoloaded method.
 Takes the file path from the file name provided and returns it such that
 "/foo/bar/baz.txt" is returned "/foo/bar".
 
-This is an autoloaded method.
-
 =back
 
 =head2 C<size>
@@ -3851,8 +3865,6 @@ This is an autoloaded method.
 
 Returns the file size of [file name] in bytes.  Returns C<0> if the file is
 empty, returns C<undef> if the file does not exist.
-
-This is an autoloaded method.
 
 =back
 
@@ -3880,8 +3892,6 @@ error if system permissions deny alterations to or creation of the file.
 Returns C<1> if successful.  If unsuccessful, fails with a descriptive error
 message about what went wrong.
 
-This is an autoloaded method.
-
 =back
 
 =head2 C<trunc>
@@ -3893,8 +3903,6 @@ This is an autoloaded method.
 Truncates [file name] (i.e.- wipes out, or "clobbers" the contents of the
 specified file.  Returns C<1> if successful.  If unsuccessful, fails with a
 descriptive error message about what went wrong.
-
-This is an autoloaded method.
 
 =back
 
@@ -3922,9 +3930,6 @@ disabled on the entire C<File::Util> object at the time of its creation
 I<(see L<new()|/new>)>, calling this method will have no effect and a true value
 will be returned.
 
-This is an autoloaded method, due to L<open_handle|open_handle> also being
-autoloaded.
-
 =back
 
 =head2 C<use_flock>
@@ -3941,8 +3946,6 @@ will tell the File::Util object whether or not it should attempt to use
 C<flock()> in its I/O operations.  A true value indicates that the File::Util
 object will use C<flock()> if available, a false value indicates that it will
 not.  The default is to use C<flock()> when available on your system.
-
-This is an autoloaded method.
 
 =back
 
@@ -4151,92 +4154,92 @@ Specifics: OS name =~ /^os2/i
 =head2 Get the names of all files and subdirectories in a directory
 
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    # option --no-fsdots excludes "." and ".." from the list
-   my(@dirs_and_files) = $f->list_dir('/foo','--no-fsdots');
+   my @dirs_and_files = $f->list_dir('/foo', '--no-fsdots');
 
 =head2 Get the names of all files and subdirectories in a directory, recursively
 
    use File::Util;
-   my($f) = File::Util->new();
-   my(@dirs_and_files) = $f->list_dir('/foo','--recurse');
+   my $f = File::Util->new();
+   my @dirs_and_files = $f->list_dir('/foo', '--recurse');
 
 =head2 Get the names of all files (no subdirectories) in a directory
 
    use File::Util;
-   my($f) = File::Util->new();
-   my(@dirs_and_files) = $f->list_dir('/foo','--files-only');
+   my $f = File::Util->new();
+   my @dirs_and_files = $f->list_dir('/foo', '--files-only');
 
 =head2 Get the names of all subdirectories (no files) in a directory
 
    use File::Util;
-   my($f) = File::Util->new();
-   my(@dirs_and_files) = $f->list_dir('/foo','--dirs-only');
+   my $f = File::Util->new();
+   my @dirs_and_files = $f->list_dir('/foo', '--dirs-only');
 
 =head2 Get the number of files and subdirectories in a directory
 
    use File::Util;
-   my($f) = File::Util->new();
-   my(@dirs_and_files) = $f->list_dir('/foo', qw/--no-fsdots --count-only/);
+   my $f = File::Util->new();
+   my @dirs_and_files  = $f->list_dir('/foo', qw/--no-fsdots --count-only/);
 
 =head2 Get the names of files and subdirs in a directory as separate array refs
 
    use File::Util;
-   my($f) = File::Util->new();
-   my($dirs,$files) = $f->list_dir('/foo', '--as-ref');
+   my $f = File::Util->new();
+   my( $dirs, $files ) = $f->list_dir('/foo', '--as-ref');
 
       -OR-
-   my($dirs,$files) = $f->list_dir('.', qw/--dirs-as-ref --files-as-ref/);
+   my( $dirs, $files ) = $f->list_dir('.', qw/--dirs-as-ref --files-as-ref/);
 
 =head2 Get the contents of a file in a string
 
    use File::Util;
-   my($f) = File::Util->new();
-   my($contents) = $f->load_file('filename');
+   my $f = File::Util->new();
+   my $contents = $f->load_file('filename');
 
 =head2 Get the contents of a file in an array of lines in the file
 
    use File::Util;
-   my($f) = File::Util->new();
-   my(@contents) = $f->load_file('filename','--as-lines');
+   my $f = File::Util->new();
+   my @contents = $f->load_file('filename','--as-lines');
 
 =head2 Get an open file handle for reading
 
    use File::Util;
-   my($f) = File::Util->new();
-   my($FH_REF) = $f->open_handle(
-      'file' => 'new_filename',
-      'mode' => 'read'
+   my $f = File::Util->new();
+   my $fh = $f->open_handle(
+      file => 'new_filename',
+      mode => 'read'
    );
 
 =head2 Get an open file handle for writing
 
    use File::Util;
-   my($f) = File::Util->new();
-   my($FH_REF) = $f->open_handle(
-      'file' => 'new_filename',
-      'mode' => 'write'
+   my $f = File::Util->new();
+   my $fh = $f->open_handle(
+      file => 'new_filename',
+      mode => 'write'
    );
 
 =head2 Write to a new or existing file
 
    use File::Util;
-   my($content) = 'Pathelogically Eclectic Rubbish Lister';
-   my($f) = File::Util->new();
-   $f->write_file('file' => 'a new file.txt', 'content' => $content);
+   my $content = 'Pathelogically Eclectic Rubbish Lister';
+   my $f = File::Util->new();
+   $f->write_file( file => 'a new file.txt', content => $content );
 
    # optionally specify a creation bitmask when writing to a new file
    $f->write_file(
-      'file'    => 'a new file.txt',
-      'bitmask' => 0777,
-      'content' => $content
+      file    => 'a new file.txt',
+      bitmask => oct 777,
+      content => $content
    );
 
 =head2 Append to a new or existing file
 
    use File::Util;
-   my($content) = 'Pathelogically Eclectic Rubbish Lister';
-   my($f) = File::Util->new();
+   my $content = 'Pathelogically Eclectic Rubbish Lister';
+   my $f = File::Util->new();
    $f->write_file(
       'file' => 'a new file.txt',
       'mode' => 'append',
@@ -4259,23 +4262,23 @@ Specifics: OS name =~ /^os2/i
 
       -OR-
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    print $f->valid_filename("foo?+/bar~@/#baz.txt") ? 'ok' : 'bad';
 
 =head2 Get the number of lines in a file
 
    use File::Util;
-   my($f) = File::Util->new();
-   my($linecount) = $f->line_count('foo.txt');
+   my $f = File::Util->new();
+   my $linecount = $f->line_count('foo.txt');
 
 =head2 Strip the path from a file name
 
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
 
    # On Windows
    #  (prints "hosts")
-   my($path) = $f->strip_path('C:\WINDOWS\system32\drivers\etc\hosts');
+   my $path = $f->strip_path('C:\WINDOWS\system32\drivers\etc\hosts');
 
    # On Linux/Unix
    #  (prints "perl")
@@ -4288,11 +4291,11 @@ Specifics: OS name =~ /^os2/i
 =head2 Get the path preceding a file name
 
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
 
    # On Windows
    #  (prints "C:\WINDOWS\system32\drivers\etc")
-   my($path) = $f->return_path('C:\WINDOWS\system32\drivers\etc\hosts');
+   my $path = $f->return_path('C:\WINDOWS\system32\drivers\etc\hosts');
 
    # On Linux/Unix
    #  (prints "/usr/bin")
@@ -4311,7 +4314,7 @@ Specifics: OS name =~ /^os2/i
    print File::Util->can_flock;
 
       -OR-
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    print $f->can_flock;
 
 =head2 Find out if the host system needs to call binmode on binary files
@@ -4325,25 +4328,25 @@ Specifics: OS name =~ /^os2/i
 
       -OR-
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    print $f->needs_binmode;
 
 =head2 Find out if a file can be opened for read (based on file permissions)
 
    use File::Util;
-   my($f) = File::Util->new();
-   my($is_readable) = $f->can_read('foo.txt');
+   my $f = File::Util->new();
+   my $is_readable = $f->can_read('foo.txt');
 
 =head2 Find out if a file can be opened for write (based on file permissions)
 
    use File::Util;
-   my($f) = File::Util->new();
-   my($is_writable) = $f->can_write('foo.txt');
+   my $f = File::Util->new();
+   my $is_writable = $f->can_write('foo.txt');
 
 =head2 Escape illegal characters in a potential file name (and its path)
 
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
 
    # prints "C__WINDOWS_system32_drivers_etc_hosts"
    print $f->escape_filename('C:\WINDOWS\system32\drivers\etc\hosts');
@@ -4370,7 +4373,7 @@ Specifics: OS name =~ /^os2/i
 
       -OR-
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    print $f->ebcdic;
 
 =head2 Get the type(s) of an existent file
@@ -4384,7 +4387,7 @@ Specifics: OS name =~ /^os2/i
 
       -OR-
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    print $f->file_type('/dev/null');
 
 =head2 Get the bitmask of an existent file
@@ -4398,7 +4401,7 @@ Specifics: OS name =~ /^os2/i
 
       -OR-
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    print $f->bitmask('/dev/null');
 
 =head2 Get time of creation for a file
@@ -4412,7 +4415,7 @@ Specifics: OS name =~ /^os2/i
 
       -OR-
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    print scalar localtime $f->created('/bin/less');
 
 =head2 Get the last access time for a file
@@ -4426,7 +4429,7 @@ Specifics: OS name =~ /^os2/i
 
       -OR-
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    print scalar localtime $f->last_access('/bin/less');
 
 =head2 Get the inode change time for a file
@@ -4440,7 +4443,7 @@ Specifics: OS name =~ /^os2/i
 
       -OR-
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    print scalar localtime $f->last_changed('/bin/cpio');
 
 =head2 Get the last modified time for a file
@@ -4454,13 +4457,13 @@ Specifics: OS name =~ /^os2/i
 
       -OR-
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    print scalar localtime $f->last_modified('/bin/less');
 
 =head2 Make a new directory, recursively if neccessary
 
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    $f->make_dir('/var/tmp/tempfiles/foo/bar/');
 
    # optionally specify a creation bitmask to be used in directory creations
@@ -4473,13 +4476,13 @@ Specifics: OS name =~ /^os2/i
 
       -OR-
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    $f->touch('/foo/bar/baz.tmp');
 
 =head2 Truncate a file
 
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    $f->trunc('/wibble/wombat/noot.tmp');
 
 =head2 Get the correct path separator for the host system
@@ -4493,7 +4496,7 @@ Specifics: OS name =~ /^os2/i
 
       -OR-
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    print $f->SL;
 
 =head2 Get the correct newline character for the host system
@@ -4507,7 +4510,7 @@ Specifics: OS name =~ /^os2/i
 
       -OR-
    use File::Util;
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    print $f->NL;
 
 =head1 EXAMPLES (Full Programs)
@@ -4521,22 +4524,22 @@ Specifics: OS name =~ /^os2/i
    use vars qw( $dir );
    use File::Util qw( NL SL );
 
-   my($f)      = File::Util->new();
-   my($dir)    = '../wibble';
-   my($old)    = 'foo';
-   my($new)    = 'bar';
-   my(@files)  = $f->list_dir($dir, '--files-only');
+   my $f      = File::Util->new();
+   my $dir    = '../wibble';
+   my $old    = 'foo';
+   my $new    = 'bar';
+   my @files  = $f->list_dir($dir, '--files-only');
 
-   foreach (@files) {
+   foreach ( @files ) {
 
       # don't change the file suffix unless it is *.foo
       if ($_ =~ /\.$old$/o) {
 
-         my($newname) = $_; $newname =~ s/\.$old/\.$new/;
+         my $newname = $_; $newname =~ s/\.$old/\.$new/;
 
          if (rename($dir . SL . $_, $dir . SL . $newname)) {
 
-            print qq[$_ -> $newname], NL
+            print qq($_ -> $newname), NL
          }
          else { warn <<__ERR__ }
    Couldn't rename "$_" to "$newname"!
@@ -4555,14 +4558,16 @@ Specifics: OS name =~ /^os2/i
 
    use File::Util qw( NL );
 
-   my($f) = File::Util->new();
-   my($removedir) = '/path/to/directory/youwanttodelete';
+   my $f = File::Util->new();
+   my $removedir = '/path/to/directory/youwanttodelete';
 
-   my(@gonners) = $f->list_dir($removedir, '--follow');
+   my @gonners = $f->list_dir($removedir, '--follow');
 
    # remove directory and everything in it
-   my($a, $b);
-   foreach (reverse(sort({ length($a) <=> length($b) } @gonners)), $removedir) {
+   my( $a, $b );
+   @gonners = reverse sort { length $a <=> length $b } @gonners;
+
+   foreach ( @gonners, $removedir ) {
       print "Removing $_ ..." . NL;
       -d $_ ? rmdir($_) || die $! : unlink($_) || die $!;
     }
@@ -4582,12 +4587,12 @@ Specifics: OS name =~ /^os2/i
 
    $Text::Wrap::columns = 72; # wrap text at this many columns
 
-   my($f) = File::Util->new();
+   my $f = File::Util->new();
    my($textfile) = 'myreport.txt'; # file to wrap and save
 
    $f->write_file(
-     'filename' => $textfile,
-     'content' => wrap('', '', $f->load_file($textfile))
+     filename => $textfile,
+     content => wrap('', '', $f->load_file($textfile))
    );
 
    print 'Done.', NL x 2;
@@ -4601,29 +4606,29 @@ Specifics: OS name =~ /^os2/i
 
    use File::Util;
 
-   my($f) = File::Util->new();
-   my($counterfile) = 'counter.txt';
+   my $f = File::Util->new();
+   my $counterfile = 'counter.txt';
 
    # if the counter file doesn't exist, let's make one
-   if (! $f->existent($counterfile)) {
+   if ( !$f->existent( $counterfile ) ) {
       $f->touch($counterfile);
    }
 
-   my($count) = $f->load_file($counterfile);
+   my $count = $f->load_file( $counterfile );
 
    # convert textual number to in-memory int type, -this will default
    # to a zero if it encounters non-numerical or empty content
-   chomp($count); # strip off any trailing lines
+   chomp $count; # strip off any trailing lines
    $count =~ s/[^[:digit:]]//g; # remove non-numeric data
    $count = 0 if "$count" eq '';   # set count to 0 if empty string
-   $count = int($count); # numberify $count
+   $count = int $count; # numberify $count
 
    print 'Count value from file: ' . $f->load_file($counterfile), $f->NL;
 
    $count++; # increment the counter value by 1
 
    # save the incremented count back to the counter file
-   $f->write_file( 'filename' => $counterfile, 'content' => $count);
+   $f->write_file( filename => $counterfile, content => $count);
 
    # verify that "it worked"
    print 'Count is now: ' . $f->load_file($counterfile), $f->NL;
@@ -4651,32 +4656,32 @@ Specifics: OS name =~ /^os2/i
    use constant RMODE => [qw| read-only  write |]->[1];
 
    # set the options for the search (will or will not recurse, etc)
-   my(@opts) = [qw/ --files-only --with-paths --recurse /]->[0,1];
+   my @opts = [qw/ --files-only --with-paths --recurse /]->[0,1];
 
    # create new File::Util object, set File::Util to send a warning for
    # fatal errors instead of dieing
-   my($f)         = File::Util->new('--fatals-as-warning');
-   my($rstr)      = $f->load_file(RFILE);
-   my($spat)      = quotemeta($f->load_file(SFILE)); $spat = qr/$spat/;
-   my($gsbt)      = 0;
-   my($action)    = RMODE eq 'read-only' ? 'detections' : 'substitutions';
-   my(@files)     = $f->list_dir(INDIR, @opts);
+   my $f         = File::Util->new('--fatals-as-warning');
+   my $rstr      = $f->load_file(RFILE);
+   my $spat      = quotemeta $f->load_file(SFILE); $spat = qr/$spat/;
+   my $gsbt      = 0;
+   my $action    = RMODE eq 'read-only' ? 'detections' : 'substitutions';
+   my @files     = $f->list_dir(INDIR, @opts);
 
-   for (my($i) = 0; $i < @files; ++$i) {
+   for (my $i = 0; $i < @files; ++$i) {
 
-      next if $f->isbin($files[$i]);
+      next if $f->isbin( $files[$i] );
 
-      my($sbt) = 0; my($file) = $f->load_file($files[$i]);
+      my $sbt = 0; my $file = $f->load_file( $files[$i] );
 
       $file =~ s/$spat/++$sbt;++$gsbt;$rstr/ge;
 
-      $f->write_file('file' => $files[$i], 'content' => $file)
+      $f->write_file( file => $files[$i], content => $file)
          if RMODE eq 'write';
 
-      print $sbt ? (qq[$sbt $action in $files[$i]] . NL) : '';
+      print $sbt ? qq($sbt $action in $files[$i]) . NL : '';
    }
 
-   print( NL . <<__DONE__ . NL x 2) and exit;
+   print( NL . <<__DONE__ . NL x 2 ) and exit;
    $gsbt $action in ${\scalar(@files)} files.
    __DONE__
 
@@ -4686,9 +4691,9 @@ Specifics: OS name =~ /^os2/i
    use vars qw( $a $b );
 
    use File::Util qw( NL );
-   my($ind) = '';
-   my($f)   = File::Util->new();
-   my(@o)   = qw(
+   my $ind = '';
+   my $f   = File::Util->new();
+   my @o   = qw(
       --with-paths
       --sl-after-dirs
       --no-fsdots
@@ -4696,68 +4701,90 @@ Specifics: OS name =~ /^os2/i
       --dirs-as-ref
    );
 
-   my($filetree)  = {};
-   my($treetrunk) = '/var/';
-   my($subdirs,$sfiles) = $f->list_dir($treetrunk, @o);
+   my $filetree  = {};
+   my $treetrunk = '/var/';
+   my( $subdirs, $sfiles ) = $f->list_dir($treetrunk, @o);
 
    $filetree = [{
       $treetrunk => [ sort({ uc $a cmp uc $b } @$subdirs, @$sfiles) ]
    }];
 
-   descend($filetree->[0]{ $treetrunk },scalar(@$subdirs));
-   walk(@$filetree);
+   descend( $filetree->[0]{ $treetrunk }, scalar(@$subdirs) );
+   walk( @$filetree );
 
    sub descend {
-      my($parent,$dirnum) = @_;
-      for (my($i) = 0; $i < $dirnum; ++$i) {
-         my($current) = $parent->[$i]; next unless -d $current;
-         my($subdirs,$sfiles) = $f->list_dir($current, @o);
+      my( $parent, $dirnum ) = @_;
+      for (my $i = 0; $i < $dirnum; ++$i) {
+         my $current = $parent->[$i]; next unless -d $current;
+         my( $subdirs, $sfiles ) = $f->list_dir($current, @o);
          map { $_ = $f->strip_path($_) } @$sfiles;
          splice(@$parent,$i,1,{
             $current => [ sort({ uc $a cmp uc $b } @$subdirs, @$sfiles) ]
          });
-         descend($parent->[$i]{ $current },scalar(@$subdirs));
+         descend( $parent->[$i]{ $current }, scalar @$subdirs );
       }
-      $parent
+
+      return $parent;
    }
 
    sub walk {
-      my($dir) = shift(@_);
+      my $dir = shift(@_);
       foreach (@{ [ %$dir ]->[1] }) {
-         my($mem) = $_;
-         if (ref($mem) eq 'HASH') {
-            print($ind . $f->strip_path([ %$mem ]->[0]) . '/',NL);
+         my $mem = $_;
+         if (ref $mem eq 'HASH') {
+            print $ind . $f->strip_path([ %$mem ]->[0]) . '/', NL;
             $ind .= ' ' x 3;
-            walk($mem);
-            $ind = substr($ind,3);
-         } else { print($ind . $mem,NL) }
+            walk( $mem );
+            $ind = substr( $ind, 3 );
+         } else { print $ind . $mem, NL }
       }
    }
 
 =head1 BUGS
 
-Send bug reports to the AUTHOR.  There are no known bugs at this time.
+Send bug reports and patches to the CPAN Bug Tracker for File::Util at
+L<https://rt.cpan.org/Dist/Display.html?Name=File%3A%3AUtil>
 
-=head1 TODO
+=head1 RESOURCES
 
-Add full support for PerlIO layers in C<File::Util::open_handle()> and possibly
-C<File::Util::write_file()>.
+If you want to get help, contact the authors (links below in the AUTHORS section)
 
-=head1 AUTHOR
+I fully endorse L<http://www.perlmonks.org> as an excellent source of help with Perl in general.
 
-Tommy Butler <L<www.atrixnet.com/contact/|http://www.atrixnet.com/contact/>>
+=head1 CONTRIBUTING
+
+The project website for File::Util is at L<https://github.com/tommybutler/file-util/wiki>
+
+The git repository for File::Util is on Github at L<https://github.com/tommybutler/file-util>
+
+Clone it at L<git://github.com/tommybutler/file-util.git>
+
+This project was a private endeavor for too long so don't hesitate to pitch
+in. I want to say I very much appreciate the emails, bug reports, patches,
+and all those who contribute their time and talents as CPAN testers.
+
+=head1 AUTHORS
+
+Tommy Butler L<www.atrixnet.com/contact/|http://www.atrixnet.com/contact/>
 
 =head1 COPYRIGHT
 
-Copyright(C) 2001-2012, Tommy Butler.  All rights reserved.
+Copyright(C) 2001-2013, Tommy Butler.  All rights reserved.
 
 =head1 LICENSE
 
-This library is free software, you may redistribute and/or modify it under
-the same terms as Perl itself.
+This library is free software, you may redistribute it and/or modify it
+under the same terms as Perl itself. For more details, see the full text of
+the LICENSE file that is included in this distribution.
+
+=head1 LIMITATION OF WARRANTY
+
+This software is distributed in the hope that it will be useful, but without
+any warranty; without even the implied warranty of merchantability or fitness
+for a particular purpose.
 
 =head1 SEE ALSO
 
-L<File::Slurp>, L<Exception::Handler>, L<Class::OOorNO>
+L<File::Slurp>, L<Path::Class>, L<Exception::Handler>
 
 =cut

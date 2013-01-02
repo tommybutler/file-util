@@ -1,20 +1,30 @@
 TODO List for File::Util
 
-1) [DONE] Set up formal (not just private) GIT repository
+Not necessarily listed in order of priority:
 
-2) Separate documenation examples into a cookbook (POD)
+1)  [DONE] Set up formal (not just private) GIT repository
 
-3) Gradually transform methods to accept input parameters in a
-   *::Class-like style (hashrefs, etc) while preserving backward
-   compatibility
+2)  Separate documenation examples into a cookbook (POD)
 
-4) Support for Perl IO "layers", which just hasn't been requested but
-   should be there for completeness
+3)  Gradually transform methods to accept input parameters in a
+    *::Class-like style (hashrefs, etc) while preserving backward
+    compatibility
 
-5) Transform (where useful) various methods to accept callbacks.
-   File::Util::list_dir() is the primary target
+4)  Support for Perl IO "layers", which just hasn't been requested but
+    should be there for completeness
 
-6) Set up File::Util::list_dir() to take a listref of regexes
+5)  Transform (where useful) various methods to accept callbacks.
+    File::Util::list_dir() is the primary target
 
-7) Continue improving the distribution so as to make it compliant
-   with Fedora packaging standards; it is already an Ubuntu package
+6)  Set up File::Util::list_dir() to take a listref of regexes
+
+7)  [IN PROGRESS] Continue improving the distribution so as to make
+    it compliant with Fedora packaging standards; it is already a
+    maintained package for Ubuntu and ActiveState
+
+8)  [DONE] Code clean up in POD documentation examples.
+
+9)  Improve and simplify code examples in POD documentation.
+
+10) [IN PROGRESS] Constantly improve test suite until Devel::Cover
+    scores are something to be proud of.

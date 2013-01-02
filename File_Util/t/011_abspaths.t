@@ -38,4 +38,6 @@ skip(
    'JAPH', $skip
 );
 
+unlink $fn;
+
 exit;
