@@ -16,7 +16,7 @@ use vars qw(
 use Exporter;
 use AutoLoader qw( AUTOLOAD );
 
-$VERSION    = 3.34;
+$VERSION    = 3.35;
 $AUTHORITY  = 'cpan:TOMMY';
 @ISA        = qw( Exporter );
 @EXPORT_OK  = qw(
@@ -2839,7 +2839,7 @@ Exports nothing by default.  File::Util respects your namespace.
 The following symbols comprise C<@File::Util::EXPORT_OK>), and as such are
 available for import to your namespace only upon request.
 
-C<atmoize>            I<(see L<atmoize|/atmoize>)>
+C<atomize>            I<(see L<atomize|/atomize>)>
 
 C<bitmask>            I<(see L<bitmask|/bitmask>)>
 
@@ -2898,7 +2898,7 @@ with File::Util for an explanation of why this change was made.
 
 Methods listed in alphabetical order.
 
-=head2 C<bitmask>
+=head2 C<atomize>
 
 =over
 
@@ -2933,6 +2933,8 @@ following table can serve as a guide in what to expect from C<atomize()>
    +-------------------------+----------+--------------------+----------------+
 
 =back
+
+=head2 C<bitmask>
 
 =over
 
