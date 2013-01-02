@@ -4143,8 +4143,6 @@ Specifics: OS name =~ /^os2/i
 
 =item L<Perl|perl> 5.006 or better
 
-=item L<Class::OOorNO>        v0.01_1 or better
-
 =item L<Exception::Handler>   v1.00_0 or better
 
 =back
