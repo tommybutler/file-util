@@ -16,7 +16,7 @@ use vars qw(
 use Exporter;
 use AutoLoader qw( AUTOLOAD );
 
-$VERSION    = 3.36; # emergency breakfix compliments of Dist::Zilla auto-prereqs fail
+$VERSION    = 3.37;
 $AUTHORITY  = 'cpan:TOMMY';
 @ISA        = qw( Exporter );
 @EXPORT_OK  = qw(
@@ -24,7 +24,7 @@ $AUTHORITY  = 'cpan:TOMMY';
    SL     strip_path  can_read     can_write     valid_filename
    OS     bitmask     return_path  file_type     escape_filename
    isbin  created     last_access  last_changed  last_modified
-   size   atomize
+   size   atomize_path
 );
 
 %EXPORT_TAGS = ( all  => [ @EXPORT_OK ] );
@@ -143,9 +143,9 @@ sub new {
 
 
 # --------------------------------------------------------
-# File::Util::atomize()
+# File::Util::atomize_path()
 # --------------------------------------------------------
-sub atomize {
+sub atomize_path {
    my $fqfn = _myargs( @_ );
 
    $fqfn =~ m/$ATOMIZER/;
@@ -397,7 +397,7 @@ sub load_file {
          }
       ) unless length $file;
 
-      ( $root, $path, $file ) = atomize( $file );
+      ( $root, $path, $file ) = atomize_path( $file );
 
       @dirs = split /$DIRSPLIT/, $path;
 
@@ -635,7 +635,7 @@ sub write_file {
    my ( $root, $path, $clean_name, @dirs ) =
       ( '',    '',    '',          ()    );
 
-   ( $root, $path, $file ) = atomize ( $file );
+   ( $root, $path, $file ) = atomize_path( $file );
 
    $mode = 'trunc' if $mode eq 'truncate';
 
@@ -1575,7 +1575,7 @@ sub open_handle {
    my ( $root, $path, $clean_name, @dirs ) =
       ( '',    '',    '',          ()    );
 
-   ( $root, $path, $file ) = atomize( $file );
+   ( $root, $path, $file ) = atomize_path( $file );
 
    # begin user input validation/sanitation sequence
 
@@ -2839,7 +2839,7 @@ Exports nothing by default.  File::Util respects your namespace.
 The following symbols comprise C<@File::Util::EXPORT_OK>), and as such are
 available for import to your namespace only upon request.
 
-C<atomize>            I<(see L<atomize|/atomize>)>
+C<atomize_path>       I<(see L<atomize_path|/atomize_path>)>
 
 C<bitmask>            I<(see L<bitmask|/bitmask>)>
 
@@ -2898,11 +2898,11 @@ with File::Util for an explanation of why this change was made.
 
 Methods listed in alphabetical order.
 
-=head2 C<atomize>
+=head2 C<atomize_path>
 
 =over
 
-=item I<Syntax:> C<atomize( [file/path or file_name] )>
+=item I<Syntax:> C<atomize_path( [file/path or file_name] )>
 
 This method is used internally by File::Util to portably handle absolute
 filenames on different platforms, but it can be a useful tool for you as well.
@@ -2913,7 +2913,7 @@ It carefully splits the string into three parts: The root of the path, the
 rest of the path, and the final file/directory named in the string.
 
 Depending on the input, the root and/or path may be empty strings.  The
-following table can serve as a guide in what to expect from C<atomize()>
+following table can serve as a guide in what to expect from C<atomize_path()>
 
    +-------------------------+----------+--------------------+----------------+
    |  INPUT                  |   ROOT   |   PATH-COMPONENT   |   FILE/DIR     |

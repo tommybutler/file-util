@@ -1,10 +1,17 @@
 Revision history for Perl extension File::Util.pm
 
-   3.35
+   3.37
+         Thu Jan  3 12:58:55 CST 2013
+         Renamed atomize() to atomize_path() before anyone starts to use it;
+         the original name is not ideal and not descriptive of what it does.
+
+   3.36
          Thu Jan  3 11:38:00 CST 2013
          breakfix, Dist::Zilla failed to detect long-time prereq
-         Exception::Handler
+         Exception::Handler.  This unfortunate problem broke v3.33 thru 3.35
+         which were taken down in short order.
 
+   3.35 - removed
    3.34 - removed
 
    3.33
