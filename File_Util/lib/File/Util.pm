@@ -16,7 +16,7 @@ use vars qw(
 use Exporter;
 use AutoLoader qw( AUTOLOAD );
 
-$VERSION    = 3.35;
+$VERSION    = 3.36; # emergency breakfix compliments of Dist::Zilla auto-prereqs fail
 $AUTHORITY  = 'cpan:TOMMY';
 @ISA        = qw( Exporter );
 @EXPORT_OK  = qw(
@@ -1131,11 +1131,11 @@ sub touch {
    my $this  = shift @_;
    my $opts  = $this->_remove_opts( \@_ );
    my $in    = $this->_names_values( @_ );
-   my(@dirs) = ();
-   my($file) = ''; my($path) = '';
-   my($mode) = 'read';
+   my @dirs  = ();
+   my $file  = ''; my($path) = '';
+   my $mode  = 'read';
 
-   $file = shift(@_)||'';
+   $file = shift @_ ||'';
 
    @dirs = split(/$DIRSPLIT/, $file);
 
@@ -1202,7 +1202,7 @@ sub touch {
       '--empty-writes-OK'
    ) if !-e $path . SL . $file;
 
-   my($now) = time();
+   my $now = time();
 
    # return
    return utime $now, $now, $path . SL . $file;
@@ -1315,9 +1315,9 @@ sub last_changed {
 # File::Util::load_dir()
 # --------------------------------------------------------
 sub load_dir {
-   my($this) = shift(@_); my($opts) = $this->_remove_opts( \@_ );
-   my($dir)  = shift(@_)||''; my(@files) = ();
-   my($dir_hash) = {}; my($dir_list) = [];
+   my $this = shift @_; my $opts = $this->_remove_opts( \@_ );
+   my $dir  = shift @_ ||''; my @files = ();
+   my $dir_hash = {}; my $dir_list = [];
 
    return $this->_throw
       (
@@ -1328,7 +1328,7 @@ sub load_dir {
             'opts'      => $opts,
          }
       )
-   unless length($dir);
+   unless length $dir;
 
    @files = $this->list_dir($dir,'--files-only');
 
@@ -1965,7 +1965,7 @@ sub size { my $f = _myargs( @_ ); $f ||= ''; return unless -e $f; -s $f }
 # --------------------------------------------------------
 # File::Util::trunc()
 # --------------------------------------------------------
-sub trunc { $_[0]->write_file('mode' => 'trunc', 'file' => $_[1]) }
+sub trunc { $_[0]->write_file( mode => 'trunc', file => $_[1]) }
 
 
 # --------------------------------------------------------
@@ -2072,8 +2072,8 @@ __END__
 # File::Util::_throw
 # --------------------------------------------------------
 sub _throw {
-   my($this) = shift(@_); my($opts) = $this->_remove_opts( \@_ );
-   my(%fatal_rules) = ();
+   my $this = shift @_; my $opts = $this->_remove_opts( \@_ );
+   my %fatal_rules = ();
 
    # fatalality-handling rules passed to the failing caller trump the
    # rules set up in the attributes of the object; the mechanism below
@@ -2132,7 +2132,7 @@ sub _throw {
 
    PLAIN_ERRORS:
 
-   my($bad_news) =
+   my $bad_news =
       CORE::eval
          (
             q{<<__ERRORBLOCK__}
@@ -2183,10 +2183,10 @@ sub _throw {
 sub _errors {
    use vars qw($EBL $EBR);
    ($EBL,$EBR) = ('<<', '>>');
-   my($error_thrown) = shift(@_);
+   my $error_thrown = shift @_;
 
    # begin long table of helpful diag error messages
-   my(%error_msg_table) = (
+   my %error_msg_table = (
 # NO SUCH FILE
 'no such file' => <<'__bad_open__',
 $in->{_pak} can't open
@@ -3389,7 +3389,7 @@ Restrictions imposed by the current "read limit"
 I<(see the L<readlimit()|/readlimit>) entry below> will be applied to the
 files opened by this method as well.  Adjust the readlimit as necessary.
 
-   my($files) = $fu->load_dir('directory/to/load/');
+   my $files = $fu->load_dir('directory/to/load/');
 
 The above code creates an anonymous hash reference that is stored in the
 variable named "C<$files>".  The keys and values of the hash referenced by
@@ -3631,13 +3631,13 @@ instead of the value(s) that would normally be returned by the call.
 
 =over
 
-=item I<Syntax:> C<< open_handle('file' => [file name], [--opts]) >>
+=item I<Syntax:> C<< open_handle( file => [file name], [--opts] ) >>
 
-=item I<OR:> C<< open_handle('file' => [file name], 'mode' => [mode], [--opts]) >>
+=item I<OR:> C<< open_handle( file => [file name], mode => [mode], [--opts] ) >>
 
-=item I<OR:> C<< open_handle('file' => [file name], 'mode' => [mode], 'bitmask' => [bitmask], [--opts]) >>
+=item I<OR:> C<< open_handle( file => [file name], mode => [mode], bitmask => [bitmask], [--opts] ) >>
 
-=item I<OR:> C<< open_handle('file' => [file name], 'mode' => [mode], 'bitmask' => [bitmask], 'dbitmask' => [bitmask], [--opts]) >>
+=item I<OR:> C<< open_handle( file => [file name], mode => [mode], bitmask => [bitmask], dbitmask => [bitmask], [--opts] ) >>
 
 Attempts to get a unique open file handle on [file name] in [mode] mode.
 Returns the file handle if successful or generates a fatal error with a
@@ -3950,13 +3950,13 @@ not.  The default is to use C<flock()> when available on your system.
 
 =over
 
-=item I<Syntax:> C<< write_file('file' => [file name], 'content' => [string], [--opts]) >>
+=item I<Syntax:> C<< write_file( file' => [file name], 'content' => [string], [--opts] ) >>
 
-=item I<OR:> C<< write_file('file' => [file name], 'content' => [string], 'mode' => [mode], [--opts]) >>
+=item I<OR:> C<< write_file( file => [file name], content => [string], mode => [mode], [--opts] ) >>
 
-=item I<OR:> C<< write_file('file' => [file name], 'content' => [string], 'mode' => [mode], 'bitmask' => [bitmask], [--opts]) >>
+=item I<OR:> C<< write_file( file => [file name], content => [string], mode => [mode], bitmask => [bitmask], [--opts] ) >>
 
-=item I<OR:> C<< write_file('file' => [file name], 'content' => [string], 'mode' => [mode], 'bitmask' => [bitmask], 'dbitmask' => [bitmask], [--opts]) >>
+=item I<OR:> C<< write_file( file => [file name], content => [string], mode => [mode], bitmask => [bitmask], dbitmask => [bitmask], [--opts] ) >>
 
 Attempts to write [string] to [file name] in mode [mode].  If the file does
 not yet exist it will be created, and it will be created with a bitmask of
@@ -4236,9 +4236,9 @@ Specifics: OS name =~ /^os2/i
    my $content = 'Pathelogically Eclectic Rubbish Lister';
    my $f = File::Util->new();
    $f->write_file(
-      'file' => 'a new file.txt',
-      'mode' => 'append',
-      'content' => $content
+      file => 'a new file.txt',
+      mode => 'append',
+      content => $content
    );
 
 =head2 Determine if something is a valid file name
@@ -4583,7 +4583,7 @@ Specifics: OS name =~ /^os2/i
    $Text::Wrap::columns = 72; # wrap text at this many columns
 
    my $f = File::Util->new();
-   my($textfile) = 'myreport.txt'; # file to wrap and save
+   my $textfile = 'myreport.txt'; # file to wrap and save
 
    $f->write_file(
      filename => $textfile,
@@ -4760,7 +4760,7 @@ and all those who contribute their time and talents as CPAN testers.
 
 =head1 AUTHORS
 
-Tommy Butler L<www.atrixnet.com/contact/|http://www.atrixnet.com/contact/>
+Tommy Butler L<http://www.atrixnet.com/contact>
 
 =head1 COPYRIGHT
 
