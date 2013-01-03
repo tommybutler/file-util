@@ -1735,7 +1735,7 @@ sub open_handle {
             dirname  => $root . $path,
             opts     => $opts,
          }
-      ) unless -r $path;
+      ) unless -r $root . $path;
 
       # Seems obvious, but we can't read non-existent files
       return $this->_throw(

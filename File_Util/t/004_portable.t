@@ -1,13 +1,11 @@
-
 use strict;
-use Test;
+use warnings;
 
-# use a BEGIN block so we print our plan before MyModule is loaded
-BEGIN { plan tests => 49, todo => [] }
-BEGIN { $| = 1 }
+use Test::More tests => 49;
+use Test::NoWarnings;
 
-# load your module...
 use lib './';
+
 use File::Util qw
    (
       SL   NL   escape_filename
@@ -20,27 +18,26 @@ my $f = File::Util->new();
 my $NL = NL; my $SL = SL;
 
 # newlines
-ok(NL eq $NL);                                                         # test 1
+ok( NL eq $NL, 'NL' );                                                         # test 1
 
-# binmode necessary?
-ok( needs_binmode, NL eq qq[\015\012] ? 1 : 0 );                       # test 2
+# test 2 removed because it was stupid
 
 # path seperator
-ok( SL eq $SL );                                                       # test 3
+ok( SL eq $SL, 'SL' );                                                       # test 3
 
 # test file escaping with substitute escape char
 # with additional char to escape as well.
 ok                                                                     # test 4
    (
-      escape_filename(q[./foo/bar/baz.t/], '+','.'),
-      '++foo+bar+baz+t+'
+      escape_filename(q[./foo/bar/baz.t/], '+','.') eq '++foo+bar+baz+t+',
+      'escaped filename with custom escape'
    );
 
 # test file escaping with defaults
 ok                                                                     # test 5
    (
-      escape_filename(q[.\foo\bar\baz.t]),
-      '._foo_bar_baz.t'
+      escape_filename(q[.\foo\bar\baz.t]) eq '._foo_bar_baz.t',
+      'escaped filename with defaults'
    );
 
 # test file escaping with option "--strip-path"
@@ -50,60 +47,63 @@ ok                                                                     # test 6
          (
             q[.:foo:bar:baz.t],
             '--strip-path'
-         ),
-      'baz.t'
+         ) eq 'baz.t'
    );
 
 # path stripping in general
-ok(strip_path(__FILE__),'004_portable.t');                               # test 7
-ok(strip_path('C:\foo'),'foo');                                          # test 8
-ok(strip_path('C:\foo\bar\baz.txt'),'baz.txt');                          # test 9
+ok(strip_path(__FILE__) eq '004_portable.t');                               # test 7
+ok(strip_path('C:\foo') eq 'foo');                                          # test 8
+ok(strip_path('C:\foo\bar\baz.txt') eq 'baz.txt');                          # test 9
 
 # illegal filename character intolerance
-ok(!valid_filename(qq[?foo]));      # question mark
-ok(!valid_filename(qq[>foo]));      # greater than
-ok(!valid_filename(qq[<foo]));      # less than
-ok(!valid_filename(qq[<foo]));      # less than
-ok(!valid_filename(qq[<foo]));      # less than
-ok(!valid_filename(qq[<foo]));      # less than
-ok(!valid_filename(qq[:foo]));      # colon
-ok(!valid_filename(qq[*foo]));      # asterisk
-ok(!valid_filename(qq[/foo]));      # forward slash
-ok(!valid_filename(qq[\\foo]));     # back slash
-ok(!valid_filename(qq["foo]));      # double quotation mark
-ok(!valid_filename(qq[\tfoo]));     # tab
-ok(!valid_filename(qq[\013foo]));   # vertical tab
-ok(!valid_filename(qq[\012foo]));   # newline
-ok(!valid_filename(qq[\015foo]));   # form feed
+ok(!valid_filename(qq[?foo]),qq[?foo]);      # question mark
+ok(!valid_filename(qq[>foo]),qq[>foo]);      # greater than
+ok(!valid_filename(qq[<foo]),qq[<foo]);      # less than
+ok(!valid_filename(qq[<foo]),qq[<foo]);      # less than
+ok(!valid_filename(qq[<foo]),qq[<foo]);      # less than
+ok(!valid_filename(qq[<foo]),qq[<foo]);      # less than
+ok(!valid_filename(qq[:foo]),qq[:foo]);      # colon
+ok(!valid_filename(qq[*foo]),qq[*foo]);      # asterisk
+ok(!valid_filename(qq[/foo]),qq[/foo]);      # forward slash
+ok(!valid_filename(qq[\\foo]),qq[\\foo]);     # back slash
+ok(!valid_filename(qq["foo]),qq["foo]);      # double quotation mark
+ok(!valid_filename(qq[\tfoo]),qq[\\tfoo]);     # tab
+ok(!valid_filename(qq[\013foo]),qq[\\013foo]);   # vertical tab
+ok(!valid_filename(qq[\012foo]),qq[\\012foo]);   # newline
+ok(!valid_filename(qq[\015foo]),qq[\\015foo]);   # form feed
 
 # strange but legal filename character tolerance
-ok(valid_filename(q['foo]));
-ok(valid_filename(';foo'));
-ok(valid_filename('$foo'));
-ok(valid_filename('%foo'));
-ok(valid_filename('`foo'));
-ok(valid_filename('!foo'));
-ok(valid_filename('@foo'));
-ok(valid_filename('#foo'));
-ok(valid_filename('^foo'));
-ok(valid_filename('&foo'));
-ok(valid_filename('-foo'));
-ok(valid_filename('_foo'));
-ok(valid_filename('+foo'));
-ok(valid_filename('=foo'));
-ok(valid_filename('(foo'));
-ok(valid_filename(')foo'));
-ok(valid_filename('{foo'));
-ok(valid_filename('}foo'));
-ok(valid_filename('[foo'));
-ok(valid_filename(']foo'));
-ok(valid_filename('~foo'));
-ok(valid_filename('.foo'));
-ok(valid_filename(q/;$%`!@#^&-_+=(){}[]~baz.foo'/));
-ok(valid_filename('C:\foo'));
+ok(valid_filename(q['foo]),q['foo]);
+ok(valid_filename(';foo'),';foo');
+ok(valid_filename('$foo'),'$foo');
+ok(valid_filename('%foo'),'%foo');
+ok(valid_filename('`foo'),'`foo');
+ok(valid_filename('!foo'),'!foo');
+ok(valid_filename('@foo'),'@foo');
+ok(valid_filename('#foo'),'#foo');
+ok(valid_filename('^foo'),'^foo');
+ok(valid_filename('&foo'),'&foo');
+ok(valid_filename('-foo'),'-foo');
+ok(valid_filename('_foo'),'_foo');
+ok(valid_filename('+foo'),'+foo');
+ok(valid_filename('=foo'),'=foo');
+ok(valid_filename('(foo'),'(foo');
+ok(valid_filename(')foo'),')foo');
+ok(valid_filename('{foo'),'{foo');
+ok(valid_filename('}foo'),'}foo');
+ok(valid_filename('[foo'),'[foo');
+ok(valid_filename(']foo'),']foo');
+ok(valid_filename('~foo'),'~foo');
+ok(valid_filename('.foo'),'.foo');
+ok(valid_filename(q/;$%`!@#^&-_+=(){}[]~baz.foo'/),q/;$%`!@#^&-_+=(){}[]~baz.foo'/);
+ok(valid_filename('C:\foo'),'C:\foo');
 
 # directory listing tests...
 # remove '.' and '..' directory entries
-ok(length(join('',$f->_dropdots(qw(. .. foo bar baz)))),9);
+ok( sub{
+   ( $f->_dropdots( qw/. .. foo/ ) )[0] eq 'foo'
+      ? 'dots removed'
+      : 'failed to remove dots'
+}->() eq 'dots removed' );
 
 exit;

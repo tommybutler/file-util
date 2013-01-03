@@ -1,14 +1,13 @@
-
 use strict;
-use Test;
+use warnings;
 
-# use a BEGIN block so we print our plan before module is loaded
-BEGIN { use File::Util }
-BEGIN { plan tests => scalar(@File::Util::EXPORT_OK), todo => [] }
-BEGIN { $| = 1 }
+use Test::More;
+use Test::NoWarnings;
 
-# load your module...
 use lib './';
+use File::Util;
+
+plan tests => ( scalar @File::Util::EXPORT_OK ) + 1;
 
 # automated empty subclass test
 
@@ -27,9 +26,8 @@ package main;
 # see if _Foo can do everything that File::Util can do
 map {
 
-   ok ref(UNIVERSAL::can('_Foo', $_)) eq 'CODE'
+   ok ref UNIVERSAL::can('_Foo', $_) eq 'CODE'
 
 } @File::Util::EXPORT_OK;
-
 
 exit;

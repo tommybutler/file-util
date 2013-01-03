@@ -11,9 +11,10 @@ print "$File::Util::VERSION\n";
 
 my $f   = File::Util->new();
 my $fn  = "/tmp/foo$$";
-my $msg = "with love, from Paris, on ${\ scalar localtime }\n";
-
-print '| ', join " | ", $f->atomize( $fn ); print " |\n";
+my $msg = <<__MSG__;
+with love, from Paris, on ${\ scalar localtime }
+...or adulation, from Antares, some time in the future
+__MSG__
 
 my $fh = $f->open_handle( file => $fn, mode => 'write' );
 
@@ -21,7 +22,11 @@ print $fh $msg;
 
 close $fh;
 
-print "$fn contents: ", $f->load_file( $fn );
+$fh = $f->open_handle( file => $fn,  mode => 'read' );
+
+my $i = 0; ++$i and print "$fn contents line $i: $_" while <$fh>;
+
+close $fh;
 
 unlink $fn or warn "Couldn't unlink $fn => $!";
 

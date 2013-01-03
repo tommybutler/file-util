@@ -3,7 +3,11 @@
 use strict;
 use warnings;
 
-use File::Util qw( atomize );
+use lib '/home/superman/projects/personal/perl/CPAN/File_Util/File_Util/lib';
+
+use File::Util qw( atomize_path );
+
+print "Rolling with File::Util v$File::Util::VERSION\n";
 
 print_atomize( qw(
    C:\\foo\\bar\\baz.txt
@@ -25,5 +29,5 @@ sub print_atomize {
    print '-' x 80, "\n";
    printf $fmt, qw( INPUT ROOT PATH-COMPONENT FILE/DIR );
    print '-' x 80, "\n";
-   printf $fmt, $_, atomize $_ for @_;
+   printf $fmt, $_, atomize_path $_ for @_;
 }

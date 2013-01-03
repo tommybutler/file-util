@@ -3,8 +3,6 @@
 use strict;
 use warnings;
 
-BEGIN { $ENV{FTLDEBUG}++ }
-
 use lib '/home/superman/projects/personal/perl/CPAN/File_Util/File_Util/lib';
 
 use File::Util qw( NL );

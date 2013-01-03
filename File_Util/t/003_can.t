@@ -1,25 +1,24 @@
-
 use strict;
-use Test;
+use warnings;
 
-# use a BEGIN block so we print our plan before MyModule is loaded
-BEGIN { plan tests => 36, todo => [] }
-BEGIN { $| = 1 }
+use Test::More tests => 38;
+use Test::NoWarnings;
 
 # load your module...
 use lib './';
 use File::Util;
 
-my($f) = File::Util->new();
+my $f = File::Util->new();
 
 # check to see if non-autoloaded File::Util methods are can-able ;O)
-map { ok( ref( UNIVERSAL::can( $f, $_ ) ), 'CODE' ) } qw
+map { ok( ref( UNIVERSAL::can( $f, $_ ) ) eq 'CODE', $_ ) } qw
    (
       _dropdots
       _errors
       _release
       _seize
       _throw
+      atomize_path
       bitmask
       can_flock
       can_read
