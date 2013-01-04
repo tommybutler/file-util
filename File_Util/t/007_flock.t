@@ -1,121 +1,84 @@
 
 use strict;
-use Test;
+use warnings;
+use Test::More tests => 9;
+use Test::NoWarnings;
 
-# use a BEGIN block so we print our plan before MyModule is loaded
-BEGIN { plan tests => 12, todo => [] }
-BEGIN { $| = 1 }
-
-# load your module...
-use lib './';
 use Fcntl qw( );
+use File::Temp qw( tmpnam );
 
-use File::Util qw( SL NL );
-my($f) = File::Util->new();
-my($tmpf) = 'flock_test';
-my($probe_flock) = sub { local($@); eval(<<'__canflock__'); $@ ? 0 : 1 };
-flock(STDIN, &Fcntl::LOCK_SH);
-flock(STDIN, &Fcntl::LOCK_UN);
-__canflock__
-my($skip) = !$f->can_write('.') || !$f->can_write('t');
+use lib './';
+use File::Util qw( SL NL OS );
 
-$skip = $skip ? &skipmsg() : $skip;
+my $f = File::Util->new( '--fatals-as-status' );
 
-# using flock? get/set flock-ing usage toggle
-ok($f->use_flock( ),1);                                                # test 1
-ok($f->use_flock(1),1);                                                # test 2
-ok($f->use_flock(0),0);                                                # test 3
-ok($f->use_flock( ),0);                                                # test 4
-ok($f->use_flock(1),1);                                                # test 5
+my ( $tfh, $tmpf ) = tmpnam();
 
-# get/set flock-ing failure policy
-ok(qq[@{[$f->flock_rules()]}],'NOBLOCKEX FAIL');                       # test 6
-ok(join(' ', $f->flock_rules(qw/ NOBLOCKEX ZERO /)),q[NOBLOCKEX ZERO]);# test 7
+close $tfh;   # I didn't want it opened!
+unlink $tmpf; # ^^ our auto-flock won't work on duped FH
 
-# can the system lock file IO?  does it?
-skip(!$probe_flock, $f->can_flock, 1);                                 # test 8
+my $have_flock = sub {
 
-# does it really work?
-skip(!$probe_flock, &test_flock());                                    # test 9
+   local $@;
+
+   eval {
+      flock( STDIN, &Fcntl::LOCK_SH );
+      flock( STDIN, &Fcntl::LOCK_UN );
+   };
+
+   return $@ ? 0 : 1;
+}->();
+
+my $have_perms = $f->can_write( $f->return_path( $tmpf ) );
+
+SKIP: {
+
+   if ( !$have_flock ) {
+
+      skip 'Your system cannot flock' => 8;
+   }
+   elsif ( !$have_perms ) {
+
+      skip 'Insufficient permissions' => 8;
+   }
+   elsif ( OS =~ /solaris/i ) {
+
+      skip 'Solaris flock has issues' => 8;
+   }
+
+   # flock-ing usage toggles
+   ok( $f->use_flock( ) == 1, 'test flock on' );       # test 1
+   ok( $f->use_flock(1) == 1, 'test on toggle' );      # test 2
+   ok( $f->use_flock(0) == 0, 'test off toggle' );     # test 3
+   ok( $f->use_flock( ) == 0, 'test toggled off' );    # test 4
+   ok( $f->use_flock(1) == 1, 'test toggle back on' ); # test 5
+
+   # get/set flock-ing failure policy
+   ok(                                                 # test 6
+      join( ' ', $f->flock_rules() ) eq 'NOBLOCKEX FAIL',
+      'expecting ' . join( ' ', $f->flock_rules() )
+   );
+
+   ok(                                                 # test 7
+      join( ' ', $f->flock_rules( qw/ NOBLOCKEX ZERO / ) ) eq 'NOBLOCKEX ZERO',
+      'expecting ' . join( ' ', $f->flock_rules( qw/ NOBLOCKEX ZERO / ) )
+   );
+
+   # actual flock test
+   ok( fight_for_lock() == 0, 'contending OPs must fail' ); # test 8
+
+}
+
+unlink $tmpf;
 
 exit;
 
 # put flock to the "test"
-sub test_flock {
+sub fight_for_lock {
 
-   # lock file, keep open handle on it
-   my($fh);
+   # auto-locks file, keep open handle on it
+   my $fh = $f->open_handle( file => $tmpf );
 
-	unless ($skip) {
-		$fh = $f->open_handle('file' => $tmpf);
-
-		# write something into the file
-		my($tstr) = 'Hello world!' . NL;
-		print($fh $tstr x 50);
-
-	}
-
-   # try to $f->trunc locked file (should fail)
-   skip(
-		$skip,
-		sub { # test 10
-
-			# FORKING!!
-			my($pid) = fork; $| = 1; die(qq{Can't fork: $!}) unless defined($pid);
-
-			if (!$pid) { $f->trunc($tmpf); exit } else { waitpid($pid, 0) }
-
-			# DONE WITH THAT NOW.
-			-s $tmpf
-	});
-
-   # test 11 - try to $f->write_file on locked file (should fail)
-   skip(
-		$skip,
-		sub {
-
-			# FORKING!!
-			my($pid) = fork; $| = 1; die(qq{Can't fork: $!}) unless defined($pid);
-
-			if (!$pid) {
-
-				$f->write_file(
-					'file' => $tmpf,
-					'content' => '',
-					'--empty-writes-OK'
-				);
-
-				exit
-			}
-			else { waitpid($pid, 0) }
-
-			# DONE WITH THAT NOW.
-			-s $tmpf
-	});
-
-   # unlock file
-   close($fh) unless $skip;
-
-   # test 12 - try to trunc the file; should succeed
-   #  - skip this on solaris...
-   if ($^O =~ /solaris/i) {
-      skip(&skip_trunc_solaris(), 0, 0);
-   }
-   else {
-      skip($skip, sub { $f->trunc($tmpf); return -s $tmpf }, 0);
-   }
-
-   # try to delete the file; should succeed
-   unlink($tmpf) unless $skip;
-
-   !-e $tmpf;
+   # this should fail, and return a "0" instead of a filehandle
+   return $f->open_handle( file => $tmpf );
 }
-
-sub skipmsg { <<'__WHYSKIP__' }
-Insufficient permissions to perform IO in this directory.  Can't perform tests!
-__WHYSKIP__
-
-sub skip_trunc_solaris { <<'__WHYSKIP__' }
-Solaris can flock, but won't let go of discretionary lock yet.
-__WHYSKIP__
-
