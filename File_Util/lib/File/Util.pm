@@ -14,9 +14,8 @@ use vars qw(
 );
 
 use Exporter;
-use AutoLoader qw( AUTOLOAD );
 
-$VERSION    = 3.37;
+$VERSION    = 3.38;
 $AUTHORITY  = 'cpan:TOMMY';
 @ISA        = qw( Exporter );
 @EXPORT_OK  = qw(
@@ -2061,14 +2060,6 @@ sub _names_values {
 
 
 # --------------------------------------------------------
-# File::Util::DESTROY(), end File::Util class definition
-# --------------------------------------------------------
-sub DESTROY {}
-1;
-
-__END__
-
-# --------------------------------------------------------
 # File::Util::_throw
 # --------------------------------------------------------
 sub _throw {
@@ -2128,7 +2119,9 @@ sub _throw {
 
    $in->{_pak} = __PACKAGE__;
 
-   map { $_ = defined($_) ? $_ : 'undefined value' } keys(%$in);
+   ## no critic
+   map { $_ = defined $_ ? $_ : 'undefined value' } keys %$in;
+   ## use critic
 
    PLAIN_ERRORS:
 
@@ -4783,3 +4776,10 @@ for a particular purpose.
 L<File::Slurp>, L<Path::Class>, L<Exception::Handler>
 
 =cut
+
+# --------------------------------------------------------
+# File::Util::DESTROY()
+# --------------------------------------------------------
+sub DESTROY {}
+
+1;

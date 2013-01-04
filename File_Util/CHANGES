@@ -1,5 +1,10 @@
 Revision history for Perl extension File::Util.pm
 
+   3.38
+         Fri Jan  4 12:26:53 CST 2013
+         Have to abandon AutoLoader.  It is simply causing too many problems
+         to continue using it on any level.
+
    3.37
          Thu Jan  3 12:58:55 CST 2013
          Renamed atomize() to atomize_path() before anyone starts to use it;
