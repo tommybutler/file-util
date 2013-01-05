@@ -1,12 +1,9 @@
 
 use strict;
-use Test;
+use Test::More tests => 3;
+use Test::NoWarnings;
 use File::Temp qw( tmpnam );
 
-# use a BEGIN block so we print our plan before MyModule is loaded
-BEGIN { plan tests => 2, todo => [] }
-
-# load your module...
 use lib './';
 use File::Util;
 
@@ -23,20 +20,14 @@ sub skipmsg { <<__WHYSKIP__ }
 Insufficient permissions to perform IO on proposed temp file "$fn"
 __WHYSKIP__
 
-# test write
-skip(
-   $skip,
-   sub {
-      $f->write_file( file => $fn, content => 'JAPH' );
-   },
-   1, $skip
-);
+SKIP: {
+   skip $skip, 2 if $skip;
 
-skip(
-   $skip,
-   sub { $f->load_file( $fn ) },
-   'JAPH', $skip
-);
+   # test write
+   ok( $f->write_file( file => $fn, content => 'JAPH' ) == 1 );
+
+   ok( $f->load_file( $fn ) eq 'JAPH' );
+}
 
 unlink $fn;
 
