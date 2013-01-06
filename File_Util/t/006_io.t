@@ -131,15 +131,17 @@ sub solaris_cooperates {
 
    my $tmpf = $tempdir . SL . 'solaris';
 
-   my $f  = File::Util->new( '--fatals-as-status' );
+   my $sf  = File::Util->new( '--fatals-as-status' );
 
-   my $fh = $f->open_handle( file => $tmpf );
+   my $fh = $sf->open_handle( file => $tmpf );
 
    my $ok = fileno $fh ? 1 : 0;
 
    close $fh if $ok;
 
    unlink $tmpf if $ok;
+
+   $f->use_flock(0); # solaris flock is so broken, it might as well not exist
 
    return $ok;
 }
