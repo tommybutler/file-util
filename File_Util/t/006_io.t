@@ -127,7 +127,7 @@ exit;
 sub solaris_cooperates {
 
    # we're only probing for solaris here, which has known issues
-   return 1 if OS !~ /solaris|sunos/i;
+   return 1 if $^O !~ /solaris|sunos/i;
 
    my $tmpf = $tempdir . SL . 'solaris';
 

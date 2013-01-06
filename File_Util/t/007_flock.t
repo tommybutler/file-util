@@ -41,7 +41,7 @@ SKIP: {
 
       skip 'Insufficient permissions' => 8;
    }
-   elsif ( OS =~ /solaris/i ) {
+   elsif ( $^O =~ /solaris|sunos/i ) {
 
       skip 'Solaris flock has issues' => 8;
    }
