@@ -13,16 +13,18 @@ my $f = File::Util->new();
 
 my $fn = tmpnam(); # get absolute filename
 
-my $skip  = !$f->can_write( $f->return_path( $fn ) );
-
-$skip = $skip ? &skipmsg() : $skip;
-
-sub skipmsg { <<__WHYSKIP__ }
-Insufficient permissions to perform IO on proposed temp file "$fn"
-__WHYSKIP__
+my $have_perms  = $f->can_write( $f->return_path( $fn ) );
 
 SKIP: {
-   skip $skip, 2 if $skip;
+
+   if ( !$have_perms ) {
+
+      skip 'Insufficient permissions to perform IO' => 2;
+   }
+   elsif ( $^O =~ /solaris|sunos/i ) {
+
+      skip 'Solaris flock is broken' => 2;
+   }
 
    # test write
    ok( $f->write_file( file => $fn, content => 'JAPH' ) == 1 );
