@@ -1,10 +1,11 @@
+
 use strict;
 use warnings;
 
 use Test::More;
 use Test::NoWarnings;
 
-use lib './';
+use lib './lib';
 use File::Util;
 
 plan tests => ( scalar @File::Util::EXPORT_OK ) + 1;

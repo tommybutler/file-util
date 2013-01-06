@@ -1,9 +1,10 @@
+
 use strict;
 use warnings;
 use Test::More;
 use Test::NoWarnings;
 
-use lib './';
+use lib './lib';
 
 use File::Util;
 

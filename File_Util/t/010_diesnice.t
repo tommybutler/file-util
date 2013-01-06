@@ -1,11 +1,11 @@
+
 use strict;
 use warnings;
 
 use Test::More tests => 32;
 use Test::NoWarnings;
 
-# load your module...
-use lib './';
+use lib './lib';
 use File::Util qw( SL NL existent );
 
 my $f = File::Util->new('--fatals-as-errmsg');

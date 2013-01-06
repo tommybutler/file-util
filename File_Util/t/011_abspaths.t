@@ -1,10 +1,11 @@
 
 use strict;
+use warnings;
 use Test::More tests => 3;
 use Test::NoWarnings;
 use File::Temp qw( tmpnam );
 
-use lib './';
+use lib './lib';
 use File::Util;
 
 # check object constructor

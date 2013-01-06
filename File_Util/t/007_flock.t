@@ -7,7 +7,7 @@ use Test::NoWarnings;
 use Fcntl qw( );
 use File::Temp qw( tmpnam );
 
-use lib './';
+use lib './lib';
 use File::Util qw( SL NL OS );
 
 my $f = File::Util->new( '--fatals-as-status' );

@@ -1,10 +1,11 @@
+
 use strict;
 use warnings;
 use Test::NoWarnings;
 use Test::More tests => 37;
 
 # load your module...
-use lib './';
+use lib './lib';
 use File::Util qw( atomize_path );
 
 # automated empty subclass test

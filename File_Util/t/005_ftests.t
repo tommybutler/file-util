@@ -4,8 +4,7 @@ use warnings;
 use Test::More tests => 36;
 use Test::NoWarnings;
 
-# load your module...
-use lib './';
+use lib './lib';
 use File::Util qw( SL OS );
 
 my $f = File::Util->new();
