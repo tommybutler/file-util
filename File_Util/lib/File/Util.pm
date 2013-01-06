@@ -536,7 +536,11 @@ sub load_file {
    my $cmd = '<' . $clean_name;
 
    # lock file before I/O on platforms that support it
-   if ( $$opts{'--no-lock'} || $$this{opts}{'--no-lock'} ) {
+   if (
+      $$opts{'--no-lock'}        ||
+      $$this{opts}{'--no-lock'}  ||
+      !$this->use_flock()
+   ) {
 
       # if you use the '--no-lock' option you are probably inefficient
       open $fh, $cmd  or                           ## no critic
@@ -781,9 +785,6 @@ sub write_file {
    # if you use the --no-lock option, please consider the risks
 
    if ( $$opts{'--no-lock'} || !$USE_FLOCK ) {
-
-      # get open mode
-      $mode = $$MODES{popen}{ $mode };
 
       # only non-existent files get bitmask arguments
       if ( -e $clean_name ) {
