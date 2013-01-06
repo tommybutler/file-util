@@ -89,6 +89,8 @@ SKIP: {
    # with the returned value
    is(
       sub {
+         $f->trunc( $tmpf ); # again, a solaris workaround
+
          $f->write_file(
             filename => $tmpf,
             content  => OS . NL
