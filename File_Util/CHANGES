@@ -1,5 +1,13 @@
 Revision history for Perl extension File::Util.pm
 
+   3.39
+         Sun Jan  6 15:54:10 CST 2013
+         Significant improvements in test suite, but most importantly
+         eliminated a bug found in make_dir() where absolute paths caused
+         problems on some platforms.
+
+         Fixed a bug that caused testing to fail on Solaris
+
    3.38
          Fri Jan  4 12:26:53 CST 2013
          Have to abandon AutoLoader.  It is simply causing too many problems

@@ -1431,24 +1431,25 @@ sub make_dir {
 
    $dir =~ s/$DIRSPLIT$// unless $dir eq $DIRSPLIT;
 
-   my @dirs_in_path = split /$DIRSPLIT/, $dir;
+   my ( $root, $path ) = atomize_path( $dir . SL );
 
-   # for absolute pathnames
-   $dirs_in_path[0] = SL if substr $dir, 0, 1 eq SL;
+   my @dirs_in_path = split /$DIRSPLIT/, $path;
 
-   for ( my $i = 0; $i < scalar @dirs_in_path; ++$i ) {
+   # if prospective file name has illegal chars then complain
+   foreach ( @dirs_in_path ) {
 
-      next if $i == 0 && $dirs_in_path[ $i ] eq SL;
-
-      # if prospective directory name contains illegal chars then complain
       return $this->_throw(
          'bad chars',
          {
-            'string'    => $dirs_in_path[ $i ],
-            'purpose'   => 'the name of a directory',
+            string  => $_,
+            purpose => 'the name of a file or directory',
+            opts    => $opts,
          }
-      ) unless $this->valid_filename( $dirs_in_path[ $i ] )
+      ) if !$this->valid_filename( $_ );
    }
+
+   # do this AFTER the above check!!
+   unshift @dirs_in_path, $root if $root;
 
    # qualify each subdir in @dirs_in_path by prepending its preceeding dir
    # names to it. Above, "/foo/bar/baz" becomes ("/", "foo", "bar", "baz")
