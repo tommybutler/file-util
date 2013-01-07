@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 38;
+use Test::More tests => 37;
 use Test::NoWarnings;
 
 # load your module...
@@ -15,7 +15,6 @@ my $f = File::Util->new();
 map { ok( ref( UNIVERSAL::can( $f, $_ ) ) eq 'CODE', "can $_" ) } qw
    (
       _dropdots
-      _errors
       _release
       _seize
       _throw
