@@ -1132,44 +1132,26 @@ sub touch {
    my $opts  = $this->_remove_opts( \@_ );
    my $in    = $this->_names_values( @_ );
    my @dirs  = ();
-   my $file  = ''; my($path) = '';
-   my $mode  = 'read';
-
-   $file = shift @_ ||'';
-
-   @dirs = split(/$DIRSPLIT/, $file);
-
-   if (scalar(@dirs) > 0) {
-
-      $file = pop(@dirs); $path = join(SL, @dirs);
-   }
-
-   if (length($path) > 0) {
-      $path = '.' . SL . $path if ($path !~ /(?:^\/)|(?:^\w\:)/o);
-   }
-   else { $path = '.'; }
+   my $file  = shift @_ ||'';
 
    return $this->_throw(
-         'no input',
-         {
-            'meth'      => 'touch',
-            'missing'   => 'a file name or file handle reference',
-            'opts'      => $opts,
-         }
-      ) if (length($path . SL . $file) == 0);
+      'no input',
+      {
+         meth    => 'touch',
+         missing => 'a file name or file handle reference',
+         opts    => $opts,
+      }
+   ) unless defined $file && length $file;
 
    # see if the file exists already and is a directory
    return $this->_throw(
       'cant touch on a dir',
       {
-         'filename'  => $path . SL . $file,
-         'dirname'   => $path . SL,
-         'opts'      => $opts,
+         filename => $file,
+         dirname  => $this->return_path( $file ) || '',
+         opts     => $opts,
       }
-   ) if (-e $path . SL . $file && -d $path . SL . $file);
-
-   # if the path doesn't exist, make it
-   $this->make_dir($path) unless -e $path . SL;
+   ) if -e $file && -d $file;
 
    # it's good to know beforehand whether or not we have permission to open
    # and read from this file allowing us to handle such an exception before
@@ -1179,33 +1161,23 @@ sub touch {
    return $this->_throw(
       'cant dread',
       {
-         'filename'  => $path . SL . $file,
-         'dirname'   => $path . SL,
-         'opts'      => $opts,
+         filename => $file,
+         dirname  => $this->return_path( $file ),
+         opts     => $opts,
       }
-   ) unless (-r $path . SL);
-
-   # now check the writability of the file itself
-   return $this->_throw(
-      'cant fwrite',
-      {
-         'filename'  => $path . SL . $file,
-         'dirname'   => $path . SL,
-         'opts'      => $opts,
-      }
-   ) if (-e $path . SL . $file && !-w $path . SL . $file);
+   ) unless -r $this->return_path( $file );
 
    # create the file if it doesn't exist (like the *nix touch command does)
    $this->write_file(
-      'filename' => $path . SL . $file,
-      'content'  => '',
+      filename => $file,
+      content  => '',
       '--empty-writes-OK'
-   ) if !-e $path . SL . $file;
+   ) unless -e $file;
 
    my $now = time();
 
    # return
-   return utime $now, $now, $path . SL . $file;
+   return utime $now, $now, $file;
 }
 
 
