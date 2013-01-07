@@ -14,7 +14,7 @@ use vars qw( $VERSION  @ISA  @EXPORT_OK  %EXPORT_TAGS );
 
 use Exporter;
 
-$VERSION    = 3.39;
+$VERSION    = 3.40;
 $AUTHORITY  = 'cpan:TOMMY';
 @ISA        = qw( Exporter );
 
