@@ -1,8 +1,8 @@
-package File::Util::Exception;
-
 use 5.006;
 use strict;
 use warnings;
+
+package File::Util::Exception;
 
 use lib 'lib';
 
@@ -10,13 +10,12 @@ use File::Util::Definitions qw( :all );
 use File::Util::Exception::Diagnostic qw( :all );
 
 use vars qw(
-   $VERSION    @ISA    $AUTHORITY
+   @ISA    $AUTHORITY
    @EXPORT_OK  %EXPORT_TAGS
 );
 
 use Exporter;
 
-$VERSION    = 1.0001;
 $AUTHORITY  = 'cpan:TOMMY';
 @ISA        = qw( Exporter );
 @EXPORT_OK  = qw( _throw );

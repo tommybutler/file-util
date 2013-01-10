@@ -1,13 +1,13 @@
-package File::Util::Definitions;
-
 use 5.006;
 use strict;
 use warnings;
 
+package File::Util::Definitions;
+
 use Fcntl qw( :flock );
 
 use vars qw(
-   $VERSION    @ISA        @EXPORT_OK    %EXPORT_TAGS
+   @ISA        @EXPORT_OK  %EXPORT_TAGS
    $OS         $MODES      $READLIMIT    $MAXDIVES
    $USE_FLOCK  @ONLOCKFAIL $ILLEGAL_CHR  $CAN_FLOCK
    $EBCDIC     $DIRSPLIT   $_LOCKS       $NEEDS_BINMODE
@@ -17,7 +17,6 @@ use vars qw(
 
 use Exporter;
 
-$VERSION    = 1.0001;
 $AUTHORITY  = 'cpan:TOMMY';
 @ISA        = qw( Exporter );
 @EXPORT_OK  = qw(

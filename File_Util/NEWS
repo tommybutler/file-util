@@ -1,5 +1,39 @@
 NEWS for File::Util
 
+Thu Jan 10 10:07:14 CST 2013
+   The latest release (v 4.0) brings many fixes to the table.  The fixes
+   affect nearly all platforms and architectures.  Users are encouraged to
+   upgrade, as this is not merely a features-added release.
+
+   Fundamental changes in the internal layout of File::Util have been
+   made; it isn't a single module file anymore.  This doesn't affect the
+   end user.  To the user, this change is completely transparent and does
+   not affect their programs or libraries that use File::Util.
+
+   This change is a step forward in the stated goal of File::Util to bring
+   a more "modern" (as in Modern::Perl) interface to the user while
+   preserving compatibility with current syntax.
+
+   Further, the test suite has been updated to make use of Test::More and
+   Test::NoWarnings across the board, bringing better "kwalitee" (as in
+   CPANTS) to you and to OS package maintainers for various platforms out
+   there.
+
+   Also in this release we move to auto-versioning a la Dist::Zilla plugins
+   PkgVersion and AutoVersion (thank you to the authors of those plugins)
+
+   Re: flock() on Solaris -
+   Updates have been made to the test suite so flock() problems on
+   Solaris don't incorrectly cause test results to appear to have failed
+   on that single platform.  Solaris users should be aware of the problems
+   with discretionary locks on their platform.  It is not only Perl
+   that experiences issues, but Python, Ruby, and others.  The problem
+   is specifically that Solaris will happily lock a file, but will very
+   often NOT unlock it until the process has exited.  This causes all
+   kinds of problems.  The documentation for File::Util will be updated
+   in order to advise Solaris users of opening the same file more than
+   once during the lifetime of a process.
+
 Mon Dec 31 23:25:00 CST 2012
    This latest release (v 3.33) is not a feature release.  It's a
    documentation update, a few bug fixes, several code optimizations, and

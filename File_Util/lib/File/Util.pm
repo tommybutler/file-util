@@ -1,8 +1,8 @@
-package File::Util;
-
 use 5.006;
 use strict;
 use warnings;
+
+package File::Util;
 
 use lib 'lib';
 
@@ -10,11 +10,10 @@ use File::Util::Definitions qw( :all );
 use File::Util::Interface::Classic qw( :all );
 use File::Util::Exception qw( :all );
 
-use vars qw( $VERSION  @ISA  @EXPORT_OK  %EXPORT_TAGS );
+use vars qw( @ISA  @EXPORT_OK  %EXPORT_TAGS );
 
 use Exporter;
 
-$VERSION    = 3.40;
 $AUTHORITY  = 'cpan:TOMMY';
 @ISA        = qw( Exporter );
 
@@ -2568,9 +2567,10 @@ files opened by this method as well.  Adjust the readlimit as necessary.
 
 Attempts to create (recursively) a directory as [new directory name] with
 the [bitmask] provided.  The bitmask is an optional argument and defaults to
-0777.  If specified, the bitmask must be supplied in the form required by the
-native perl umask function.  I<see L<perlfunc/"umask">> for more information
-about the format of the bitmask argument.
+0777, combined with the user's current umask.  If specified, the bitmask
+must be supplied in the form required by the native perl umask function.
+I<see L<perlfunc/"umask">> for more information about the format of the
+bitmask argument.
 
 As mentioned above, the recursive creation of directories is transparently
 handled for you.  This means that if the name of the directory you pass in
@@ -2760,7 +2760,9 @@ you ever opt to not use file locking unless you really know what you are doing.
 If the file does not yet exist it will be created, and it will be created
 with a bitmask of [bitmask] if you specify a file creation bitmask using
 the C<'bitmask'> option, otherwise the file will be created with the default
-bitmask of 0777.
+bitmask of 0777.  The bitmask is combined with the user's current umask,
+whether you specify a value or not.  This is a function of Perl,
+not File::Util.
 
 If specified, the bitmask must be supplied in the form required by the
 native perl umask function.  I<see L<perlfunc/"umask">> for more information
@@ -3051,6 +3053,8 @@ Attempts to write [string] to [file name] in mode [mode].  If the file does
 not yet exist it will be created, and it will be created with a bitmask of
 [bitmask] if you specify a file creation bitmask using the C<'bitmask'> option,
 otherwise the file will be created with the default bitmask of 0777.
+The bitmask is combined with the user's current umask, whether you specify a
+value or not.  This is a function of Perl, not File::Util.
 
 [string] should be a string or a scalar variable containing a string.  The
 string can be any type of data, such as a binary stream, or ascii text with
@@ -3235,6 +3239,9 @@ Specifics: OS name =~ /^os2/i
 
 =head1 EXAMPLES
 
+Many of these are demonstrated in the standalone scripts that come in the
+"examples" directory as part of this distribution.
+
 =head2 Get the names of all files and subdirectories in a directory
 
    use File::Util;
@@ -3312,7 +3319,9 @@ Specifics: OS name =~ /^os2/i
    my $f = File::Util->new();
    $f->write_file( file => 'a new file.txt', content => $content );
 
-   # optionally specify a creation bitmask when writing to a new file
+   # you can optionally specify a bitmask for a file if it doesn't exist yet.
+   # the bitmask is combined with the user's current umask for the creation
+   # mode of the file.  (You should usually omit this.)
    $f->write_file(
       file    => 'a new file.txt',
       bitmask => oct 777,
@@ -3550,7 +3559,9 @@ Specifics: OS name =~ /^os2/i
    my $f = File::Util->new();
    $f->make_dir('/var/tmp/tempfiles/foo/bar/');
 
-   # optionally specify a creation bitmask to be used in directory creations
+   # you can optionally specify a bitmask for the new directory.
+   # the bitmask is combined with the user's current umask for the creation
+   # mode of the directory.  (You should usually omit this.)
    $f->make_dir('/var/tmp/tempfiles/foo/bar/',0755);
 
 =head2 Touch a file
@@ -3599,65 +3610,74 @@ Specifics: OS name =~ /^os2/i
 
 =head1 EXAMPLES (Full Programs)
 
+These are included in the standalone scripts that come in the
+"examples" directory as part of this distribution.
+
 =head2 Batch File Rename
 
-   # Code changes the file suffix of all files in a directory ending in
-   # *.foo so that they afterward end in *.bar
+   # This code changes the file suffix of all files in a directory
+   # ending in *.log so that they end in *.txt
+   #
+   # Note - This example is NOT recursive.
 
    use strict;
+   use warnings;
    use vars qw( $dir );
+
+   # Regarding "SL" below: On Win/DOS, it is "\" and on Mac/BSD/Linux it is "/"
+   # File::Util will automatically detect this for you.
    use File::Util qw( NL SL );
 
-   my $f      = File::Util->new();
-   my $dir    = '../wibble';
-   my $old    = 'foo';
-   my $new    = 'bar';
-   my @files  = $f->list_dir($dir, '--files-only');
+   my $ftl   = File::Util->new();
+   my $dir   = 'some/log/directory';
+   my @files = $ftl->list_dir( $dir, '--files-only' );
 
-   foreach ( @files ) {
+   foreach my $file ( @files ) {
 
-      # don't change the file suffix unless it is *.foo
-      if ($_ =~ /\.$old$/o) {
+      # don't change the file suffix unless it is *.log
+      next unless $file =~ /log$/;
 
-         my $newname = $_; $newname =~ s/\.$old/\.$new/;
+      my $newname = $file;
+         $newname =~ s/\.log$/\.txt/;
 
-         if (rename($dir . SL . $_, $dir . SL . $newname)) {
+      if ( rename $dir . SL . $file, $dir . SL . $newname ) {
 
-            print qq($_ -> $newname), NL
-         }
-         else { warn <<__ERR__ }
-   Couldn't rename "$_" to "$newname"!
-   __ERR__
+         print qq($file -> $newname), NL
       }
-      else { print <<__NOCHANGE__ }
-   File retained as "$_"
-   __NOCHANGE__
+      else {
+
+         warn qq(Couldn't rename "$_" to "$newname" - $!)
+      }
    }
+
+   exit;
 
 =head2 Recursively remove a directory and all its contents
 
    # This code removes a directory and everything in it
 
-   use strict; # always
-
+   use strict;
+   use warnings;
    use File::Util qw( NL );
 
-   my $f = File::Util->new();
+   my $ftl = File::Util->new();
    my $removedir = '/path/to/directory/youwanttodelete';
 
-   my @gonners = $f->list_dir($removedir, '--follow');
+   my @gonners = $ftl->list_dir( $removedir, '--recurse' );
 
    # remove directory and everything in it
-   my( $a, $b );
    @gonners = reverse sort { length $a <=> length $b } @gonners;
 
-   foreach ( @gonners, $removedir ) {
-      print "Removing $_ ..." . NL;
-      -d $_ ? rmdir($_) || die $! : unlink($_) || die $!;
+   foreach my $gonner ( @gonners, $removedir ) {
+
+      print "Removing $gonner ...", NL;
+
+      -d $gonner ? rmdir $gonner || die $! : unlink $gonner || die $!;
     }
 
-   print 'Done.  w00T!', NL x 2;
+   print 'Done!', NL;
 
+   exit;
 
 =head2 Wrap the lines in a file at 72 columns, then save it
 
@@ -3665,6 +3685,7 @@ Specifics: OS name =~ /^os2/i
    # the newly formatted content
 
    use strict; # always
+   use warnings;
 
    use File::Util qw( NL );
    use Text::Wrap qw( wrap );
@@ -3686,45 +3707,46 @@ Specifics: OS name =~ /^os2/i
    # This code opens a file, reads a number value, increments it,
    # then saves the newly incremented value back to the file
 
+   # For the sake of simplicity, this code assumes:
+   #   * the counter file already exist and is writeable
+   #   * the counter file has one line, which contains only numbers
+
    use strict; # always
+   use warnings;
 
    use File::Util;
 
-   my $f = File::Util->new();
-   my $counterfile = 'counter.txt';
+   my $ftl = File::Util->new();
+   my $counterfile = 'counter.txt'; # the counter file needs to already exist
 
-   # if the counter file doesn't exist, let's make one
-   if ( !$f->existent( $counterfile ) ) {
-      $f->touch($counterfile);
-   }
-
-   my $count = $f->load_file( $counterfile );
+   my $count = $ftl->load_file( $counterfile );
 
    # convert textual number to in-memory int type, -this will default
    # to a zero if it encounters non-numerical or empty content
-   chomp $count; # strip off any trailing lines
-   $count =~ s/[^[:digit:]]//g; # remove non-numeric data
-   $count = 0 if "$count" eq '';   # set count to 0 if empty string
-   $count = int $count; # numberify $count
+   chomp $count;
+   $count = int $count;
 
-   print 'Count value from file: ' . $f->load_file($counterfile), $f->NL;
+   print "Count value from file: $count.";
 
    $count++; # increment the counter value by 1
 
    # save the incremented count back to the counter file
-   $f->write_file( filename => $counterfile, content => $count);
+   $ftl->write_file( filename => $counterfile, content => $count );
 
-   # verify that "it worked"
-   print 'Count is now: ' . $f->load_file($counterfile), $f->NL;
-   print 'Done.', $f->NL x 2;
+   # verify that it worked
+   print ' Count is now: ' . $ftl->load_file( $counterfile );
+
+   exit;
 
 =head2 Batch Search & Replace
 
-   # Code does a batch find or search and replace for all files in a given
-   # directory, recursively or non-recursively based on choices set forth
-   # in the code.
+   # Code does a recursive batch search/replace on the content of all files
+   # in a given directory
+   #
+   # Note - this code skips binary files
 
    use strict;
+   use warnings;
    use File::Util qw( NL SL );
 
    # will get search pattern from file named below
@@ -3736,48 +3758,48 @@ Specifics: OS name =~ /^os2/i
    # will perform batch operation in directory named below
    use constant INDIR => '/foo/bar/baz';
 
-   # specify whether the operation will do a find or a search and replace
-   use constant RMODE => [qw| read-only  write |]->[1];
-
-   # set the options for the search (will or will not recurse, etc)
-   my @opts = [qw/ --files-only --with-paths --recurse /]->[0,1];
 
    # create new File::Util object, set File::Util to send a warning for
-   # fatal errors instead of dieing
-   my $f         = File::Util->new('--fatals-as-warning');
-   my $rstr      = $f->load_file(RFILE);
-   my $spat      = quotemeta $f->load_file(SFILE); $spat = qr/$spat/;
-   my $gsbt      = 0;
-   my $action    = RMODE eq 'read-only' ? 'detections' : 'substitutions';
-   my @files     = $f->list_dir(INDIR, @opts);
+   # fatal errors instead of dying
+   my $ftl   = File::Util->new( '--fatals-as-warning' );
+   my $rstr  = $ftl->load_file( RFILE );
+   my $spat  = quotemeta $ftl->load_file( SFILE ); $spat = qr/$spat/;
+   my $gsbt  = 0;
+   my @opts  = qw/ --files-only --with-paths --recurse /;
+   my @files = $ftl->list_dir( INDIR, @opts );
 
    for (my $i = 0; $i < @files; ++$i) {
 
-      next if $f->isbin( $files[$i] );
+      next if $ftl->isbin( $files[$i] );
 
-      my $sbt = 0; my $file = $f->load_file( $files[$i] );
+      my $sbt = 0; my $file = $ftl->load_file( $files[$i] );
 
       $file =~ s/$spat/++$sbt;++$gsbt;$rstr/ge;
 
-      $f->write_file( file => $files[$i], content => $file)
-         if RMODE eq 'write';
+      $ftl->write_file( file => $files[$i], content => $file );
 
-      print $sbt ? qq($sbt $action in $files[$i]) . NL : '';
+      print $sbt ? qq($sbt replacements in $files[$i]) . NL : '';
    }
 
-   print( NL . <<__DONE__ . NL x 2 ) and exit;
-   $gsbt $action in ${\scalar(@files)} files.
+   print NL . <<__DONE__ . NL;
+   $gsbt replacements in ${\ scalar @files } files.
    __DONE__
+
+   exit;
 
 =head2 Pretty-Print A Directory Recursively
 
+   # set this to the name of the directory to pretty-print
+   my $treetrunk = '/tmp';
+
    use strict;
-   use vars qw( $a $b );
+   use warnings;
 
    use File::Util qw( NL );
-   my $ind = '';
-   my $f   = File::Util->new();
-   my @o   = qw(
+
+   my $indent = '';
+   my $ftl    = File::Util->new();
+   my @opts   = qw(
       --with-paths
       --sl-after-dirs
       --no-fsdots
@@ -3786,25 +3808,35 @@ Specifics: OS name =~ /^os2/i
    );
 
    my $filetree  = {};
-   my $treetrunk = '/var/';
-   my( $subdirs, $sfiles ) = $f->list_dir($treetrunk, @o);
+   my( $subdirs, $sfiles ) = $ftl->list_dir( $treetrunk, @opts );
 
    $filetree = [{
-      $treetrunk => [ sort({ uc $a cmp uc $b } @$subdirs, @$sfiles) ]
+      $treetrunk => [ sort { uc $a cmp uc $b } @$subdirs, @$sfiles ]
    }];
 
-   descend( $filetree->[0]{ $treetrunk }, scalar(@$subdirs) );
+   descend( $filetree->[0]{ $treetrunk }, scalar @$subdirs );
+
    walk( @$filetree );
 
+   exit;
+
    sub descend {
+
       my( $parent, $dirnum ) = @_;
-      for (my $i = 0; $i < $dirnum; ++$i) {
-         my $current = $parent->[$i]; next unless -d $current;
-         my( $subdirs, $sfiles ) = $f->list_dir($current, @o);
-         map { $_ = $f->strip_path($_) } @$sfiles;
-         splice(@$parent,$i,1,{
-            $current => [ sort({ uc $a cmp uc $b } @$subdirs, @$sfiles) ]
-         });
+
+      for ( my $i = 0; $i < $dirnum; ++$i ) {
+
+         my $current = $parent->[ $i ];
+
+         next unless -d $current;
+
+         my( $subdirs, $sfiles ) = $ftl->list_dir( $current, @opts );
+
+         map { $_ = $ftl->strip_path( $_ ) } @$sfiles;
+
+         splice @$parent, $i, 1,
+         { $current => [ sort { uc $a cmp uc $b } @$subdirs, @$sfiles ] };
+
          descend( $parent->[$i]{ $current }, scalar @$subdirs );
       }
 
@@ -3812,15 +3844,24 @@ Specifics: OS name =~ /^os2/i
    }
 
    sub walk {
-      my $dir = shift(@_);
-      foreach (@{ [ %$dir ]->[1] }) {
+
+      my $dir = shift @_;
+
+      foreach ( @{ [ %$dir ]->[1] } ) {
+
          my $mem = $_;
-         if (ref $mem eq 'HASH') {
-            print $ind . $f->strip_path([ %$mem ]->[0]) . '/', NL;
-            $ind .= ' ' x 3;
+
+         if ( ref $mem eq 'HASH' ) {
+
+            print $indent . $ftl->strip_path([ %$mem ]->[0]) . '/', NL;
+
+            $indent .= ' ' x 3; # increase indent
+
             walk( $mem );
-            $ind = substr( $ind, 3 );
-         } else { print $ind . $mem, NL }
+
+            $indent = substr( $indent, 3 ); # decrease indent
+
+         } else { print $indent . $mem, NL }
       }
    }
 
