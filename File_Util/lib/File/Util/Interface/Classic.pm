@@ -59,12 +59,13 @@ sub _remove_opts {
       push @$args, $arg and next unless $arg; # ...so give it back to the @$args
 
       # hmmm.  looks like an "--option" argument, if:
-      if ( substr( $arg, 0, 2) eq '--' ) {
+      if ( $arg =~ /^--/o ) {
 
          # it's either a bare "--option", or it's an "--option=value" pair
          my ( $opt, $value ) = split /=/o, $arg;
 
-         $opts->{ $opt } = defined $value ? $value : $arg
+         $opts->{ $opt } = defined $value ? $value : $arg;
+         $opts->{ substr $opt, 2 } = defined $value ? $value : substr $opt, 2;
       }
       else {
 
@@ -82,26 +83,13 @@ sub _remove_opts {
 # --------------------------------------------------------
 sub _names_values {
 
-   my @copy    = _myargs( @_ );
+   my @pairs   = _myargs( @_ );
    my $nvpairs = {};
    my $i       = 0;
 
-   while ( @copy ) {
+   while ( my ( $name, $val ) = splice @pairs, 0, 2 ) {
 
-      my ( $name, $val ) = splice @copy, 0, 2;
-
-      if ( defined $name ) {
-
-         $nvpairs->{ $name } = defined $val ? $val : '';
-      }
-      else {
-
-         ++$i;
-
-         $nvpairs->{
-            qq[un-named key no. $i]
-         } = defined $val ? $val : '';
-      }
+      $nvpairs->{ $name } = $val;
    }
 
    return $nvpairs;
