@@ -1010,8 +1010,9 @@ sub touch {
    my $this  = shift @_;
    my $opts  = $this->_remove_opts( \@_ );
    my $in    = $this->_names_values( @_ );
-   my @dirs  = ();
    my $file  = shift @_ ||'';
+   my @dirs;
+   my $path;
 
    return $this->_throw(
       'no input',
@@ -1022,12 +1023,14 @@ sub touch {
       }
    ) unless defined $file && length $file;
 
+   $path = $this->return_path( $file );
+
    # see if the file exists already and is a directory
    return $this->_throw(
       'cant touch on a dir',
       {
          filename => $file,
-         dirname  => $this->return_path( $file ) || '',
+         dirname  => $path || '',
          opts     => $opts,
       }
    ) if -e $file && -d $file;
@@ -1041,10 +1044,12 @@ sub touch {
       'cant dread',
       {
          filename => $file,
-         dirname  => $this->return_path( $file ),
+         dirname  => $path,
          opts     => $opts,
       }
-   ) unless -r $this->return_path( $file );
+   ) if ( -e $path && !-r $path );
+
+   $this->make_dir( $path ) unless -e $path;
 
    # create the file if it doesn't exist (like the *nix touch command does)
    $this->write_file(
