@@ -20,10 +20,12 @@ set printoptions=paper:letter
 set ruler
 set runtimepath=~/.vim,/var/lib/vim/addons,/usr/share/vim/vimfiles,/usr/share/vim/vim72,/usr/share/vim/vimfiles/after,/var/lib/vim/addons/after,~/.vim/after
 set shiftwidth=3
+set shortmess=aoO
 set showmatch
 set smartindent
 set suffixes=.bak,~,.swp,.o,.info,.aux,.log,.dvi,.bbl,.blg,.brf,.cb,.ind,.idx,.ilg,.inx,.out,.toc
 set tabstop=3
+set winwidth=1
 let s:so_save = &so | let s:siso_save = &siso | set so=0 siso=0
 let v:this_session=expand("<sfile>:p")
 silent only
@@ -33,11 +35,12 @@ if expand('%') == '' && !&modified && line('$') <= 1 && getline(1) == ''
 endif
 set shortmess=aoO
 badd +1955 lib/File/Util.pm
-badd +0 lib/File/Util/Interface/Classic.pm
-badd +1 lib/File/Util/Exception.pm
-badd +6 lib/File/Util/Exception/Diagnostic.pm
-badd +0 lib/File/Util/Definitions.pm
-badd +0 dist.ini
+badd +111 lib/File/Util/Interface/Classic.pm
+badd +27 lib/File/Util/Exception.pm
+badd +589 lib/File/Util/Exception/Diagnostic.pm
+badd +159 lib/File/Util/Definitions.pm
+badd +1 dist.ini
+badd +0 t/013_interface_classic.t
 args lib/File/Util.pm
 edit lib/File/Util.pm
 set splitbelow splitright
@@ -49,13 +52,12 @@ set nosplitbelow
 set nosplitright
 wincmd t
 set winheight=1 winwidth=1
-exe 'vert 1resize ' . ((&columns * 118 + 118) / 237)
-exe 'vert 2resize ' . ((&columns * 118 + 118) / 237)
+exe 'vert 1resize ' . ((&columns * 83 + 84) / 168)
+exe 'vert 2resize ' . ((&columns * 84 + 84) / 168)
 argglobal
 setlocal keymap=
 setlocal noarabic
 setlocal autoindent
-setlocal balloonexpr=
 setlocal nobinary
 setlocal bufhidden=
 setlocal buflisted
@@ -95,8 +97,8 @@ setlocal formatexpr=
 setlocal formatoptions=tcrq
 setlocal formatlistpat=^\\s*\\d\\+[\\]:.)}\\t\ ]\\s*
 setlocal grepprg=
-setlocal iminsert=2
-setlocal imsearch=2
+setlocal iminsert=0
+setlocal imsearch=0
 setlocal include=\\<\\(use\\|require\\)\\>
 setlocal includeexpr=substitute(substitute(v:fname,'::','/','g'),'$','.pm','')
 setlocal indentexpr=GetPerlIndent()
@@ -147,21 +149,20 @@ setlocal nowinfixheight
 setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
-1836
+1835
 normal zo
-let s:l = 17 - ((16 * winheight(0) + 29) / 59)
+let s:l = 3916 - ((28 * winheight(0) + 17) / 35)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-17
-normal! 017l
+3916
+normal! 0
 wincmd w
 argglobal
 edit lib/File/Util/Interface/Classic.pm
 setlocal keymap=
 setlocal noarabic
 setlocal autoindent
-setlocal balloonexpr=
 setlocal nobinary
 setlocal bufhidden=
 setlocal buflisted
@@ -201,8 +202,8 @@ setlocal formatexpr=
 setlocal formatoptions=tcrq
 setlocal formatlistpat=^\\s*\\d\\+[\\]:.)}\\t\ ]\\s*
 setlocal grepprg=
-setlocal iminsert=2
-setlocal imsearch=2
+setlocal iminsert=0
+setlocal imsearch=0
 setlocal include=\\<\\(use\\|require\\)\\>
 setlocal includeexpr=substitute(substitute(v:fname,'::','/','g'),'$','.pm','')
 setlocal indentexpr=GetPerlIndent()
@@ -253,15 +254,17 @@ setlocal nowinfixheight
 setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
-let s:l = 39 - ((38 * winheight(0) + 29) / 59)
+112
+normal zo
+let s:l = 92 - ((0 * winheight(0) + 17) / 35)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-39
-normal! 028l
+92
+normal! 0
 wincmd w
-exe 'vert 1resize ' . ((&columns * 118 + 118) / 237)
-exe 'vert 2resize ' . ((&columns * 118 + 118) / 237)
+exe 'vert 1resize ' . ((&columns * 83 + 84) / 168)
+exe 'vert 2resize ' . ((&columns * 84 + 84) / 168)
 tabedit dist.ini
 set splitbelow splitright
 set nosplitbelow
@@ -272,7 +275,6 @@ argglobal
 setlocal keymap=
 setlocal noarabic
 setlocal autoindent
-setlocal balloonexpr=
 setlocal nobinary
 setlocal bufhidden=
 setlocal buflisted
@@ -312,8 +314,8 @@ setlocal formatexpr=
 setlocal formatoptions=croql
 setlocal formatlistpat=^\\s*\\d\\+[\\]:.)}\\t\ ]\\s*
 setlocal grepprg=
-setlocal iminsert=2
-setlocal imsearch=2
+setlocal iminsert=0
+setlocal imsearch=0
 setlocal include=
 setlocal includeexpr=
 setlocal indentexpr=
@@ -364,29 +366,22 @@ setlocal nowinfixheight
 setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
-let s:l = 43 - ((42 * winheight(0) + 30) / 60)
+let s:l = 43 - ((25 * winheight(0) + 18) / 36)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 43
 normal! 015l
-tabedit lib/File/Util/Exception.pm
+tabedit t/013_interface_classic.t
 set splitbelow splitright
-wincmd _ | wincmd |
-vsplit
-1wincmd h
-wincmd w
 set nosplitbelow
 set nosplitright
 wincmd t
 set winheight=1 winwidth=1
-exe 'vert 1resize ' . ((&columns * 118 + 118) / 237)
-exe 'vert 2resize ' . ((&columns * 118 + 118) / 237)
 argglobal
 setlocal keymap=
 setlocal noarabic
 setlocal autoindent
-setlocal balloonexpr=
 setlocal nobinary
 setlocal bufhidden=
 setlocal buflisted
@@ -426,8 +421,8 @@ setlocal formatexpr=
 setlocal formatoptions=tcrq
 setlocal formatlistpat=^\\s*\\d\\+[\\]:.)}\\t\ ]\\s*
 setlocal grepprg=
-setlocal iminsert=2
-setlocal imsearch=2
+setlocal iminsert=0
+setlocal imsearch=0
 setlocal include=\\<\\(use\\|require\\)\\>
 setlocal includeexpr=substitute(substitute(v:fname,'::','/','g'),'$','.pm','')
 setlocal indentexpr=GetPerlIndent()
@@ -478,237 +473,18 @@ setlocal nowinfixheight
 setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
-let s:l = 10 - ((9 * winheight(0) + 29) / 59)
+let s:l = 36 - ((8 * winheight(0) + 18) / 36)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-10
-normal! 036l
-wincmd w
-argglobal
-edit lib/File/Util/Exception/Diagnostic.pm
-setlocal keymap=
-setlocal noarabic
-setlocal autoindent
-setlocal balloonexpr=
-setlocal nobinary
-setlocal bufhidden=
-setlocal buflisted
-setlocal buftype=
-setlocal nocindent
-setlocal cinkeys=0{,0},0),:,0#,!^F,o,O,e
-setlocal cinoptions=
-setlocal cinwords=if,else,while,do,for,switch
-setlocal comments=:#
-setlocal commentstring=#%s
-setlocal complete=.,w,b,u,t,i
-setlocal completefunc=
-setlocal nocopyindent
-setlocal nocursorcolumn
-setlocal nocursorline
-setlocal define=[^A-Za-z_]
-setlocal dictionary=
-setlocal nodiff
-setlocal equalprg=
-setlocal errorformat=
-setlocal expandtab
-if &filetype != 'perl'
-setlocal filetype=perl
-endif
-setlocal foldcolumn=0
-setlocal foldenable
-setlocal foldexpr=0
-setlocal foldignore=#
-setlocal foldlevel=1
-setlocal foldmarker={{{,}}}
-set foldmethod=syntax
-setlocal foldmethod=syntax
-setlocal foldminlines=1
-setlocal foldnestmax=20
-setlocal foldtext=foldtext()
-setlocal formatexpr=
-setlocal formatoptions=tcrq
-setlocal formatlistpat=^\\s*\\d\\+[\\]:.)}\\t\ ]\\s*
-setlocal grepprg=
-setlocal iminsert=2
-setlocal imsearch=2
-setlocal include=\\<\\(use\\|require\\)\\>
-setlocal includeexpr=substitute(substitute(v:fname,'::','/','g'),'$','.pm','')
-setlocal indentexpr=GetPerlIndent()
-setlocal indentkeys=0{,0},:,0#,!^F,o,O,e,0=,0),0=or,0=and
-setlocal noinfercase
-setlocal iskeyword=@,48-57,_,192-255
-setlocal keywordprg=perldoc\ -f
-setlocal nolinebreak
-setlocal nolisp
-setlocal nolist
-setlocal makeprg=
-setlocal matchpairs=(:),{:},[:]
-setlocal modeline
-setlocal modifiable
-setlocal nrformats=octal,hex
-set number
-setlocal number
-setlocal numberwidth=4
-setlocal omnifunc=
-setlocal path=/etc/perl,/usr/local/lib/perl/5.10.1,/usr/local/share/perl/5.10.1,/usr/lib/perl5,/usr/share/perl5,/usr/lib/perl/5.10,/usr/share/perl/5.10,/usr/local/lib/site_perl,,
-setlocal nopreserveindent
-setlocal nopreviewwindow
-setlocal quoteescape=\\
-setlocal noreadonly
-setlocal norightleft
-setlocal rightleftcmd=search
-setlocal noscrollbind
-setlocal shiftwidth=3
-setlocal noshortname
-setlocal smartindent
-setlocal softtabstop=0
-setlocal nospell
-setlocal spellcapcheck=[.?!]\\_[\\])'\"\	\ ]\\+
-setlocal spellfile=
-setlocal spelllang=en
-setlocal statusline=
-setlocal suffixesadd=
-setlocal swapfile
-setlocal synmaxcol=3000
-if &syntax != 'perl'
-setlocal syntax=perl
-endif
-setlocal tabstop=3
-setlocal tags=
-setlocal textwidth=0
-setlocal thesaurus=
-setlocal nowinfixheight
-setlocal nowinfixwidth
-setlocal wrap
-setlocal wrapmargin=0
-35
-normal zo
-46
-normal zo
-let s:l = 30 - ((29 * winheight(0) + 29) / 59)
-if s:l < 1 | let s:l = 1 | endif
-exe s:l
-normal! zt
-30
-normal! 03l
-wincmd w
-exe 'vert 1resize ' . ((&columns * 118 + 118) / 237)
-exe 'vert 2resize ' . ((&columns * 118 + 118) / 237)
-tabedit lib/File/Util/Definitions.pm
-set splitbelow splitright
-set nosplitbelow
-set nosplitright
-wincmd t
-set winheight=1 winwidth=1
-argglobal
-setlocal keymap=
-setlocal noarabic
-setlocal autoindent
-setlocal balloonexpr=
-setlocal nobinary
-setlocal bufhidden=
-setlocal buflisted
-setlocal buftype=
-setlocal nocindent
-setlocal cinkeys=0{,0},0),:,0#,!^F,o,O,e
-setlocal cinoptions=
-setlocal cinwords=if,else,while,do,for,switch
-setlocal comments=:#
-setlocal commentstring=#%s
-setlocal complete=.,w,b,u,t,i
-setlocal completefunc=
-setlocal nocopyindent
-setlocal nocursorcolumn
-setlocal nocursorline
-setlocal define=[^A-Za-z_]
-setlocal dictionary=
-setlocal nodiff
-setlocal equalprg=
-setlocal errorformat=
-setlocal expandtab
-if &filetype != 'perl'
-setlocal filetype=perl
-endif
-setlocal foldcolumn=0
-setlocal foldenable
-setlocal foldexpr=0
-setlocal foldignore=#
-setlocal foldlevel=0
-setlocal foldmarker={{{,}}}
-set foldmethod=syntax
-setlocal foldmethod=syntax
-setlocal foldminlines=1
-setlocal foldnestmax=20
-setlocal foldtext=foldtext()
-setlocal formatexpr=
-setlocal formatoptions=tcrq
-setlocal formatlistpat=^\\s*\\d\\+[\\]:.)}\\t\ ]\\s*
-setlocal grepprg=
-setlocal iminsert=2
-setlocal imsearch=2
-setlocal include=\\<\\(use\\|require\\)\\>
-setlocal includeexpr=substitute(substitute(v:fname,'::','/','g'),'$','.pm','')
-setlocal indentexpr=GetPerlIndent()
-setlocal indentkeys=0{,0},:,0#,!^F,o,O,e,0=,0),0=or,0=and
-setlocal noinfercase
-setlocal iskeyword=@,48-57,_,192-255
-setlocal keywordprg=perldoc\ -f
-setlocal nolinebreak
-setlocal nolisp
-setlocal nolist
-setlocal makeprg=
-setlocal matchpairs=(:),{:},[:]
-setlocal modeline
-setlocal modifiable
-setlocal nrformats=octal,hex
-set number
-setlocal number
-setlocal numberwidth=4
-setlocal omnifunc=
-setlocal path=/etc/perl,/usr/local/lib/perl/5.10.1,/usr/local/share/perl/5.10.1,/usr/lib/perl5,/usr/share/perl5,/usr/lib/perl/5.10,/usr/share/perl/5.10,/usr/local/lib/site_perl,,
-setlocal nopreserveindent
-setlocal nopreviewwindow
-setlocal quoteescape=\\
-setlocal noreadonly
-setlocal norightleft
-setlocal rightleftcmd=search
-setlocal noscrollbind
-setlocal shiftwidth=3
-setlocal noshortname
-setlocal smartindent
-setlocal softtabstop=0
-setlocal nospell
-setlocal spellcapcheck=[.?!]\\_[\\])'\"\	\ ]\\+
-setlocal spellfile=
-setlocal spelllang=en
-setlocal statusline=
-setlocal suffixesadd=
-setlocal swapfile
-setlocal synmaxcol=3000
-if &syntax != 'perl'
-setlocal syntax=perl
-endif
-setlocal tabstop=3
-setlocal tags=
-setlocal textwidth=0
-setlocal thesaurus=
-setlocal nowinfixheight
-setlocal nowinfixwidth
-setlocal wrap
-setlocal wrapmargin=0
-let s:l = 16 - ((15 * winheight(0) + 30) / 60)
-if s:l < 1 | let s:l = 1 | endif
-exe s:l
-normal! zt
-16
-normal! 01l
-tabnext 4
+36
+normal! 013l
+tabnext 3
 if exists('s:wipebuf')
   silent exe 'bwipe ' . s:wipebuf
 endif
 unlet! s:wipebuf
-set winheight=1 winwidth=20 shortmess=filnxtToO
+set winheight=1 winwidth=1 shortmess=aoO
 let s:sx = expand("<sfile>:p:r")."x.vim"
 if file_readable(s:sx)
   exe "source " . fnameescape(s:sx)

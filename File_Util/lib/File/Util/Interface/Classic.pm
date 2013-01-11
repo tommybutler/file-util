@@ -29,7 +29,7 @@ $AUTHORITY  = 'cpan:TOMMY';
 
 
 # --------------------------------------------------------
-# File::Util::_myargs()
+# File::Util::Interface::Classic::_myargs()
 # --------------------------------------------------------
 sub _myargs {
 
@@ -40,7 +40,7 @@ sub _myargs {
 
 
 # --------------------------------------------------------
-# File::Util::_remove_opts()
+# File::Util::Interface::Classic::_remove_opts()
 # --------------------------------------------------------
 sub _remove_opts {
 
@@ -49,7 +49,7 @@ sub _remove_opts {
    return unless UNIVERSAL::isa( $args, 'ARRAY' );
 
    my @triage = @$args; @$args = ();
-   my $opts   = {};
+   my $opts   = { };
 
    while ( @triage ) {
 
@@ -59,13 +59,23 @@ sub _remove_opts {
       push @$args, $arg and next unless $arg; # ...so give it back to the @$args
 
       # hmmm.  looks like an "--option" argument, if:
-      if ( $arg =~ /^--/o ) {
+      if ( $arg =~ /^--/ ) {
 
          # it's either a bare "--option", or it's an "--option=value" pair
-         my ( $opt, $value ) = split /=/o, $arg;
+         my ( $opt, $value ) = split /=/, $arg;
 
-         $opts->{ $opt } = defined $value ? $value : $arg;
-         $opts->{ substr $opt, 2 } = defined $value ? $value : substr $opt, 2;
+         # bare version
+         $opts->{ $opt } = defined $value ? $value : 1;
+                         # ^^^^^^^ if $value is undef, it was a --flag (true)
+
+         # sanitized version, remove leading "--" ...
+         my $clean_name = substr $opt, 2;
+
+         # ...and replace non-alnum chars with "_" so the names can be
+         # referenced as hash keys without superfluous quoting and escaping
+         $clean_name =~ s/[^[:alnum:]]/_/g;
+
+         $opts->{ $clean_name } = defined $value ? $value : 1;
       }
       else {
 
@@ -79,12 +89,12 @@ sub _remove_opts {
 
 
 # --------------------------------------------------------
-# File::Util::_names_values()
+# File::Util::Interface::Classic::_names_values()
 # --------------------------------------------------------
 sub _names_values {
 
    my @in_pairs  = _myargs( @_ );
-   my $out_pairs = {};
+   my $out_pairs = { };
 
    # this code no longer tries to catch foolishness such as names that are
    # undef other than skipping over them, for lack of sane options to deal
@@ -98,5 +108,25 @@ sub _names_values {
 
    return $out_pairs;
 }
+
+=pod
+
+=head1 NAME
+
+File::Util::Interface::Classic
+
+=head1 DESCRIPTION
+
+Provides a classic interface for argument passing to and between the public
+and private methods of File::Util.
+
+Don't use this module by itself.  It is intended for internal use only.
+
+=cut
+
+# --------------------------------------------------------
+# File::Util::Interface::Classic::DESTROY()
+# --------------------------------------------------------
+sub DESTROY { }
 
 1;

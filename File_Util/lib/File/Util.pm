@@ -34,14 +34,14 @@ use Fcntl qw( :flock );
 # Constructor
 # --------------------------------------------------------
 sub new {
-   my $this = {};
+   my $this = { };
 
    bless $this, shift @_;
 
    my $in   = $this->_names_values( @_ );
    my $opts = $this->_remove_opts( \@_ );
 
-   $this->{opts} = $opts || {};
+   $this->{opts} = $opts || { };
 
    $USE_FLOCK  = $in->{use_flock}
       if exists $in->{use_flock}
@@ -123,7 +123,7 @@ sub list_dir {
 
       $this->{traversed}{ $pdir } = $pdir;
    }
-   else { $this->{traversed} = {} }
+   else { $this->{traversed} = { } }
 
    # enforce maximum subdirectory dives, unless $MAXDIVES is equal to zero
    if ( $MAXDIVES != 0 && ( scalar keys %{ $this->{traversed} } >= $maxd ) ) {
@@ -855,7 +855,7 @@ sub _seize {
    return $fh if !$CAN_FLOCK;
 
    my @policy = @ONLOCKFAIL;
-   my $policy = {};
+   my $policy = { };
 
    # seize filehandle, return it if lock is successful
 
@@ -1168,7 +1168,7 @@ sub last_changed {
 sub load_dir {
    my $this = shift @_; my $opts = $this->_remove_opts( \@_ );
    my $dir  = shift @_ ||''; my @files = ();
-   my $dir_hash = {}; my $dir_list = [];
+   my $dir_hash = { }; my $dir_list = [];
 
    return $this->_throw
       (
@@ -3807,7 +3807,7 @@ These are included in the standalone scripts that come in the
       --dirs-as-ref
    );
 
-   my $filetree  = {};
+   my $filetree  = { };
    my( $subdirs, $sfiles ) = $ftl->list_dir( $treetrunk, @opts );
 
    $filetree = [{
@@ -3917,6 +3917,6 @@ L<File::Slurp>, L<Path::Class>, L<Exception::Handler>
 # --------------------------------------------------------
 # File::Util::DESTROY()
 # --------------------------------------------------------
-sub DESTROY {}
+sub DESTROY { }
 
 1;

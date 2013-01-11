@@ -60,7 +60,7 @@ $SL =
      OS2 => '\\', UNIX   => '/', WINDOWS   => chr(92),
      VMS => '/',  CYGWIN => '/', }->{ $OS } || '/';
 
-$_LOCKS = {};
+$_LOCKS = { };
 
 } BEGIN {
    use constant NL => $NL;
@@ -112,7 +112,7 @@ $MODES->{sysopen} = {
 };
 
 # --------------------------------------------------------
-# %$File::Util::LOCKS
+# %$File::Util::Definitions::LOCKS
 # --------------------------------------------------------
 $_LOCKS->{IGNORE}    = sub { $_[2] };
 $_LOCKS->{ZERO}      = sub { 0 };
@@ -152,5 +152,25 @@ $_LOCKS->{FAIL} = sub {
 # (for use in error messages)
 ( $EBL, $EBR ) = ('( ', ' )'); # error bracket left, error bracket right
 
-sub DESTROY {}
+=pod
+
+=head1 NAME
+
+File::Util::Definitions
+
+=head1 DESCRIPTION
+
+Defines constants and special variables that File::Util uses internally,
+many of which are calculated dynamically based on the platform where
+your program runs.
+
+Don't use this module by itself.  It is for internal use only.
+
+=cut
+
+# --------------------------------------------------------
+# File::Util::Definitions::DESTROY()
+# --------------------------------------------------------
+sub DESTROY { }
+
 1;

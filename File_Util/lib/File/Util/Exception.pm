@@ -43,7 +43,7 @@ sub _throw {
 
    return(0) if $fatal_rules{'--fatals-as-status'};
 
-   $this->{expt}||={};
+   $this->{expt} ||= { };
 
    unless (UNIVERSAL::isa($this->{expt},'Exception::Handler')) {
 
@@ -52,7 +52,7 @@ sub _throw {
       $this->{expt} = Exception::Handler->new();
    }
 
-   my $error = ''; my $in = {};
+   my $error = ''; my $in = { };
 
    $in->{_pak} = __PACKAGE__;
 
@@ -79,7 +79,7 @@ sub _throw {
       }
    }
 
-   $in = shift @_ || {};
+   $in = shift @_ || { };
 
    $in->{_pak} = __PACKAGE__;
 
@@ -133,5 +133,25 @@ sub _throw {
    '';
 }
 
-sub DESTROY {}
+=pod
+
+=head1 NAME
+
+File::Util::Exception
+
+=head1 DESCRIPTION
+
+Base class for all File::Util::Exception subclasses.  It's primarily
+responsible for error handling within File::Util, but hands certain
+work off to its subclasses, depending on how File::Util was use()'d.
+
+Don't use this module by itself.  It is for internal use only.
+
+=cut
+
+# --------------------------------------------------------
+# File::Util::Exception::DESTROY()
+# --------------------------------------------------------
+sub DESTROY { }
+
 1;
