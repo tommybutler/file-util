@@ -7,6 +7,7 @@ package File::Util::Exception;
 use lib 'lib';
 
 use File::Util::Definitions qw( :all );
+use File::Util::Interface::Classic qw( _remove_opts );
 use File::Util::Exception::Diagnostic qw( :all );
 
 use vars qw(
@@ -27,25 +28,26 @@ $AUTHORITY  = 'cpan:TOMMY';
 # File::Util::_throw
 # --------------------------------------------------------
 sub _throw {
-   my $this = shift @_; my $opts = $this->_remove_opts( \@_ );
+   my $this = shift @_;
+   my $opts = _remove_opts( \@_ );
    my %fatal_rules = ();
 
    # fatalality-handling rules passed to the failing caller trump the
    # rules set up in the attributes of the object; the mechanism below
-   # also allows for the implicit handling of '--fatals-are-fatal'
+   # also allows for the implicit handling of fatals_are_fatal => 1
    map { $fatal_rules{ $_ } = $_ }
-   grep(/^--fatals/o, values %$opts);
+   grep /^fatals/o, values %$opts;
 
-   unless (scalar keys %fatal_rules) {
+   unless ( scalar keys %fatal_rules ) {
       map { $fatal_rules{ $_ } = $_ }
-      grep(/^--fatals/o, keys %{ $this->{opts} })
+      grep /^fatals/o, keys %{ $this->{opts} }
    }
 
-   return(0) if $fatal_rules{'--fatals-as-status'};
+   return 0 if $fatal_rules{'fatals_as_status'};
 
    $this->{expt} ||= { };
 
-   unless (UNIVERSAL::isa($this->{expt},'Exception::Handler')) {
+   unless ( UNIVERSAL::isa( $this->{expt}, 'Exception::Handler' ) ) {
 
       require Exception::Handler;
 
@@ -93,44 +95,44 @@ sub _throw {
       CORE::eval
          (
             q{<<__ERRORBLOCK__}
-            . &NL . &_errors($error)
+            . &NL . &_errors( $error )
             . &NL . q{__ERRORBLOCK__}
          );
 
 ## for debugging only
 #   if ($@) { return $this->{expt}->trace($@) }
 
-   if ($fatal_rules{'--fatals-as-warning'}) {
+   if ( $fatal_rules{fatals_as_warning} ) {
 
-      warn($this->{expt}->trace(($@ || $bad_news))) and return
+      warn $this->{expt}->trace( $@ || $bad_news ) and return;
    }
-   elsif ( $fatal_rules{'--fatals-as-errmsg'} || $opts->{'--return'}) {
+   elsif ( $fatal_rules{fatals_as_errmsg} || $opts->{return} ) {
 
-      return($this->{expt}->trace(($@ || $bad_news)))
+      return $this->{expt}->trace( $@ || $bad_news );
    }
 
-   foreach (keys(%{$in})) {
+   foreach ( keys %$in ) {
 
-      next if ($_ eq 'opts');
+      next if $_ eq 'opts';
 
       $bad_news .= qq[ARG   $_ = $in->{$_}] . $NL;
    }
 
-   if ($in->{opts}) {
+   if ( $in->{opts} ) {
 
-      foreach (keys(%{$$in{opts}})) {
+      foreach ( keys %{ $$in{opts} } ) {
 
-         $_ = (defined($_)) ? $_  : 'empty value';
+         $_ = defined $_ ? $_  : 'empty value';
 
          $bad_news .= qq[OPT   $_] . $NL;
       }
    }
 
-   warn($this->{expt}->trace(($@ || $bad_news))) if ($opts->{'--warn-also'});
+   warn $this->{expt}->trace( $@ || $bad_news ) if $opts->{warn_also};
 
-   $this->{expt}->fail(($@ || $bad_news));
+   $this->{expt}->fail( $@ || $bad_news );
 
-   '';
+   return '';
 }
 
 =pod

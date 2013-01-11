@@ -7,7 +7,7 @@ package File::Util;
 use lib 'lib';
 
 use File::Util::Definitions qw( :all );
-use File::Util::Interface::Classic qw( :all );
+use File::Util::Interface::Modern qw( :all );
 use File::Util::Exception qw( :all );
 
 use vars qw( @ISA  @EXPORT_OK  %EXPORT_TAGS );
@@ -36,22 +36,26 @@ sub new {
 
    bless $this, shift @_;
 
-   my $opts = $this->_remove_opts( \@_ );
-   my $in   = $this->_names_values( @_ );
+   my $opts = $this->_remove_opts( \@_ ) || {};
+   my $in   = $this->_names_values( @_ ) || {};
+
+   @$opts{ keys %$in } = values %$in;
 
    $this->{opts} = $opts || { };
 
-   $USE_FLOCK  = $in->{use_flock}
-      if exists $in->{use_flock}
-      && defined $in->{use_flock};
+   $USE_FLOCK  = $opts->{use_flock}
+      if exists  $opts->{use_flock}
+      && defined $opts->{use_flock};
 
-   $READLIMIT  = $in->{readlimit}
-      if defined $in->{readlimit}
-      && $$in{readlimit} !~ /\D/;
+   $READLIMIT  = $opts->{readlimit}
+      if exists  $opts->{readlimit}
+      && defined $opts->{readlimit}
+      && $opts->{readlimit} !~ /\D/;
 
-   $MAXDIVES   = $in->{max_dives}
-      if defined $in->{max_dives}
-      && $$in{max_dives} !~ /\D/;
+   $MAXDIVES   = $opts->{max_dives}
+      if exists  $opts->{max_dives}
+      && defined $opts->{max_dives}
+      && $opts->{max_dives} !~ /\D/;
 
    return $this;
 }
@@ -82,8 +86,10 @@ sub list_dir {
    my $dir  = shift @_ || '.';
    my $path = $dir;
    my $maxd = $opts->{max_dives} || $MAXDIVES;
-   my $r    = 0;
    my ( @dirs, @files, @items );
+
+   my $recursing = 0; # flag to dynamicall indicate whether or not this
+                      # method is being used recursively for this call
 
    return $this->_throw(
       'no input' => {
@@ -135,11 +141,9 @@ sub list_dir {
       )
    }
 
-   $r = 1 if $opts->{follow} || $opts->{recurse};
+   $recursing = 1 if $opts->{follow} || $opts->{recurse};
 
-   local *DIR;
-
-   opendir DIR, $dir
+   opendir my $dir_fh, $dir
       or return $this->_throw(
             'bad opendir' => {
                dirname    => $dir,
@@ -150,17 +154,17 @@ sub list_dir {
 
    # read from beginning of the directory (doesn't seem necessary on any
    # platforms I've run code on, but just in case...)
-   rewinddir DIR;
+   rewinddir $dir_fh;
 
    @files = exists $opts->{pattern}
-      ? grep /$opts->{pattern}/, readdir DIR
-      : readdir DIR;
+      ? grep /$opts->{pattern}/, readdir $dir_fh
+      : readdir $dir_fh;
 
    @files = exists $opts->{rpattern}
       ? grep /$opts->{rpattern}/, @files
       : @files;
 
-   closedir DIR
+   closedir $dir_fh
       or return $this->_throw(
          'close dir'  => {
             dir       => $dir,
@@ -169,26 +173,30 @@ sub list_dir {
          }
       );
 
+   # get rid of "." and ".." if they are unwanted
    @files = grep { $_ !~ /$FSDOTS/ } @files if $opts->{no_fsdots};
 
-   for ( my $i = 0; $i < @files; ++$i ) {
+   # prepend full path information to each file name if paths were
+   # requested, or if we are recursing.  Then separate the directories
+   # and files off into @dirs and @itmes, respectively
+   for my $file ( @files ) {
 
-      my $listing = ( $opts->{with_paths} || $r == 1 )
-         ? $path . SL . $files[ $i ]
-         : $files[ $i ];
+      my $listing = ( $opts->{with_paths} || $recursing == 1 )
+         ? $path . SL . $file
+         : $file;
 
-      if ( -d $path . SL . $files[ $i ] ) {
+      if ( -d $path . SL . $file ) {
 
          push @dirs, $listing
       }
       else { push @items, $listing }
    }
 
-   if  ( $r && !$opts->{override_follow} ) {
+   if  ( $recursing && !$opts->{override_follow} ) {
 
       @dirs = grep { $this->strip_path( $_ ) !~ /$FSDOTS/ } @dirs;
 
-      for ( my $i = 0; $i < @dirs; ++$i ) {
+      for my $dir ( @dirs ) {
 
          my @opts = qw(
             --with-paths    --dirs-as-ref
@@ -202,7 +210,7 @@ sub list_dir {
 
          push @opts, qq(--max-dives=$maxd);
 
-         my @lsts = $this->list_dir( $dirs[ $i ], @opts );
+         my @lsts = $this->list_dir( $dir, @opts );
 
          push @dirs, @{ $lsts[0] }
             if UNIVERSAL::isa( $lsts[0], 'ARRAY' ) && scalar @{ $lsts[0] };
