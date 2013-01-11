@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Test::NoWarnings;
-use Test::More tests => 12;
+use Test::More tests => 13;
 
 use lib './lib';
 use File::Util;
@@ -61,6 +61,10 @@ is_deeply(
 is_deeply(
    _names_values( a => 'a',  'b' ),
    { a => a => b => undef }
+);
+is_deeply(
+   _names_values( a => 'a',  b => 'b', ( undef, 'u' ), c => 'c' ), # foolishness
+   { a => a => b => b => c => c => } # ...should go ignored (at least here)
 );
 
 exit;

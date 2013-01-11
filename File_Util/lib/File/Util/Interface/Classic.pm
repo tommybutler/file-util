@@ -83,16 +83,20 @@ sub _remove_opts {
 # --------------------------------------------------------
 sub _names_values {
 
-   my @pairs   = _myargs( @_ );
-   my $nvpairs = {};
-   my $i       = 0;
+   my @in_pairs  = _myargs( @_ );
+   my $out_pairs = {};
 
-   while ( my ( $name, $val ) = splice @pairs, 0, 2 ) {
+   # this code no longer tries to catch foolishness such as names that are
+   # undef other than skipping over them, for lack of sane options to deal
+   # with such insane input ;-)
+   while ( my ( $name, $val ) = splice @in_pairs, 0, 2 ) {
 
-      $nvpairs->{ $name } = $val;
+      next unless defined $name;
+
+      $out_pairs->{ $name } = $val;
    }
 
-   return $nvpairs;
+   return $out_pairs;
 }
 
 1;

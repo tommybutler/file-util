@@ -1,12 +1,12 @@
 NEWS for File::Util
 
-Thu Jan 10 10:07:14 CST 2013
+Thu Jan 10 22:44:45 CST 2013
    The latest release (v 4.0) brings many fixes to the table.  The fixes
    affect nearly all platforms and architectures.  Users are encouraged to
    upgrade, as this is not merely a features-added release.
 
    Fundamental changes in the internal layout of File::Util have been
-   made; it isn't a single module file anymore.  This doesn't affect the
+   made; it isn't a single module file anymore.  This does NOT affect the
    end user.  To the user, this change is completely transparent and does
    not affect their programs or libraries that use File::Util.
 
@@ -14,13 +14,20 @@ Thu Jan 10 10:07:14 CST 2013
    a more "modern" (as in Modern::Perl) interface to the user while
    preserving compatibility with current syntax.
 
+   Also in this release we move to auto-versioning a la Dist::Zilla plugins
+   PkgVersion and AutoVersion (thank you to the authors of those plugins)
+
    Further, the test suite has been updated to make use of Test::More and
    Test::NoWarnings across the board, bringing better "kwalitee" (as in
    CPANTS) to you and to OS package maintainers for various platforms out
    there.
 
-   Also in this release we move to auto-versioning a la Dist::Zilla plugins
-   PkgVersion and AutoVersion (thank you to the authors of those plugins)
+   Since the new year and new goals for File::Util, CPANTS metrics for
+   kwalitee of the distribution have climbed from well below 100 to
+   almost 140.  This will continue to improve.  Onward and upward.
+
+   Finally, several code optimizations have been made for faster performance,
+   made possible by the increasingly rigorous test suite.
 
    Re: flock() on Solaris -
    Updates have been made to the test suite so flock() problems on
