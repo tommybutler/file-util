@@ -28,8 +28,6 @@ $AUTHORITY  = 'cpan:TOMMY';
 
 %EXPORT_TAGS = ( all  => [ @EXPORT_OK ] );
 
-use Fcntl qw( :flock );
-
 # --------------------------------------------------------
 # Constructor
 # --------------------------------------------------------
@@ -38,14 +36,14 @@ sub new {
 
    bless $this, shift @_;
 
-   my $in   = $this->_names_values( @_ );
    my $opts = $this->_remove_opts( \@_ );
+   my $in   = $this->_names_values( @_ );
 
    $this->{opts} = $opts || { };
 
    $USE_FLOCK  = $in->{use_flock}
       if exists $in->{use_flock}
-      && $in->{use_flock};
+      && defined $in->{use_flock};
 
    $READLIMIT  = $in->{readlimit}
       if defined $in->{readlimit}
@@ -83,7 +81,7 @@ sub list_dir {
    my $opts = $this->_remove_opts( \@_ );
    my $dir  = shift @_ || '.';
    my $path = $dir;
-   my $maxd = $opts->{'--max-dives'} || $MAXDIVES;
+   my $maxd = $opts->{max_dives} || $MAXDIVES;
    my $r    = 0;
    my ( @dirs, @files, @items );
 
@@ -117,7 +115,7 @@ sub list_dir {
    # directory of $dir, rather than on $dir itself so that multiple
    # subdirectories within the same parent directory don't improperly increment
    # the number of dives made
-   if ( $opts->{'--recursing'} ) {
+   if ( $opts->{recursing} ) {
 
       my $pdir = $dir; $pdir =~ s/(^.*)$DIRSPLIT.*/$1/;
 
@@ -137,7 +135,7 @@ sub list_dir {
       )
    }
 
-   $r = 1 if $opts->{'--follow'} || $opts->{'--recurse'};
+   $r = 1 if $opts->{follow} || $opts->{recurse};
 
    local *DIR;
 
@@ -154,12 +152,12 @@ sub list_dir {
    # platforms I've run code on, but just in case...)
    rewinddir DIR;
 
-   @files = exists $opts->{'--pattern'}
-      ? grep /$opts->{'--pattern'}/, readdir DIR
+   @files = exists $opts->{pattern}
+      ? grep /$opts->{pattern}/, readdir DIR
       : readdir DIR;
 
-   @files = exists $opts->{'--rpattern'}
-      ? grep /$opts->{'--rpattern'}/, @files
+   @files = exists $opts->{rpattern}
+      ? grep /$opts->{rpattern}/, @files
       : @files;
 
    closedir DIR
@@ -171,11 +169,11 @@ sub list_dir {
          }
       );
 
-   @files = grep { $_ !~ /$FSDOTS/ } @files if $opts->{'--no-fsdots'};
+   @files = grep { $_ !~ /$FSDOTS/ } @files if $opts->{no_fsdots};
 
    for ( my $i = 0; $i < @files; ++$i ) {
 
-      my $listing = ( $opts->{'--with-paths'} || $r == 1 )
+      my $listing = ( $opts->{with_paths} || $r == 1 )
          ? $path . SL . $files[ $i ]
          : $files[ $i ];
 
@@ -186,19 +184,21 @@ sub list_dir {
       else { push @items, $listing }
    }
 
-   if  ( $r && !$opts->{'--override-follow'} ) {
+   if  ( $r && !$opts->{override_follow} ) {
 
       @dirs = grep { $this->strip_path( $_ ) !~ /$FSDOTS/ } @dirs;
 
       for ( my $i = 0; $i < @dirs; ++$i ) {
 
          my @opts = qw(
-         --with-paths   --dirs-as-ref
-         --files-as-ref --recursing --no-fsdots );
+            --with-paths    --dirs-as-ref
+            --files-as-ref  --recursing
+            --no-fsdots
+         );
 
          # pattern should work when recursing!
-         push @opts, qq(--rpattern=$opts->{'--rpattern'})
-            if $opts->{'--rpattern'};
+         push @opts, qq(--rpattern=$opts->{rpattern})
+            if $opts->{rpattern};
 
          push @opts, qq(--max-dives=$maxd);
 
@@ -212,7 +212,7 @@ sub list_dir {
       }
    }
 
-   if ( $opts->{'--sl-after-dirs'} ) {
+   if ( $opts->{sl_after_dirs} ) {
 
       # append directory separator to everything but the "dots"
       $_ .= SL for grep { $_ !~ /$FSDOTS/ } @dirs;
@@ -220,7 +220,7 @@ sub list_dir {
 
    my $reta = []; my $retb = [];
 
-   if ( $opts->{'--ignore-case'} ) {
+   if ( $opts->{ignore_case} ) {
 
       $reta = [ sort { uc $a cmp uc $b } @dirs  ];
       $retb = [ sort { uc $a cmp uc $b } @items ];
@@ -232,20 +232,20 @@ sub list_dir {
    }
 
    return scalar @$reta
-      if $opts->{'--dirs-only'} && $opts->{'--count-only'};
+      if $opts->{dirs_only} && $opts->{count_only};
 
    return scalar @$retb
-      if $opts->{'--files-only'} && $opts->{'--count-only'};
+      if $opts->{files_only} && $opts->{count_only};
 
-   return scalar @$reta + scalar @$retb if $opts->{'--count-only'};
+   return scalar @$reta + scalar @$retb if $opts->{count_only};
 
-   return $reta, $retb if $opts->{'--as-ref'};
+   return $reta, $retb if $opts->{as_ref};
 
-   $reta = [ $reta ] if $opts->{'--dirs-as-ref'};
-   $retb = [ $retb ] if $opts->{'--files-as-ref'};
+   $reta = [ $reta ] if $opts->{dirs_as_ref};
+   $retb = [ $retb ] if $opts->{files_as_ref};
 
-   return @$reta if $opts->{'--dirs-only'};
-   return @$retb if $opts->{'--files-only'};
+   return @$reta if $opts->{dirs_only};
+   return @$retb if $opts->{files_only};
 
    return @$reta, @$retb;
 }
