@@ -8,3 +8,5 @@
 ^blib/
 ^MYMETA.*
 ^misc/
+^File-Util-\d+.*/
+^File-Util-\d+.*gz
