@@ -7,7 +7,6 @@ package File::Util::Exception;
 use lib 'lib';
 
 use File::Util::Definitions qw( :all );
-use File::Util::Interface::Classic qw( _remove_opts );
 use File::Util::Exception::Diagnostic qw( :all );
 
 use vars qw(
@@ -29,21 +28,21 @@ $AUTHORITY  = 'cpan:TOMMY';
 # --------------------------------------------------------
 sub _throw {
    my $this = shift @_;
-   my $opts = _remove_opts( \@_ );
+   my $opts = $this->_remove_opts( \@_ );
    my %fatal_rules = ();
 
    # fatalality-handling rules passed to the failing caller trump the
    # rules set up in the attributes of the object; the mechanism below
    # also allows for the implicit handling of fatals_are_fatal => 1
    map { $fatal_rules{ $_ } = $_ }
-   grep /^fatals/o, values %$opts;
+   grep /^fatals/o, keys %$opts;
 
    unless ( scalar keys %fatal_rules ) {
       map { $fatal_rules{ $_ } = $_ }
       grep /^fatals/o, keys %{ $this->{opts} }
    }
 
-   return 0 if $fatal_rules{'fatals_as_status'};
+   return 0 if $fatal_rules{fatals_as_status};
 
    $this->{expt} ||= { };
 
@@ -54,42 +53,51 @@ sub _throw {
       $this->{expt} = Exception::Handler->new();
    }
 
-   my $error = ''; my $in = { };
+   my $error = '';
 
-   $in->{_pak} = __PACKAGE__;
+   if ( !scalar keys %$opts ) {
 
-   if ( scalar @_ == 1 ) {
+      $opts->{_pak} = __PACKAGE__;
 
       $error = $_[0] ? 'plain error' : 'empty error';
 
-      $in->{error} = $_[0] || 'error undefined';
+      $opts->{error} = $_[0] || 'error undefined';
 
       goto PLAIN_ERRORS;
    }
    else {
 
+      $opts->{_pak} = __PACKAGE__;
+
       $error = shift @_ || 'empty error';
 
       if ( $error eq 'plain error' ) {
 
-         $in->{error} = shift @_;
+         $opts->{error} = shift @_;
 
-         $in->{error} = 'error undefined'
-            unless defined $in->{error} && length $in->{error};
+         $opts->{error} = 'error undefined'
+            unless defined $opts->{error} && length $opts->{error};
 
          goto PLAIN_ERRORS;
       }
    }
 
-   $in = shift @_ || { };
-
-   $in->{_pak} = __PACKAGE__;
+   $opts->{_pak} = __PACKAGE__;
 
    ## no critic
-   map { $_ = defined $_ ? $_ : 'undefined value' } keys %$in;
+   map { $_ = defined $_ ? $_ : 'undefined value' } keys %$opts;
    ## use critic
 
+   use Data::Dumper;
+
    PLAIN_ERRORS:
+
+   print Dumper {
+      error => $error,
+      '@_'  => \@_,
+      opts  => $opts,
+      fatal_rules => \%fatal_rules
+   };
 
    my $bad_news =
       CORE::eval
@@ -111,16 +119,16 @@ sub _throw {
       return $this->{expt}->trace( $@ || $bad_news );
    }
 
-   foreach ( keys %$in ) {
+   foreach ( keys %$opts ) {
 
       next if $_ eq 'opts';
 
-      $bad_news .= qq[ARG   $_ = $in->{$_}] . $NL;
+      $bad_news .= qq[ARG   $_ = $opts->{$_}] . $NL;
    }
 
-   if ( $in->{opts} ) {
+   if ( $opts->{opts} ) {
 
-      foreach ( keys %{ $$in{opts} } ) {
+      foreach ( keys %{ $$opts{opts} } ) {
 
          $_ = defined $_ ? $_  : 'empty value';
 
