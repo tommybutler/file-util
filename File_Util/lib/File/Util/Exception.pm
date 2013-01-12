@@ -28,6 +28,7 @@ $AUTHORITY  = 'cpan:TOMMY';
 # --------------------------------------------------------
 sub _throw {
    my $this = shift @_;
+   my @in   = @_;
    my $opts = $this->_remove_opts( \@_ );
    my %fatal_rules = ();
 
@@ -55,13 +56,13 @@ sub _throw {
 
    my $error = '';
 
-   if ( !scalar keys %$opts ) {
+   if ( scalar @in == 1 && !scalar keys %$opts ) {
 
       $opts->{_pak} = __PACKAGE__;
 
-      $error = $_[0] ? 'plain error' : 'empty error';
+      $error = $in[0] ? 'plain error' : 'empty error';
 
-      $opts->{error} = $_[0] || 'error undefined';
+      $opts->{error} = $in[0] || 'error undefined';
 
       goto PLAIN_ERRORS;
    }
@@ -82,22 +83,11 @@ sub _throw {
       }
    }
 
-   $opts->{_pak} = __PACKAGE__;
-
    ## no critic
    map { $_ = defined $_ ? $_ : 'undefined value' } keys %$opts;
    ## use critic
 
-   use Data::Dumper;
-
    PLAIN_ERRORS:
-
-   print Dumper {
-      error => $error,
-      '@_'  => \@_,
-      opts  => $opts,
-      fatal_rules => \%fatal_rules
-   };
 
    my $bad_news =
       CORE::eval
@@ -106,9 +96,6 @@ sub _throw {
             . &NL . &_errors( $error )
             . &NL . q{__ERRORBLOCK__}
          );
-
-## for debugging only
-#   if ($@) { return $this->{expt}->trace($@) }
 
    if ( $fatal_rules{fatals_as_warning} ) {
 
