@@ -9,6 +9,10 @@ use lib './lib';
 use File::Util;
 
 # check object constructor
-ok( ref File::Util->new() eq 'File::Util', 'New File::Util' );
+ok
+(
+   ref File::Util->new() eq 'File::Util',
+   'New bare File::Util instantiation'
+);
 
 exit;

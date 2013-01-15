@@ -8,9 +8,13 @@ use Test::NoWarnings;
 use lib './lib';
 use File::Util;
 
-my $f = File::Util->new();
+my $ftl = File::Util->new();
 
 # check to see if File::Util ISA [foo, etc.]
-ok( UNIVERSAL::isa( $f, 'File::Util' ), 'ISA File::Util' );
+ok
+(
+   UNIVERSAL::isa( $ftl, 'File::Util' ),
+   'ISA File::Util bless matches namespace'
+);
 
 exit;
