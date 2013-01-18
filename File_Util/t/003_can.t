@@ -9,10 +9,10 @@ use Test::NoWarnings;
 use lib './lib';
 use File::Util;
 
-my $f = File::Util->new();
+my $ftl = File::Util->new();
 
 # check to see if non-autoloaded File::Util methods are can-able ;O)
-map { ok( ref( UNIVERSAL::can( $f, $_ ) ) eq 'CODE', "can $_" ) } qw
+map { ok( ref( UNIVERSAL::can( $ftl, $_ ) ) eq 'CODE', "can $_" ) } qw
    (
       _dropdots
       _release
