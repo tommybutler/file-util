@@ -27,7 +27,8 @@ package main;
 # see if _Foo can do everything that File::Util can do
 map {
 
-   ok ref UNIVERSAL::can('_Foo', $_) eq 'CODE'
+   ok ref UNIVERSAL::can('_Foo', $_) eq 'CODE',
+      "Empty subclass can $_"
 
 } @File::Util::EXPORT_OK;
 

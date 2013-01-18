@@ -47,11 +47,11 @@ SKIP: {
    }
 
    # flock-ing usage toggles
-   ok( $f->use_flock( ) == 1, 'test flock on' );       # test 1
-   ok( $f->use_flock(1) == 1, 'test on toggle' );      # test 2
-   ok( $f->use_flock(0) == 0, 'test off toggle' );     # test 3
-   ok( $f->use_flock( ) == 0, 'test toggled off' );    # test 4
-   ok( $f->use_flock(1) == 1, 'test toggle back on' ); # test 5
+   ok $f->use_flock( ) == 1, 'test flock on' ;       # test 1
+   ok $f->use_flock(1) == 1, 'test on toggle' ;      # test 2
+   ok $f->use_flock(0) == 0, 'test off toggle' ;     # test 3
+   ok $f->use_flock( ) == 0, 'test toggled off' ;    # test 4
+   ok $f->use_flock(1) == 1, 'test toggle back on' ; # test 5
 
    # get/set flock-ing failure policy
    ok(                                                 # test 6
@@ -65,7 +65,7 @@ SKIP: {
    );
 
    # actual flock test
-   ok( fight_for_lock() == 0, 'contending OPs must fail' ); # test 8
+   is fight_for_lock(), 0, 'contending flock OPs must fail' ; # test 8
 
 }
 

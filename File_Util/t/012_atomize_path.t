@@ -28,9 +28,17 @@ for my $path ( keys %$atomized ) {
 
    my @atoms = atomize_path( $path );
 
-   ok( shift @atoms eq $atomized->{ $path }{root} );
-   ok( shift @atoms eq $atomized->{ $path }{path} );
-   ok( shift @atoms eq $atomized->{ $path }{file} );
+   is shift @atoms,
+      $atomized->{ $path }{root},
+      qq(atomized root matches "$atomized->{ $path }{root}") ;
+
+   is shift @atoms,
+      $atomized->{ $path }{path},
+      qq(atomized path matches "$atomized->{ $path }{path}") ;
+
+   is shift @atoms,
+      $atomized->{ $path }{file},
+      qq(atomized filename matches "$atomized->{ $path }{file}") ;
 }
 
 exit;

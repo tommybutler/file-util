@@ -27,9 +27,10 @@ SKIP: {
    }
 
    # test write
-   ok( $f->write_file( file => $fn, content => 'JAPH' ) == 1 );
+   is $f->write_file( file => $fn, content => 'JAPH' ), 1,
+      'write file with abs path' ;
 
-   ok( $f->load_file( $fn ) eq 'JAPH' );
+   is $f->load_file( $fn ), 'JAPH', 'file content matches' ;
 }
 
 unlink $fn;
