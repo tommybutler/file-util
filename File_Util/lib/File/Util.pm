@@ -306,8 +306,8 @@ sub load_file {
    my $fh_passed  = 0;
    my $fh;
 
-   my ( $file, $root, $path, $clean_name, $content, $fh_stat, $mode  ) =
-      ( '',    '',    '',    '',          '',       '',       'read' );
+   my ( $file, $root, $path, $clean_name, $content, $mode  ) =
+      ( '',    '',    '',    '',          '',       'read' );
 
    if ( scalar @_ == 1 ) {
 
@@ -863,7 +863,6 @@ sub _seize {
    return $fh if !$CAN_FLOCK;
 
    my @policy = @ONLOCKFAIL;
-   my $policy = { };
 
    # seize filehandle, return it if lock is successful
 
@@ -1017,9 +1016,7 @@ sub existent { my $f = _myargs( @_ ); defined $f ? -e $f : undef }
 sub touch {
    my $this  = shift @_;
    my $opts  = $this->_remove_opts( \@_ );
-   my $in    = $this->_names_values( @_ );
    my $file  = shift @_ ||'';
-   my @dirs;
    my $path;
 
    return $this->_throw(
@@ -1865,6 +1862,7 @@ and machines.
    my $f = File::Util->new();
 
    my $content = $f->load_file('foo.txt');
+   my $binary_content = $f->load_file('foo.bin');
 
    $content =~ s/this/that/g;
 
@@ -1902,7 +1900,7 @@ and machines.
 
    print "My file has a bitmask of " . $f->bitmask('my.file');
 
-   print "My file is a " . join(', ', $f->file_type('my.file')) . " file."
+   print "My file is a " . join(', ', $f->file_type('my.file')) . " file.";
 
    warn 'This file is binary!' if $f->isbin('my.file');
 
