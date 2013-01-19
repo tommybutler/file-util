@@ -6,7 +6,7 @@ package File::Util::Interface::Modern;
 
 use lib 'lib';
 
-use File::Util::Interface::Classic qw( _myargs _names_values );
+use File::Util::Interface::Classic qw( _myargs );
 use File::Util::Definitions qw( :all );
 
 use vars qw(
@@ -22,10 +22,30 @@ $AUTHORITY  = 'cpan:TOMMY';
    _remove_opts
    _myargs
    _names_values
-); # some of the symbols above come from File::Util::Interface::Classic
-   # but the _remove_opts method is specifically overriden in this package
+); # some of the symbols above come from File::Util::Interface::Classic but
+   # the _remove_opts/_names_values methods are specifically overriden in
+   # this package
 
 %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
+
+
+# --------------------------------------------------------
+# File::Util::Interface::Modern::_names_values()
+# --------------------------------------------------------
+sub _names_values {
+
+   my @in_pairs  = _myargs( @_ );
+
+   if ( UNIVERSAL::isa( $in_pairs[0], 'HASH' ) ) {
+
+      # method was called like $f->method( { name => val } )
+      return shift @in_pairs;
+   }
+
+   # ...method called like $f->methd( name => val );
+
+   goto \&File::Util::Interface::Classic::_names_values;
+}
 
 
 # --------------------------------------------------------
@@ -90,6 +110,16 @@ sub _remove_opts {
 }
 
 
+# --------------------------------------------------------
+# File::Util::Interface::Modern::DESTROY()
+# --------------------------------------------------------
+sub DESTROY { }
+
+1;
+
+
+__END__
+
 =pod
 
 =head1 NAME
@@ -112,13 +142,7 @@ with current practices in Perl, like this:
       -or-
    some_method( '/var/log' => { match => [ qr/.*\.log/, qr/access|error/ ] } )
 
-Don't use this module by itself.  It is intended for internal use only.
+Users, don't use this module by itself.  It is intended for internal use only.
 
 =cut
 
-# --------------------------------------------------------
-# File::Util::Interface::Modern::DESTROY()
-# --------------------------------------------------------
-sub DESTROY { }
-
-1;

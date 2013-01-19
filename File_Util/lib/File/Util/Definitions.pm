@@ -152,6 +152,15 @@ $_LOCKS->{FAIL} = sub {
 # (for use in error messages)
 ( $EBL, $EBR ) = ('( ', ' )'); # error bracket left, error bracket right
 
+# --------------------------------------------------------
+# File::Util::Definitions::DESTROY()
+# --------------------------------------------------------
+sub DESTROY { }
+
+1;
+
+__END__
+
 =pod
 
 =head1 NAME
@@ -164,13 +173,7 @@ Defines constants and special variables that File::Util uses internally,
 many of which are calculated dynamically based on the platform where
 your program runs.
 
-Don't use this module by itself.  It is for internal use only.
+Users, don't use this module by itself.  It is for internal use only.
 
 =cut
 
-# --------------------------------------------------------
-# File::Util::Definitions::DESTROY()
-# --------------------------------------------------------
-sub DESTROY { }
-
-1;

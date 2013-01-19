@@ -130,6 +130,17 @@ sub _throw {
    return '';
 }
 
+
+# --------------------------------------------------------
+# File::Util::Exception::DESTROY()
+# --------------------------------------------------------
+sub DESTROY { }
+
+1;
+
+
+__END__
+
 =pod
 
 =head1 NAME
@@ -142,13 +153,7 @@ Base class for all File::Util::Exception subclasses.  It's primarily
 responsible for error handling within File::Util, but hands certain
 work off to its subclasses, depending on how File::Util was use()'d.
 
-Don't use this module by itself.  It is for internal use only.
+Users, don't use this module by itself.  It is for internal use only.
 
 =cut
 
-# --------------------------------------------------------
-# File::Util::Exception::DESTROY()
-# --------------------------------------------------------
-sub DESTROY { }
-
-1;

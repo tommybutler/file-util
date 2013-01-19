@@ -109,6 +109,17 @@ sub _names_values {
    return $out_pairs;
 }
 
+
+# --------------------------------------------------------
+# File::Util::Interface::Classic::DESTROY()
+# --------------------------------------------------------
+sub DESTROY { }
+
+1;
+
+
+__END__
+
 =pod
 
 =head1 NAME
@@ -118,19 +129,13 @@ File::Util::Interface::Classic
 =head1 DESCRIPTION
 
 Provides a classic interface for argument passing to and between the public
-and private methods of File::Util.  It is as a subclass for module developers
-that want to use it, and provides some base methods that are inherited by
-L<File::Util::Interface::Modern>, but the _remove_opts method is overridden
-in that namespace, whose more progressive version of that method supports
-both ::Classic and ::Modern call syntaxen.
+and private methods of File::Util.  It is as a subclass for File::Util
+developers that want to use it, and provides some base methods that are
+inherited by L<File::Util::Interface::Modern>, but the _remove_opts method
+is overridden in that namespace, whose more progressive version of that
+method supports both ::Classic and ::Modern call syntaxen.
 
-Don't use this module by itself.  It is intended for internal use only.
+Users, don't use this module by itself.  It is intended for internal use only.
 
 =cut
 
-# --------------------------------------------------------
-# File::Util::Interface::Classic::DESTROY()
-# --------------------------------------------------------
-sub DESTROY { }
-
-1;

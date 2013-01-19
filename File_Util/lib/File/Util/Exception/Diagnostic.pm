@@ -588,6 +588,17 @@ __no_input__
    : $error_msg_table{'unknown error message'}
 }
 
+
+# --------------------------------------------------------
+# File::Util::Exception::Diagnostic::DESTROY()
+# --------------------------------------------------------
+sub DESTROY { }
+
+1;
+
+
+__END__
+
 =pod
 
 =head1 NAME
@@ -599,13 +610,7 @@ File::Util::Exception::Diagnostic
 Provides those super-helpful wordy error messages with built-in diagnostics
 to help users solve problems when things go wrong.
 
-Don't use this module by itself.  It is for internal use only.
+Users, don't use this module by itself.  It is for internal use only.
 
 =cut
 
-# --------------------------------------------------------
-# File::Util::Exception::Diagnostic::DESTROY()
-# --------------------------------------------------------
-sub DESTROY { }
-
-1;
