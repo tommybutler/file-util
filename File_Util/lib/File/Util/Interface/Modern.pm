@@ -1,4 +1,3 @@
-use 5.006;
 use strict;
 use warnings;
 
@@ -22,6 +21,7 @@ $AUTHORITY  = 'cpan:TOMMY';
    _remove_opts
    _myargs
    _names_values
+   _parse_in
 ); # some of the symbols above come from File::Util::Interface::Classic but
    # the _remove_opts/_names_values methods are specifically overriden in
    # this package
@@ -107,6 +107,22 @@ sub _remove_opts {
    }
 
    return $opts;
+}
+
+
+# --------------------------------------------------------
+# File::Util::Interface::Modern::_parse_in()
+# --------------------------------------------------------
+sub _parse_in {
+
+   my @in   = _myargs( @_ );
+   my $opts = _remove_opts( \@in ) || {};
+   my $in   = _names_values( @in ) || {};
+
+   # merge two hashrefs
+   @$in{ keys %$opts } = values %$opts;
+
+   return $in;
 }
 
 
