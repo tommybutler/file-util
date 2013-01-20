@@ -8,7 +8,7 @@ use lib './lib';
 
 if ( !( $ENV{RELEASE_TESTING} || $ENV{AUTHOR_TESTING} || $ENV{AUTHOR_TESTS} ) )
 {
-   plan skip_all => 'These tests are only for the module maintainer';
+   plan skip_all => 'these tests are for testing by the author';
 }
 else
 {
