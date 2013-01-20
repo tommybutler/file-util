@@ -1,4 +1,4 @@
-use 5.006;
+use 5.6.1;
 use strict;
 use warnings;
 
@@ -26,7 +26,7 @@ $AUTHORITY  = 'cpan:TOMMY';
    size   atomize_path
 );
 
-%EXPORT_TAGS = ( all  => [ @EXPORT_OK ] );
+%EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
 
 # --------------------------------------------------------
 # Constructor
@@ -36,26 +36,23 @@ sub new {
 
    bless $this, shift @_;
 
-   my $opts = $this->_remove_opts( \@_ ) || {};
-   my $in   = $this->_names_values( @_ ) || {};
+   my $in = $this->_parse_in( @_ ) || { };
 
-   @$opts{ keys %$in } = values %$in;
+   $this->{opts} = $in || { };
 
-   $this->{opts} = $opts || { };
+   $USE_FLOCK  = $in->{use_flock}
+      if exists  $in->{use_flock}
+      && defined $in->{use_flock};
 
-   $USE_FLOCK  = $opts->{use_flock}
-      if exists  $opts->{use_flock}
-      && defined $opts->{use_flock};
+   $READLIMIT  = $in->{readlimit}
+      if exists  $in->{readlimit}
+      && defined $in->{readlimit}
+      && $in->{readlimit} !~ /\D/;
 
-   $READLIMIT  = $opts->{readlimit}
-      if exists  $opts->{readlimit}
-      && defined $opts->{readlimit}
-      && $opts->{readlimit} !~ /\D/;
-
-   $MAXDIVES   = $opts->{max_dives}
-      if exists  $opts->{max_dives}
-      && defined $opts->{max_dives}
-      && $opts->{max_dives} !~ /\D/;
+   $MAXDIVES   = $in->{max_dives}
+      if exists  $in->{max_dives}
+      && defined $in->{max_dives}
+      && $in->{max_dives} !~ /\D/;
 
    return $this;
 }
@@ -86,7 +83,7 @@ sub list_dir {
    my $dir  = shift @_ || '.';
    my $path = $dir;
    my $maxd = $opts->{max_dives} || $MAXDIVES;
-   my ( @dirs, @files, @items );
+   my ( @dirs, @files, @items, @trees );
 
    my $recursing = 0; # flag to dynamicall indicate whether or not this
                       # method is being used recursively for this call
@@ -144,7 +141,8 @@ sub list_dir {
    $recursing = 1 if $opts->{follow} || $opts->{recurse};
 
    opendir my $dir_fh, $dir
-      or return $this->_throw(
+      or return $this->_throw
+         (
             'bad opendir' => {
                dirname    => $dir,
                exception  => $!,
@@ -156,11 +154,11 @@ sub list_dir {
    # platforms I've run code on, but just in case...)
    rewinddir $dir_fh;
 
-   @files = exists $opts->{pattern}
+   @files = defined $opts->{pattern}
       ? grep /$opts->{pattern}/, readdir $dir_fh
       : readdir $dir_fh;
 
-   @files = exists $opts->{rpattern}
+   @files = defined $opts->{rpattern}
       ? grep /$opts->{rpattern}/, @files
       : @files;
 
@@ -174,7 +172,7 @@ sub list_dir {
       );
 
    # get rid of "." and ".." if they are unwanted
-   @files = grep { $_ !~ /$FSDOTS/ } @files if $opts->{no_fsdots};
+   @files = grep { !/$FSDOTS/o } @files if $opts->{no_fsdots};
 
    # prepend full path information to each file name if paths were
    # requested, or if we are recursing.  Then separate the directories
@@ -192,38 +190,33 @@ sub list_dir {
       else { push @items, $listing }
    }
 
-   if  ( $recursing && !$opts->{override_follow} ) {
+   if ( $recursing ) {
 
       @dirs = grep { $this->strip_path( $_ ) !~ /$FSDOTS/ } @dirs;
 
-      for my $dir ( @dirs ) {
+      for my $subdir ( @dirs ) {
 
-         my @opts = qw(
-            --with-paths    --dirs-as-ref
-            --files-as-ref  --recursing
-            --no-fsdots
-         );
+         my $pass_opts = {
+            with_paths => 1,
+            recursing  => 1,
+            no_fsdots  => 1,
+            max_dives  => $maxd,
+            rpattern   => $opts->{rpattern},
+            as_tree    => 1,
+         };
 
-         # pattern should work when recursing!
-         push @opts, qq(--rpattern=$opts->{rpattern})
-            if $opts->{rpattern};
+         my $subtree = $this->list_dir( $subdir, $pass_opts );
 
-         push @opts, qq(--max-dives=$maxd);
-
-         my @lsts = $this->list_dir( $dir, @opts );
-
-         push @dirs, @{ $lsts[0] }
-            if UNIVERSAL::isa( $lsts[0], 'ARRAY' ) && scalar @{ $lsts[0] };
-
-         push @items, @{ $lsts[1] }
-            if UNIVERSAL::isa( $lsts[1], 'ARRAY' ) && scalar @{ $lsts[1] };
+         push @dirs,  @{ $subtree->{dirs}  };
+         push @items, @{ $subtree->{files} };
+         push @trees, $subtree;
       }
    }
 
    if ( $opts->{sl_after_dirs} ) {
 
       # append directory separator to everything but the "dots"
-      $_ .= SL for grep { $_ !~ /$FSDOTS/ } @dirs;
+      $_ .= SL for grep { !/$FSDOTS/o } @dirs;
    }
 
    my $reta = []; my $retb = [];
@@ -238,6 +231,8 @@ sub list_dir {
       $reta = [ sort { $a cmp $b } @dirs  ];
       $retb = [ sort { $a cmp $b } @items ];
    }
+
+   return { dirs => $reta, files => $retb } if $opts->{as_tree};
 
    return scalar @$reta
       if $opts->{dirs_only} && $opts->{count_only};
@@ -288,7 +283,7 @@ sub _dropdots {
       push @out, $dir_item;
    }
 
-   return( \@dots, @out ) if $opts->{'--save-dots'};
+   return( \@dots, @out ) if $opts->{save_dots};
 
    return @out;
 }
@@ -395,7 +390,7 @@ sub load_file {
       # subroutine asked for an array eg- my @file = load_file('file');
       # otherwise, return a scalar value containing all of the file's content
       return split /$NL|\r|\n/o, $content
-         if $opts->{'--as-list'};
+         if $opts->{as_list};
 
       return $content;
    }
@@ -463,13 +458,13 @@ sub load_file {
 
    # lock file before I/O on platforms that support it
    if (
-      $$opts{'--no-lock'}        ||
-      $$this{opts}{'--no-lock'}  ||
+      $$opts{no_lock}        ||
+      $$this{opts}{no_lock}  ||
       !$this->use_flock()
    ) {
 
-      # if you use the '--no-lock' option you are probably inefficient
-      open $fh, $cmd  or                           ## no critic
+      # if you use the 'no_lock' option you are probably inefficient
+      open $fh, $cmd or                            ## no critic
          return $this->_throw(                     ## use critic
             'bad open',
             {
@@ -508,9 +503,9 @@ sub load_file {
 
    $content = <$fh>;
 
-   if ( $$opts{'--no-lock'} || $$this{opts}{'--no-lock'} ) {
+   if ( $$opts{no_lock} || $$this{opts}{no_lock} ) {
 
-      # if execution gets here, you used the '--no-lock' option, and you
+      # if execution gets here, you used the 'no_lock' option, and you
       # are probably inefficient
 
       close $fh or return $this->_throw(
@@ -542,7 +537,7 @@ sub load_file {
    # subroutine asked for an array eg- my @file = load_file('file');
    # otherwise, return a scalar value containing all of the file's content
    return split /$NL|\r|\n/o, $content
-      if $opts->{'--as-lines'};
+      if $opts->{as_lines};
 
    return $content;
 }
@@ -612,7 +607,7 @@ sub write_file {
          &&
       !$EMPTY_WRITES_OK
          &&
-      !$opts->{'--empty-writes-OK'}
+      !$opts->{empty_writes_OK}
    );
 
    # check if file already exists in the form of a directory
@@ -710,7 +705,7 @@ sub write_file {
 
    # if you use the --no-lock option, please consider the risks
 
-   if ( $$opts{'--no-lock'} || !$USE_FLOCK ) {
+   if ( $$opts{no_lock} || !$USE_FLOCK ) {
 
       # only non-existent files get bitmask arguments
       if ( -e $clean_name ) {
@@ -824,13 +819,13 @@ sub write_file {
       }
    }
 
-   CORE::binmode( $write_fh ) if $in->{binmode} || $opts->{'--binmode'};
+   CORE::binmode( $write_fh ) if $in->{binmode} || $opts->{binmode};
 
    $in->{content} ||= ''; syswrite( $write_fh, $in->{content} );
 
    # release lock on the file
 
-   $this->_release( $write_fh ) unless $$opts{'--no-lock'} || !$USE_FLOCK;
+   $this->_release( $write_fh ) unless $$opts{no_lock} || !$USE_FLOCK;
 
    close $write_fh or
       return $this->_throw(
@@ -993,7 +988,7 @@ sub escape_filename {
 
    $escape = '_' if !defined($escape);
 
-   $file = strip_path($file) if $opts->{'--strip-path'};
+   $file = strip_path($file) if $opts->{strip_path};
 
    if ( $also ) { $file =~ s/\Q$also\E/$escape/g }
 
@@ -1014,9 +1009,8 @@ sub existent { my $f = _myargs( @_ ); defined $f ? -e $f : undef }
 # File::Util::touch()
 # --------------------------------------------------------
 sub touch {
-   my $this  = shift @_;
-   my $opts  = $this->_remove_opts( \@_ );
-   my $file  = shift @_ ||'';
+   my $this = shift @_;
+   my $file = shift( @_ ) || '';
    my $path;
 
    return $this->_throw(
@@ -1024,7 +1018,7 @@ sub touch {
       {
          meth    => 'touch',
          missing => 'a file name or file handle reference',
-         opts    => $opts,
+         opts    => { },
       }
    ) unless defined $file && length $file;
 
@@ -1036,7 +1030,7 @@ sub touch {
       {
          filename => $file,
          dirname  => $path || '',
-         opts     => $opts,
+         opts     => { },
       }
    ) if -e $file && -d $file;
 
@@ -1050,7 +1044,7 @@ sub touch {
       {
          filename => $file,
          dirname  => $path,
-         opts     => $opts,
+         opts     => { },
       }
    ) if ( -e $path && !-r $path );
 
@@ -1060,7 +1054,7 @@ sub touch {
    $this->write_file(
       filename => $file,
       content  => '',
-      '--empty-writes-OK'
+      { empty_writes_OK => 1 }
    ) unless -e $file;
 
    my $now = time();
@@ -1080,14 +1074,14 @@ sub file_type {
 
    my @ret;
 
-   push @ret, 'PLAIN'     if (-f $f);   push @ret, 'TEXT'      if (-T $f);
-   push @ret, 'BINARY'    if (-B $f);   push @ret, 'DIRECTORY' if (-d $f);
-   push @ret, 'SYMLINK'   if (-l $f);   push @ret, 'PIPE'      if (-p $f);
-   push @ret, 'SOCKET'    if (-S $f);   push @ret, 'BLOCK'     if (-b $f);
-   push @ret, 'CHARACTER' if (-c $f);
+   push @ret, 'PLAIN'     if -f $f;   push @ret, 'TEXT'      if -T $f;
+   push @ret, 'BINARY'    if -B $f;   push @ret, 'DIRECTORY' if -d $f;
+   push @ret, 'SYMLINK'   if -l $f;   push @ret, 'PIPE'      if -p $f;
+   push @ret, 'SOCKET'    if -S $f;   push @ret, 'BLOCK'     if -b $f;
+   push @ret, 'CHARACTER' if -c $f;
 
    ## no critic
-   push @ret, 'TTY'       if (-t $f);
+   push @ret, 'TTY'       if -t $f;
    ## use critic
 
    push @ret, 'ERROR: Cannot determine file type' unless scalar @ret;
@@ -1226,9 +1220,10 @@ sub make_dir {
    my $opts = $this->_remove_opts( \@_ );
    my( $dir, $bitmask ) = @_;
 
+   $bitmask = defined $bitmask ? $bitmask : $opts->{bitmask};
    $bitmask ||= oct 777;
 
-   if ( $$opts{'--if-not-exists'} ) {
+   if ( $opts->{if_not_exists} ) {
 
       if ( -e $dir ) {
 

@@ -7,7 +7,7 @@ use warnings;
 # very well test list_dir() unless you have a good directory tree first;
 # this led to the combining of the make_dir and list_dir testing routines
 
-use Test::More tests => 22;
+use Test::More tests => 23;
 use Test::NoWarnings;
 
 use File::Temp qw( tempdir );
@@ -86,6 +86,19 @@ is_deeply
    ],
    [ sort @test_files, @test_files  ],
    'same, but using modern call style, ' .
+   'stripped of fully qualified paths'
+);
+
+is_deeply
+(
+   [
+      sort map { $ftl->strip_path( $_ ) } $ftl->list_dir
+      (
+         $testbed => { recurse => 1 }, { files_only => 1 }
+      )
+   ],
+   [ sort @test_files, @test_files  ],
+   'same, but using intentially wrong modern call style, ' .
    'stripped of fully qualified paths'
 );
 
