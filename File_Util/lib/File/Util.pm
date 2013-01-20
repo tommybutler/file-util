@@ -83,7 +83,7 @@ sub list_dir {
    my $dir  = shift @_ || '.';
    my $path = $dir;
    my $maxd = $opts->{max_dives} || $MAXDIVES;
-   my ( @dirs, @files, @items, @trees );
+   my ( @dirs, @files, @items );
 
    my $recursing = 0; # flag to dynamicall indicate whether or not this
                       # method is being used recursively for this call
@@ -209,7 +209,6 @@ sub list_dir {
 
          push @dirs,  @{ $subtree->{dirs}  };
          push @items, @{ $subtree->{files} };
-         push @trees, $subtree;
       }
    }
 
