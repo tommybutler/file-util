@@ -85,6 +85,8 @@ sub list_dir {
    my $maxd = $opts->{max_dives} || $MAXDIVES;
    my ( @dirs, @files, @items );
 
+   return $this->_as_tree( $dir => $opts ) if $opts->{ as_tree };
+
    my $recursing = 0; # flag to dynamicall indicate whether or not this
                       # method is being used recursively for this call
 
@@ -190,6 +192,16 @@ sub list_dir {
       else { push @items, $listing }
    }
 
+   # callbacks have to happen on dirs/files *as they are found* and that
+   # doesn't work when we just push everything we find from recursive calls
+   # onto the list of @dirs and @items.
+   #
+   # instead, we have to preserve what we *just* found, and invoke the callback
+   # funcs on those lists instead of the collective ones.  That's what the
+   # $cb_invocants variable below is used for...
+
+   my $cb_invocants = { dirs => [ @dirs ], files => [ @items ] };
+
    if ( $recursing ) {
 
       @dirs = grep { $this->strip_path( $_ ) !~ /$FSDOTS/ } @dirs;
@@ -202,14 +214,44 @@ sub list_dir {
             no_fsdots  => 1,
             max_dives  => $maxd,
             rpattern   => $opts->{rpattern},
-            as_tree    => 1,
+            callback   => $opts->{callback},
+            d_callback => $opts->{d_callback},
+            f_callback => $opts->{f_callback},
+            as_ref     => 1,
          };
 
-         my $subtree = $this->list_dir( $subdir, $pass_opts );
+         my ( $dirs_ref, $files_ref ) = $this->list_dir( $subdir, $pass_opts );
 
-         push @dirs,  @{ $subtree->{dirs}  };
-         push @items, @{ $subtree->{files} };
+         push @dirs,  @$dirs_ref;
+         push @items, @$files_ref;
       }
+   }
+
+   # here below is where we invoke the callbacks on dirs,
+   # files, or both.
+
+   if ( my $cb = $opts->{d_callback} ) {
+
+      $this->throw( qq(d_callback "$cb" not a coderef) )
+         unless ref $cb eq 'CODE';
+
+      $cb->( $dir, $cb_invocants->{dirs} );
+   }
+
+   if ( my $cb = $opts->{f_callback} ) {
+
+      $this->throw( qq(f_callback "$cb" not a coderef) )
+         unless ref $cb eq 'CODE';
+
+      $cb->( $dir, $cb_invocants->{files} );
+   }
+
+   if ( my $cb = $opts->{callback} ) {
+
+      $this->throw( qq(callback "$cb" not a coderef) )
+         unless ref $cb eq 'CODE';
+
+      $cb->( $dir, $cb_invocants->{dirs}, $cb_invocants->{files} );
    }
 
    if ( $opts->{sl_after_dirs} ) {
@@ -231,8 +273,6 @@ sub list_dir {
       $retb = [ sort { $a cmp $b } @items ];
    }
 
-   return { dirs => $reta, files => $retb } if $opts->{as_tree};
-
    return scalar @$reta
       if $opts->{dirs_only} && $opts->{count_only};
 
@@ -250,6 +290,97 @@ sub list_dir {
    return @$retb if $opts->{files_only};
 
    return @$reta, @$retb;
+}
+
+
+# --------------------------------------------------------
+# File::Util::_as_tree()
+# --------------------------------------------------------
+sub _as_tree {
+   my $this = shift @_;
+   my $opts = $this->_remove_opts( \@_ );
+   my $dir  = shift @_ || '.';
+   my $tree = {};
+
+   my $treeify = sub
+   {
+      my ( $dirname, $subdirs, $files ) = @_;
+
+      # find root of tree (if path was absolute)
+      my ( $root, $branch, $leaf ) = atomize_path( $dirname );
+
+      my @path_dirs = split /$DIRSPLIT/o, $branch;
+
+      # find place in tree
+      my @lineage = ( @path_dirs, $leaf );
+
+      unshift @lineage, $root if $root;
+
+      my $ancestory = $tree;
+
+      # recursively create hashref tree
+
+      for ( my $i = 0; $i < @lineage; $i++ )
+      {
+         my $self = $lineage[ $i ];
+
+         my $parent = $i > 0 ? $i - 1 : undef;
+
+         if ( defined $parent )
+         {
+            my @predecessors = @lineage[ 0 .. $parent ];
+
+            # for abs paths on *nix
+            shift @predecessors if
+               @predecessors > 1 &&
+               $predecessors[0] eq SL;
+
+            $parent = join SL, @predecessors;
+
+            $parent = $root . $parent if $root && $parent ne $root;
+         }
+
+         $ancestory->{ $self } ||= { };
+
+         if ( !$opts->{ no_dirmeta } ) {
+
+            $ancestory->{ $self }{ _DIR_PARENT_ } = $parent;
+
+            $ancestory->{ $self }{ _DIR_SELF_ }   =
+               !defined $parent
+                  ? $self
+                  : $parent eq $root
+                     ? $parent . $self
+                     : $parent . SL . $self;
+         }
+
+         $ancestory = $ancestory->{ $self };
+      }
+
+      # the next two loops populate the tree
+
+      my $parent = $ancestory;
+
+      for my $subdir ( @$subdirs )
+      {
+         $parent->{ strip_path( $subdir ) } ||= { };
+      }
+
+      for my $file ( @$files )
+      {
+         $parent->{ strip_path( $file ) } = $file;
+      }
+   };
+
+   $this->list_dir(
+      $dir => {
+         callback  => $treeify,
+         no_fsdots => 1,
+         recurse   => $opts->{recurse}
+      }
+   );
+
+   return $tree;
 }
 
 
