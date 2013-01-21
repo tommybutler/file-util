@@ -7,7 +7,7 @@ use warnings;
 # very well test list_dir() unless you have a good directory tree first;
 # this led to the combining of the make_dir and list_dir testing routines
 
-use Test::More tests => 23;
+use Test::More tests => 24;
 use Test::NoWarnings;
 
 use File::Temp qw( tempdir );
@@ -102,5 +102,36 @@ is_deeply
    'stripped of fully qualified paths'
 );
 
-exit;
+my @cbstack;
 
+sub callback
+{
+   my ( $currdir, $subdirs, $files ) = @_;
+
+   push @cbstack, @$subdirs;
+   push @cbstack, @$files;
+
+   return;
+}
+
+$ftl->list_dir( $tempdir => { callback => \&callback, recurse => 1 } );
+
+my @list_as_lines = $ftl->list_dir( $tempdir => { recurse => 1 } );
+
+is_deeply
+   [ sort { uc $a cmp uc $b } @cbstack ],
+   [ sort { uc $a cmp uc $b } @list_as_lines ],
+   'compare recursive listing to recursive callback return';
+
+__END__
+
+$ftl->list_dir(
+   $tempdir => {
+     #d_callback  => $d_cb,
+     #f_callback  => $f_cb,
+      callback    => \&callback,
+      recurse     => 1, # set to zero if you want to see diff output
+      with_paths  => 1, # unnecessary if recurse => 1
+      no_fsdots   => 1, # unnecessary if recurse => 1
+   }
+);
