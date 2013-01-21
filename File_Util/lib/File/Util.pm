@@ -2117,9 +2117,6 @@ C<strip_path>         I<(see L<strip_path|/strip_path>)>
 
 C<valid_filename>     I<(see L<valid_filename|/valid_filename>)>
 
-B<Note:> Symbols in C<@L<Class::OOorNO|Class::OOorNO>::EXPORT_OK> are also
-available for import.
-
 =head2 EXPORT_TAGS
 
    :all (exports all of @File::Util::EXPORT_OK)
