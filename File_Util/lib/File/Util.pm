@@ -85,6 +85,10 @@ sub list_dir {
    my $maxd = $opts->{max_dives} || $MAXDIVES;
    my ( @dirs, @files, @items );
 
+   # "." and ".." make no sense when recursing
+   $opts->{no_fsdots} = 1 if $opts->{recurse};
+
+   # break off immediately to helper function if asked to make a ref-tree
    return $this->_as_tree( $dir => $opts ) if $opts->{ as_tree };
 
    my $recursing = 0; # flag to dynamicall indicate whether or not this
