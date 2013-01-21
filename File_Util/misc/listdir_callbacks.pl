@@ -40,14 +40,16 @@ my $f_cb = sub
    return;
 };
 
-my $cb = sub { say join ' | ', map { ref $_ or $_ } @_; say '' };
+my $cb = sub { say 'ALL IN: ' . join ' | ', map { ref $_ or $_ } @_; say '' };
 
 $ftl->list_dir(
    $tempdir => {
-      d_callback => $d_cb,
-      f_callback => $f_cb,
-      callback => $cb,
-      recurse => 1,
+      d_callback  => $d_cb,
+      f_callback  => $f_cb,
+      callback    => $cb,
+      recurse     => 1, # set to zero if you want to see diff output
+      with_paths  => 1, # unnecessary if recurse => 1
+      no_fsdots   => 1, # unnecessary if recurse => 1
    }
 );
 
@@ -80,7 +82,7 @@ sub setup_test_tree {
 
    for my $tfile ( @test_files )
    {
-      $ftl->write_file( file => $deeper . SL . $tfile, content => time );
+      $ftl->write_file( { file => $deeper . SL . $tfile, content => rand } );
    }
 
    return;

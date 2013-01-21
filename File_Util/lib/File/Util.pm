@@ -1,4 +1,4 @@
-use 5.6.1;
+use 5.6.0;
 use strict;
 use warnings;
 
@@ -379,7 +379,6 @@ sub _as_tree {
    $this->list_dir(
       $dir => {
          callback  => $treeify,
-         no_fsdots => 1,
          recurse   => $opts->{recurse}
       }
    );
@@ -682,8 +681,7 @@ sub load_file {
 # --------------------------------------------------------
 sub write_file {
    my $this     = shift @_;
-   my $opts     = $this->_remove_opts( \@_ );
-   my $in       = $this->_names_values( @_ );
+   my $in       = _parse_in( @_ );
    my $file     = $in->{file}    || $in->{filename} || '';
    my $content  = $in->{content} || '';
    my $mode     = $in->{mode}    || 'write';
@@ -704,7 +702,7 @@ sub write_file {
       {
          meth    => 'write_file',
          missing => 'a file name to create, write, or append',
-         opts    => $opts,
+         opts    => $in,
       }
    ) unless length $file;
 
@@ -720,7 +718,7 @@ sub write_file {
          {
             string  => $raw_name,
             purpose => 'the name of a file or directory',
-            opts    => $opts,
+            opts    => $in,
          }
       ) if $try_filename =~ /(?:$DIRSPLIT){2,}/;
    }
@@ -732,7 +730,7 @@ sub write_file {
       {
          meth    => 'write_file',
          missing => 'the content you want to write or append',
-         opts    => $opts,
+         opts    => $in,
       }
    ) if (
       length $content == 0
@@ -741,7 +739,7 @@ sub write_file {
          &&
       !$EMPTY_WRITES_OK
          &&
-      !$opts->{empty_writes_OK}
+      !$in->{empty_writes_OK}
    );
 
    # check if file already exists in the form of a directory
@@ -749,7 +747,7 @@ sub write_file {
       'cant write_file on a dir',
       {
          filename => $raw_name,
-         opts     => $opts,
+         opts     => $in,
       }
    ) if -d $raw_name;
 
@@ -765,7 +763,7 @@ sub write_file {
          {
             string  => $_,
             purpose => 'the name of a file or directory',
-            opts    => $opts,
+            opts    => $in,
          }
       ) if !$this->valid_filename( $_ );
    }
@@ -782,7 +780,7 @@ sub write_file {
             meth     => 'write_file',
             filename => $raw_name,
             badmode  => $mode,
-            opts     => $opts,
+            opts     => $in,
          }
       )
    }
@@ -820,7 +818,7 @@ sub write_file {
          {
             filename => $clean_name,
             dirname  => $root . $path,
-            opts     => $opts,
+            opts     => $in,
          }
       ) unless -w $clean_name;
    }
@@ -832,14 +830,14 @@ sub write_file {
          {
             filename => $clean_name,
             dirname  => $root . $path,
-            opts     => $opts,
+            opts     => $in,
          }
       ) unless -w $root . $path;
    }
 
    # if you use the --no-lock option, please consider the risks
 
-   if ( $$opts{no_lock} || !$USE_FLOCK ) {
+   if ( $$in{no_lock} || !$USE_FLOCK ) {
 
       # only non-existent files get bitmask arguments
       if ( -e $clean_name ) {
@@ -855,7 +853,7 @@ sub write_file {
                   mode      => $mode,
                   exception => $!,
                   cmd       => qq($clean_name, $$MODES{sysopen}{ $mode }),
-                  opts      => $opts,
+                  opts      => $in,
                }
             );
       }
@@ -873,7 +871,7 @@ sub write_file {
                mode      => $mode,
                exception => $!,
                cmd       => qq($clean_name, $$MODES{sysopen}{$mode}, $bitmask),
-               opts      => $opts,
+               opts      => $in,
             }
          );
       }
@@ -890,7 +888,7 @@ sub write_file {
                   mode      => 'read',
                   exception => $!,
                   cmd       => $mode . $clean_name,
-                  opts      => $opts,
+                  opts      => $in,
                }
             );
 
@@ -908,7 +906,7 @@ sub write_file {
             {
                filename  => $clean_name,
                mode      => $mode,
-               opts      => $opts,
+               opts      => $in,
                exception => $!,
                cmd       => qq($clean_name, $$MODES{sysopen}{ $mode }),
             }
@@ -926,7 +924,7 @@ sub write_file {
             {
                filename  => $clean_name,
                mode      => $mode,
-               opts      => $opts,
+               opts      => $in,
                exception => $!,
                cmd       => qq($clean_name, $$MODES{sysopen}{$mode}, $bitmask),
             }
@@ -946,20 +944,20 @@ sub write_file {
             {
                filename  => $clean_name,
                exception => $!,
-               opts      => $opts,
+               opts      => $in,
             }
          );
 
       }
    }
 
-   CORE::binmode( $write_fh ) if $in->{binmode} || $opts->{binmode};
+   CORE::binmode( $write_fh ) if $in->{binmode};
 
    $in->{content} ||= ''; syswrite( $write_fh, $in->{content} );
 
    # release lock on the file
 
-   $this->_release( $write_fh ) unless $$opts{no_lock} || !$USE_FLOCK;
+   $this->_release( $write_fh ) unless $$in{no_lock} || !$USE_FLOCK;
 
    close $write_fh or
       return $this->_throw(
@@ -968,7 +966,7 @@ sub write_file {
             filename  => $clean_name,
             mode      => $mode,
             exception => $!,
-            opts      => $opts,
+            opts      => $in,
          }
       );
 
