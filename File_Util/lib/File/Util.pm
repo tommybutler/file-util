@@ -205,6 +205,14 @@ sub list_dir {
 
    # here below is where we invoke the callbacks on dirs, files, or both.
 
+   if ( my $cb = $opts->{callback} ) {
+
+      $this->throw( qq(callback "$cb" not a coderef) )
+         unless ref $cb eq 'CODE';
+
+      $cb->( $dir, \@dirs, \@items );
+   }
+
    if ( my $cb = $opts->{d_callback} ) {
 
       $this->throw( qq(d_callback "$cb" not a coderef) )
@@ -219,14 +227,6 @@ sub list_dir {
          unless ref $cb eq 'CODE';
 
       $cb->( $dir, \@items );
-   }
-
-   if ( my $cb = $opts->{callback} ) {
-
-      $this->throw( qq(callback "$cb" not a coderef) )
-         unless ref $cb eq 'CODE';
-
-      $cb->( $dir, \@dirs, \@items );
    }
 
 # RECURSION
@@ -2342,7 +2342,7 @@ File::Util provides a comprehensive toolbox of utilities to automate all
 kinds of common tasks on file / directories.  Its purpose is to do so
 in the most B<portable> manner possible so that users of this module won't
 have to worry about whether their programs will work on other operating systems
-and/or architectures.
+and/or architectures.  It works on Linux, Windows, Mac, BSD, Unix and others.
 
 File::Util is written B<purely in Perl>, and requires no compiler or make
 utility on your system in order to install and run it.
@@ -2359,10 +2359,10 @@ to run File::Util on Perl version 5.8 and above.
    my $f = File::Util->new();
 
    # load content into a variable, be it text, or binary, either works
-   my $content = $f->load_file('foo.txt');
+   my $content = $f->load_file( 'foo.txt' );
 
    # binary this time
-   my $binary_content = $f->load_file('foo.bin');
+   my $binary_content = $f->load_file( 'foo.bin' );
 
    # wrangle text
    $content =~ s/this/that/g;
@@ -2418,7 +2418,7 @@ to run File::Util on Perl version 5.8 and above.
    # using an auto-flock'd filehandle (for operating systems that support flock)
    # ...you can also use the write_file() method in append mode as well...
 
-   if ( $f->can_write('captains.log') ) {
+   if ( $f->can_write( 'captains.log' ) ) {
 
       my $fh = $f->open_handle(
          file => 'captains.log',
@@ -2431,22 +2431,22 @@ to run File::Util on Perl version 5.8 and above.
    }
    else { # ...or warn the crew
 
-      warn "Trouble on the bridge, the Captain can't access his log";
+      warn "Trouble on the bridge, the Captain can't access his log!";
    }
 
    # get the number of lines in a file
-   my $log_line_count = $f->line_count('/var/log/messages');
+   my $log_line_count = $f->line_count( '/var/log/messages' );
 
    # the next several examples show how to get different information about files
 
-   print "My file has a bitmask of " . $f->bitmask('my.file');
+   print "My file has a bitmask of " . $f->bitmask( 'my.file' );
 
-   print "My file is a " . join(', ', $f->file_type('my.file')) . " file.";
+   print "My file is a " . join(', ', $f->file_type( 'my.file' )) . " file.";
 
-   warn 'This file is binary!' if $f->isbin('my.file');
+   warn 'This file is binary!' if $f->isbin( 'my.file' );
 
    print 'My file was last modified on ' .
-      scalar localtime $f->last_modified('my.file');
+      scalar localtime $f->last_modified( 'my.file' );
 
    # ...and B<_lots_> more
 
@@ -2496,14 +2496,87 @@ will need to run the rest of the install command with Administrative privileges
 
 =head1 DOCUMENTATION
 
-There's more than just this document.  Take a look at the reference manual
-at L<File::Util::Manual>, and the cookbook at L<File::Util::Cookbook>.
+There's more than just this document!  Take a look at the L<File::Util::Manual>,
+the L<File::Util::Manual::Examples>, and the L<File::Util::Cookbook>.
 
-=head1 @ISA
+=head1 METHODS
+
+File::Util exposes the following public methods.
+
+B<Each of which are covered in the L<File::Util::Manual>>, which has more room for
+the detailed explanation that is provided there.
+
+This is just an itemized table of contents.
 
 =over
 
-=item L<Exporter>
+=item atomize_path         I<(see L<atomize_path|File::Util::Manual/atomize_path>)>
+
+=item bitmask              I<(see L<bitmask|File::Util::Manual/bitmask>)>
+
+=item can_flock            I<(see L<can_flock|File::Util::Manual/can_flock>)>
+
+=item can_read             I<(see L<can_read|File::Util::Manual/can_read>)>
+
+=item can_write            I<(see L<can_write|File::Util::Manual/can_write>)>
+
+=item created              I<(see L<created|File::Util::Manual/created>)>
+
+=item ebcdic               I<(see L<ebcdic|File::Util::Manual/ebcdic>)>
+
+=item escape_filename      I<(see L<escape_filename|File::Util::Manual/escape_filename>)>
+
+=item existent             I<(see L<existent|File::Util::Manual/existent>)>
+
+=item file_type            I<(see L<file_type|File::Util::Manual/file_type>)>
+
+=item flock_rules          I<(see L<flock_rules|File::Util::Manual/flock_rules>)>
+
+=item isbin                I<(see L<isbin|File::Util::Manual/isbin>)>
+
+=item last_access          I<(see L<last_access|File::Util::Manual/last_access>)>
+
+=item last_changed         I<(see L<last_changed|File::Util::Manual/last_changed>)>
+
+=item last_modified        I<(see L<last_modified|File::Util::Manual/last_modified>)>
+
+=item line_count           I<(see L<line_count|File::Util::Manual/line_count>)>
+
+=item list_dir             I<(see L<list_dir|File::Util::Manual/list_dir>)>
+
+=item load_dir             I<(see L<load_dir|File::Util::Manual/load_dir>)>
+
+=item load_file            I<(see L<load_file|File::Util::Manual/load_file>)>
+
+=item make_dir             I<(see L<make_dir|File::Util::Manual/make_dir>)>
+
+=item max_dives            I<(see L<max_dives|File::Util::Manual/max_dives>)>
+
+=item needs_binmode        I<(see L<needs_binmode|File::Util::Manual/needs_binmode>)>
+
+=item open_handle          I<(see L<open_handle|File::Util::Manual/open_handle>)>
+
+=item readlimit            I<(see L<readlimit|File::Util::Manual/readlimit>)>
+
+=item return_path          I<(see L<return_path|File::Util::Manual/return_path>)>
+
+=item size                 I<(see L<size|File::Util::Manual/size>)>
+
+=item split_path           I<(see L<split_path|File::Util::Manual/split_path>)>
+
+=item strip_path           I<(see L<strip_path|File::Util::Manual/strip_path>)>
+
+=item touch                I<(see L<touch|File::Util::Manual/touch>)>
+
+=item trunc                I<(see L<trunc|File::Util::Manual/trunc>)>
+
+=item unlock_open_handle   I<(see L<unlock_open_handle|File::Util::Manual/unlock_open_handle>)>
+
+=item use_flock            I<(see L<use_flock|File::Util::Manual/use_flock>)>
+
+=item valid_filename       I<(see L<valid_filename|File::Util::Manual/valid_filename>)>
+
+=item write_file           I<(see L<write_file|File::Util::Manual/write_file>)>
 
 =back
 
@@ -2515,1331 +2588,61 @@ You can, however, ask it for certain things (below).
 =head2 @EXPORT_OK
 
 The following symbols comprise C<@File::Util::EXPORT_OK>), and as such are
-available for import to your namespace only upon request.
+available for import to your namespace only upon request.  They can be
+used either as object methods or like regular subroutines in your program.
 
 To get any of these functions/symbols into your namespace without having
 to use them as an object method, use this kind of syntax:
 
-   use File::Util qw( strip_path NL );
+C<use File::Util qw( strip_path NL );>
 
-C<atomize_path>       I<(see L<atomize_path|/atomize_path>)>
+atomize_path
 
-C<bitmask>            I<(see L<bitmask|/bitmask>)>
+can_flock
 
-C<can_flock>          I<(see L<can_flock|/can_flock>)>
+can_read
 
-C<can_read>           I<(see L<can_read|/can_read>)>
+can_write
 
-C<can_write>          I<(see L<can_write|/can_write>)>
+created
 
-C<created>            I<(see L<created|/created>)>
+ebcdic
 
-C<ebcdic>             I<(see L<ebcdic|/ebcdic>)>
+escape_filename
 
-C<escape_filename>    I<(see L<escape_filename|/escape_filename>)>
+existent
 
-C<existent>           I<(see L<existent|/existent>)>
+file_type
 
-C<file_type>          I<(see L<file_type|/file_type>)>
+isbin
 
-C<isbin>              I<(see L<isbin|/isbin>)>
+last_access
 
-C<last_access>        I<(see L<last_access|/last_access>)>
+last_changed
 
-C<last_changed>       I<(see L<last_changed|/last_changed>)>
+last_modified
 
-C<last_modified>      I<(see L<last_modified|/last_modified>)>
+NL
 
-C<NL>                 I<(see L<NL|/NL>)>
+needs_binmode
 
-C<needs_binmode>      I<(see L<needs_binmode|/needs_binmode>)>
+return_path
 
-C<return_path>        I<(see L<return_path|/return_path>)>
+size
 
-C<size>               I<(see L<size|/size>)>
+SL
 
-C<SL>                 I<(see L<SL|/SL>)>
+split_path
 
-C<split_path>         I<(see L<split_path|/split_path>)>
+strip_path
 
-C<strip_path>         I<(see L<strip_path|/strip_path>)>
-
-C<valid_filename>     I<(see L<valid_filename|/valid_filename>)>
+valid_filename
 
 =head2 EXPORT_TAGS
 
    :all (imports all of @File::Util::EXPORT_OK to your namespace)
 
    use File::Util qw( :all ); # seldom if ever necessary, but it's an option
-
-=head1 METHODS
-
-B<Note:> In the past, some of the methods listed would state that they were
-autoloaded methods.  This mechanism has been changed.  Only the error handling
-and help messages are AutoLoad'ed now.  I<(see L<AutoLoader>.)> if you want
-to know more about AutoLoading in Perl.  See the CHANGES file distributed
-with File::Util for an explanation of why this change was made.
-
-Methods listed in alphabetical order.
-
-=head2 C<atomize_path>
-
-=over
-
-=item I<Syntax:> C<atomize_path( [file/path or file_name] )>
-
-This method is used internally by File::Util to portably handle absolute
-filenames on different platforms, but it can be a useful tool for you as well.
-
-This method takes a single string as its argument.  The string is expected
-to be a fully-qualified (absolute) or relative path to a file or directory.
-It carefully splits the string into three parts: The root of the path, the
-rest of the path, and the final file/directory named in the string.
-
-Depending on the input, the root and/or path may be empty strings.  The
-following table can serve as a guide in what to expect from C<atomize_path()>
-
-   +-------------------------+----------+--------------------+----------------+
-   |  INPUT                  |   ROOT   |   PATH-COMPONENT   |   FILE/DIR     |
-   +-------------------------+----------+--------------------+----------------+
-   |  C:\foo\bar\baz.txt     |   C:\    |   foo\bar          |   baz.txt      |
-   |  /foo/bar/baz.txt       |   /      |   foo/bar          |   baz.txt      |
-   |  ./a/b/c/d/e/f/g.txt    |          |   ./a/b/c/d/e/f    |   g.txt        |
-   |  :a:b:c:d:e:f:g.txt     |   :      |   a:b:c:d:e:f      |   g.txt        |
-   |  ../wibble/wombat.ini   |          |   ../wibble        |   wombat.ini   |
-   |  ..\woot\noot.doc       |          |   ..\woot          |   noot.doc     |
-   |  ../../zoot.conf        |          |   ../..            |   zoot.conf    |
-   |  /root                  |   /      |                    |   root         |
-   |  /etc/sudoers           |   /      |   etc              |   sudoers      |
-   |  /                      |   /      |                    |                |
-   |  D:\                    |   D:\    |                    |                |
-   |  D:\autorun.inf         |   D:\    |                    |   autorun.inf  |
-   +-------------------------+----------+--------------------+----------------+
-
-=back
-
-=head2 C<bitmask>
-
-=over
-
-=item I<Syntax:> C<bitmask( [file name] )>
-
-Gets the bitmask of the named file, provided the file exists. If the file
-exists, the bitmask of the named file is returned in four digit octal
-notation e.g.- C<0644>.  Otherwise, returns C<undef> if the file does I<not>
-exist.
-
-=back
-
-=head2 C<can_flock>
-
-=over
-
-=item I<Syntax:> C<can_flock>
-
-Returns 1 if the current system claims to support C<flock()> I<and> if the
-Perl process can successfully call it.  I<(see L<perlfunc/flock>.)>  Unless
-both of these conditions are true a zero value (0) is returned.  This is a
-constant method.  It accepts no arguments and will always return the same
-value for the system on which it is executed.
-
-B<Note:> Perl will try to support or emulate flock whenever it can via
-available system calls, namely C<flock>; C<lockf>; or with C<fcntl>.
-
-=back
-
-=head2 C<can_read>
-
-=over
-
-=item I<Syntax:> C<can_read( [file name] )>
-
-Returns 1 if the named file (or directory) is B<readable> by your program
-according to the applied permissions of the file system on which the file
-resides.  Otherwise a value of undef is returned.
-
-This works the same as Perl's built-in C<-r> file test operator,
-I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.
-
-=back
-
-=head2 C<can_write>
-
-=over
-
-=item I<Syntax:> C<can_write( [file name] )>
-
-Returns 1 if the named file (or directory) is B<writable> by your program
-according to the applied permissions of the file system on which the file
-resides.  Otherwise a value of undef is returned.
-
-This works the same as Perl's built-in C<-w> file test operator,
-I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.
-
-=back
-
-=head2 C<created>
-
-=over
-
-=item I<Syntax:> C<created( [file name] )>
-
-Returns the time of creation for the named file in non-leap seconds since
-whatever your system considers to be the epoch.  Suitable for feeding to
-Perl's built-in functions "gmtime" and "localtime".  I<(see L<perlfunc/time>.)>
-
-=back
-
-=head2 C<ebcdic>
-
-=over
-
-=item I<Syntax:> C<ebcdic>
-
-Returns 1 if the machine on which the code is running uses EBCDIC, or returns
-0 if not.  I<(see L<perlebcdic>.)>  This is a constant method.  It accepts
-no arguments and will always return the same value for the system on which it
-is executed.
-
-=back
-
-=head2 C<escape_filename>
-
-=over
-
-=item I<Syntax:> C<escape_filename( [string], [escape char] )>
-
-Returns it's argument in an escaped form that is suitable for use as a filename.
-Illegal characters (i.e.- any type of newline character, tab, vtab, and the
-following C<< / | * " ? < : > \ >>), are replaced with [escape char] or
-"B<_>" if no [escape char] is specified.  Returns an empty string if no
-arguments are provided.
-
-=back
-
-=head2 C<existent>
-
-=over
-
-=item I<Syntax:> C<existent( [file name] )>
-
-Returns 1 if the named file (or directory) exists.  Otherwise a value of
-undef is returned.
-
-This works the same as Perl's built-in C<-e> file test operator,
-I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.
-
-=back
-
-=head2 C<file_type>
-
-=over
-
-=item I<Syntax:> C<file_type( [file name] )>
-
-Returns a list of keywords corresponding to each of Perl's built in file tests
-(those specific to file types) for which the named file returns true.
-I<(see L<perlfunc/-X>.)>
-
-The keywords and their definitions appear below; the order of keywords returned
-is the same as the order in which the are listed here:
-
-=over
-
-=item C<PLAIN             File is a plain file.>
-
-=item C<TEXT              File is a text file.>
-
-=item C<BINARY            File is a binary file.>
-
-=item C<DIRECTORY         File is a directory.>
-
-=item C<SYMLINK           File is a symbolic link.>
-
-=item C<PIPE              File is a named pipe (FIFO).>
-
-=item C<SOCKET            File is a socket.>
-
-=item C<BLOCK             File is a block special file.>
-
-=item C<CHARACTER         File is a character special file.>
-
-=back
-
-=back
-
-=head2 C<flock_rules>
-
-=over
-
-=item I<Syntax:> C<flock_rules( [keyword list] )>
-
-Sets I/O race condition policy, or tells File::Util how it should handle race
-conditions created when a file can't be locked because it is already locked
-somewhere else (usually by another process).
-
-An empty call to this method returns a list of keywords representing the rules
-that are currently in effect for the object.
-
-Otherwise, a call should include a list with array containing your chosen
-directive keywords in order of precedence.  The rules will be applied in
-cascading order when a File::Util object attempts to lock a file, so if the
-actions specified by the first rule don't result in success, the second rule
-is applied, and so on.
-
-Recognized keywords:
-
-=over
-
-=item C<NOBLOCKEX>
-
-tries to get an exclusive lock on the file without blocking (waiting)
-
-=item C<NOBLOCKSH>
-
-tries to get a shared lock on the file without blocking
-
-=item C<BLOCKEX>
-
-waits to try getting an exclusive lock
-
-=item C<BLOCKSH>
-
-waits to try getting a shared lock
-
-=item C<FAIL>
-
-dies with stack trace
-
-=item C<WARN>
-
-warn()s about the error with a stack trace and returns undef
-
-=item C<IGNORE>
-
-ignores the failure to get an exclusive lock
-
-=item C<UNDEF>
-
-returns undef
-
-=item C<ZERO>
-
-returns 0
-
-=back
-
-Examples:
-
-=over
-
-=item ex- C<flock_rules( qw/ NOBLOCKEX FAIL / );>
-
-This is the default policy.  When in effect, the File::Util object will first
-attempt to get a non-blocking exclusive lock on the file.  If that attempt
-fails the File::Util object will call die() with a detailed error message and
-a stack trace.
-
-=item ex- C<flock_rules( qw/ NOBLOCKEX BLOCKEX FAIL / );>
-
-The File::Util object will first attempt to get a non-blocking exclusive lock
-on the file.  If that attempt fails it falls back to the second policy rule
-"BLOCKEX" and tries again to get an exclusive lock on the file, but this time
-by blocking (waiting for its turn).  If that second attempt fails, the
-File::Util object will fail with a detailed error message and a stack trace.
-
-=item ex- C<flock_rules( qw/ BLOCKEX IGNORE / );>
-
-The File::Util object will first attempt to get a file non-blocking lock on
-the file.  If that attempt fails it will ignore the error, and go on to open
-the file anyway and no failures will occur or warings be issued.
-
-=back
-
-=back
-
-=head2 C<isbin>
-
-=over
-
-=item I<Syntax:> C<isbin( [file name] )>
-
-Returns 1 if the named file (or directory) exists.  Otherwise a value of undef
-is returned, indicating that the named file either does not exist or is of
-another file type.
-
-This works the same as Perl's built-in C<-B> file test operator,
-I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.
-
-=back
-
-=head2 C<last_access>
-
-=over
-
-=item I<Syntax:> C<last_access( [file name] )>
-
-Returns the last accessed time for the named file in non-leap seconds since
-whatever your system considers to be the epoch.  Suitable for feeding to
-Perl's built-in functions "gmtime" and "localtime".  I<(see L<perlfunc/time>.)>
-
-=back
-
-=head2 C<last_changed>
-
-=over
-
-=item I<Syntax:> C<last_changed( [file name] )>
-
-Returns the inode change time for the named file in non-leap seconds since
-whatever your system considers to be the epoch.  Suitable for feeding to
-Perl's built-in functions "gmtime" and "localtime".  I<(see L<perlfunc/time>.)>
-
-=back
-
-=head2 C<last_modified>
-
-=over
-
-=item I<Syntax:> C<last_modified( [file name] )>
-
-Returns the last modified time for the named file in non-leap seconds since
-whatever your system considers to be the epoch.  Suitable for feeding to
-Perl's built-in functions "gmtime" and "localtime".  I<(see L<perlfunc/time>.)>
-
-=back
-
-=head2 C<line_count>
-
-=over
-
-=item I<Syntax:> C<line_count( [file name] )>
-
-Returns the number of lines in the named file.  Fails with an error if the
-named file does not exist.
-
-=back
-
-=head2 C<list_dir>
-
-=over
-
-=item I<Syntax:> C<list_dir( [directory name] , [--opts] )>
-
-Returns alphabetically sorted all file names in the directory specified if it
-exists.  Fails with an error message if no such directory is found, or the
-directory is inaccessible.
-
-The behavior of this method has changed slightly after version 3.29.  If running
-with the C<--fatals-as-warning> flag, the previous behavior was to abort
-immediately.  This is not the case anymore.  If running with the
-C<--fatals-as-warning> flag, C<list_dir()> will still emit a warning when it
-encounters an otherwise fatal error, but it will also return whatever directory
-contents it is able to successfully access.
-
-=over
-
-=item B<Flags accepted by C<list_dir()>>
-
-=over
-
-=item C<--dirs-only>
-
-return only directory contents which are directories
-
-=item C<--files-only>
-
-return only directory contents which are files
-
-=item C<--no-fsdots>
-
-do not include "." and ".." in the list of directory contents
-
-=item C<--pattern>
-
-return only files/directories matching pattern provided. argument
-should be plain text string.  It will be converted to a perl regex and passed
-to CORE::grep as the method scans through directory listings for a match.
-
-(ex- C<'--pattern=\.txt$'> returns all file/directory names ending in ".txt".
-It will match "foo.txt", but not "foo.txt.gz" because of the "$" anchor in the
-regular expression passed in.)
-
-or for the opposite effect, C<< '--pattern=.*(?<!\.txt)$' >> returns all
-file/directory names that don't end in ".txt"
-
-=item C<--with-paths>
-
-Include file paths with the contents of the directory list, relative
-to the directory named in the call.
-
-=item C<--recurse>
-
-Recurse subdirectories
-
-=item C<--follow>
-
-Recurse subdirectories, same as C<--recurse>
-
-=item C<--dirs-as-ref>
-
-When returning directory listing, include first a reference to the list
-of subdirectories found, followed by anything else returned by the call.
-
-=item C<--files-as-ref>
-
-When returning directory listing, include last a reference to the list
-of files found, preceded by a list of subdirectories found (or preceded
-by a list reference to subdirectories found if C<--dirs-as-ref> was also used).
-
-=item C<--as-ref>
-
-Return a pair list references: the first is a reference to any subdirectories
-found by the call, the second is a reference to any files found by the call.
-
-=item C<--sl-after-dirs>
-
-Append a directory separator ("/, "\", or ":" depending on your system)
-to all directories found by the call.  Useful in visual displays for quick
-differentiation between subdirectories and files.
-
-=item C<--ignore-case>
-
-Items returned by the call to this method are sorted alphabetically by
-default, so "Zoo.txt" comes before "alligator.txt" because the alphabetical
-sort is case-sensitive.  This is also the way directories are listed at the
-system level on most operating systems.
-
-If you'd like the directory contents returned by this method to be
-sorted without regard to case , use this flag.
-
-=item C<--count-only>
-
-Returns a single value: an integer reflecting the number of items
-found in the directory after applying the filter criteria specified by any
-other flags (ie- "--dirs-only", "--recurse", etc.) that may have been passed
-in as well.
-
-=back
-
-=back
-
-=back
-
-=head2 C<load_dir>
-
-=over
-
-=item I<Syntax:> C<load_dir( [directory name] , [--ds-type] )>
-
-Returns a data structure containing the contents of each file present in the
-named directory.
-
-The type of data structure returned is determined by the optional data-type
-switch.  Only one option may be used for a given call to this method.
-Recognized options are listed below.
-
-=over
-
-=item B<Flags accepted by C<load_dir()>>
-
-=over
-
-=item C<--as-list>
-
-Causes the method to return a list comprised of the contents loaded from
-each file (in case-sensitive order) located in the named directory.
-
-=item C<--as-listref>
-
-Same as above, except an array reference to the list of items is returned
-rather than the list itself.
-
-=item C<--as-hashref> *(default)
-
-Implicit.  If no option is passed in, the default behavior is to return a
-reference to an anonymous hash whose keys are the names of each file in the
-specified directory; the hash values for contain the contents of the file
-represented by its corresponding key.
-
-=back
-
-=back
-
-B<Note:> This method does not distinguish between plain files and other file
-types such as binaries, FIFOs, sockets, etc.
-
-Restrictions imposed by the current "read limit"
-I<(see the L<readlimit()|/readlimit>) entry below> will be applied to the
-files opened by this method as well.  Adjust the readlimit as necessary.
-
-   my $files = $fu->load_dir('directory/to/load/');
-
-The above code creates an anonymous hash reference that is stored in the
-variable named "C<$files>".  The keys and values of the hash referenced by
-"C<$files>" would resemble those of the following code snippet (given that
-the files in the named directory were the files 'a.txt', 'b.html', 'c.dat',
-and 'd.conf')
-
-   my($files) =
-      {
-         'a.txt'  => "the contents of file a.txt",
-         'b.html' => "the contents of file b.html",
-         'c.dat'  => "the contents of file c.dat",
-         'd.conf' => "the contents of file d.conf",
-      };
-
-=back
-
-=head2 C<load_file>
-
-=over
-
-=item I<Syntax:> C<load_file( [file name] , [--opts] )>
-
-=item I<OR:> C<< load_file( 'FH' => [file handle reference] , [--opts] ) >>
-
-If [file name] is passed, returns the contents of [file name] in a string.
-If a [file handle reference] is passed instead, the filehandle will be
-C<CORE::read()> and the data obtained by the read will be returned in a string.
-
-If you desire the contents of the file (or file handle data) in a list of
-lines instead of a single string, this can be accomplished through the use
-of the C<--as-lines> flag (see below).
-
-=over
-
-=item B<Flags accepted by C<load_file()>>
-
-=over
-
-=item C<--as-lines>
-
-If this flag is passed then your call to C<load_file> will return an ordered
-list of strings, each of which is a line from the file [file name].  The lines
-are returned in the order they are read, from the beginning of the file to the
-end.
-
-This is not the default behavior.  The default behavior is for C<load_file> to
-return a single string containing the entire contents of the file, including
-line break characters.
-
-=item C<--no-lock>
-
-By default this method will attempt to get a lock on the file while it is
-being read, following whatever rules are in place for the flock policy
-established either by default (implicitly) or changed by you in a call to
-File::Util::flock_rules()
-I<(see the L<flock_rules()|/flock_rules>) entry below>.
-
-This method will not try to get a lock on the file if the File::Util object was
-created with the option C<--no-lock> or if the method was called with the
-option C<--no-lock>.
-
-This method will automatically call binmode() on binary files for you.  If you
-pass in a filehandle instead of a file name you do not get this automatic
-check performed for you.  In such a case, you'll have to call binmode() on
-the filehandle yourself.  Once you pass a filehandle to this method it has no
-way of telling if the file opened to that filehandle is binary or not.
-
-B<Notes:> This method does not distinguish between plain files and other file
-types such as binaries, FIFOs, sockets, etc.
-
-Restrictions imposed by the current "read limit"
-I<(see the L<readlimit()|/readlimit>) entry below> will be applied to the
-files opened by this method as well.  Adjust the readlimit as necessary.
-
-=back
-
-=back
-
-=back
-
-=head2 C<make_dir>
-
-=over
-
-=item I<Syntax:> C<make_dir( [new directory name] , [bitmask], [--opts] )>
-
-Attempts to create (recursively) a directory as [new directory name] with
-the [bitmask] provided.  The bitmask is an optional argument and defaults to
-0777, combined with the user's current umask.  If specified, the bitmask
-must be supplied in the form required by the native perl umask function.
-I<see L<perlfunc/"umask">> for more information about the format of the
-bitmask argument.
-
-As mentioned above, the recursive creation of directories is transparently
-handled for you.  This means that if the name of the directory you pass in
-contains a parent directory that does not exist, the parent directory(ies) will
-be created for you automatically and silently in order to create the final
-directory in the [new directory name].
-
-Simply put, if [new directory] is "/path/to/directory" and the directory
-"/path/to" does not exist, the directory "/path/to" will be created and the
-"/path/to/directory" directory will be created thereafter.  All directories
-created will be created with the [bitmask] you specify, or with the default
-of 0777.
-
-Upon successful creation of the [new directory name], the [new directory name]
-is returned to the caller.
-
-=over
-
-=item B<Flags accepted by C<make_dir()>>
-
-=over
-
-=item C<--if-not-exists>
-
-If this flag is passed in then make_dir will not attempt to create the directory
-if it already exists.  Rather it will return the name of the directory as it
-normally would if the directory did not exist previous to calling this method.
-
-If a call to this method is made without the C<--if-not-exists> flag and the
-directory specified as [new directory name] does in fact exist, an error will
-result as it is impossible to create a directory that already exists.
-
-=back
-
-=back
-
-=back
-
-=head2 C<max_dives>
-
-=over
-
-=item I<Syntax:> C<max_dives( [integer] )>
-
-When called without any arguments, this method returns an integer reflecting
-the current number of times the File::Util object will dive into the
-subdirectories it discovers when recursively listing directory contents from
-a call to C<File::Util::list_dir()>.  The default is 1000.  If the number is
-exceeded, the File::Util object will fail with a diagnostic error message.
-
-When called with an argument, it sets the maximum number of times a File::Util
-object will recurse into subdirectories before failing with an error message.
-
-This method can only be called with a numeric integer value.  Passing a bad
-argument to this method will cause it to fail with an error message.
-
-I<(see L<list_dir|/list_dir>)>
-
-=back
-
-=head2 C<needs_binmode>
-
-=over
-
-=item I<Syntax:> C<needs_binmode>
-
-Returns 1 if the machine on which the code is running requires that C<binmode()>
-I<(a built-in function)> be called on open file handles, or returns 0 if not.
-I<(see L<perlfunc/binmode>.)>  This is a constant method.  It accepts no
-arguments and will always return the same value for the system on which it
-is executed.
-
-=back
-
-=head2 C<new>
-
-=over
-
-=item I<Syntax:> C<< new( ['parameters' => 'values', etc], [--flags] ) >>
-
-This is the File::Util constructor method.  eg- It returns a new File::Util
-object reference when you call it.  It recognizes various parameters and flags
-that govern the behavior of the new File::Util object.
-
-=over
-
-=item B<Parameters accepted by C<new()>>
-
-=over
-
-=item use_flock   => true/false value
-
-Optionally specify this option to the C<File::Util::new> method instruct the
-new object that it should never attempt to use C<flock()> in it's I/O
-operations.  The default is to use C<flock()> when available on your system.
-Specify this option with a true or false value, true to use C<flock()>, false
-to not use it.
-
-=item readlimit   => positive integer
-
-Optionally specify this option to the File::Util::new method to instruct the
-new object that it should never attempt to open and read in a file greater
-than the number of bytes you specify.  Obviously this argument can only be
-a numeric integer value, otherwise it will be silently ignored.  The default
-readlimit for File::Util objects is 52428800 bytes (50 megabytes).
-
-=item max_dives   => positive integer
-
-Optionally specify this option to the File::Util::new method to instruct the
-new object to set the maximum number of times it will recurse into
-subdirectories while performing directory listing operations before failing
-with an error message.  This argument can only be a numeric integer value,
-otherwise it will be silently ignored.
-
-=back
-
-=item B<Flags accepted by C<new()>>
-
-=over
-
-=item C<--fatals-as-warning>
-
-Directive to instruct the new File::Util object that when any call to one of
-its methods results in a fatal error that it should return B<C<undef>>
-instead of the value(s) that would normally be returned by the call, and to
-send an error message to STDERR as well.
-
-=item C<--fatals-as-status>
-
-Directive to instruct the new File::Util object that when any call to one of
-its methods results in a fatal error that it should return B<C<undef>>
-instead of the value(s) that would normally be returned by the call.
-
-=item C<--fatals-as-errmsg>
-
-Directive to instruct the new File::Util object that when any call to one of
-its methods results in a fatal error that it should return B<an error message>
-instead of the value(s) that would normally be returned by the call.
-
-=back
-
-=back
-
-=back
-
-=head2 C<open_handle>
-
-=over
-
-=item I<Syntax:> C<< open_handle( file => [file name], [--opts] ) >>
-
-=item I<OR:> C<< open_handle( file => [file name], mode => [mode], [--opts] ) >>
-
-=item I<OR:> C<< open_handle( file => [file name], mode => [mode], bitmask => [bitmask], [--opts] ) >>
-
-=item I<OR:> C<< open_handle( file => [file name], mode => [mode], bitmask => [bitmask], dbitmask => [bitmask], [--opts] ) >>
-
-Attempts to get a unique open file handle on [file name] in [mode] mode.
-Returns the file handle if successful or generates a fatal error with a
-diagnostic message if the operation fails.
-
-You will need to remember to call C<close()> on the filehandle yourself, at
-your own discretion.  Leaving filehandles open is not a good practice, and
-is not recommended.  I<see L<perlfunc/close>>).
-
-Once you have the file handle you would use it as you would use any file handle.
-Remember that unless you specifically turn file locking off when the
-C<File::Util> object is created (see I<(see L<new|/new>)> or by using the
-C<--no-lock> flag when calling C<open_handle>, that file locking is going to
-automagically be handled for you behind the scenes, so long as your OS supports
-file locking of any kind at all.  Great!  It's very convenient for you to not
-have to worry about portably taking care of file locking between one
-application and the next; by using C<File::Util> in all of them, you know
-that you're covered.
-
-A slight inconvenience for the price of a larger set of features (compare
-L<write_file|/write_file> to this method)
-I<B<you will have to release the file lock on the open handle yourself.>>
-C<File::Util> can't manage it for you anymore once it hands the handle over
-to you.  At that point, it's all yours.  In order to release the file lock
-on your file handle, call L<unlock_open_handle()|/unlock_open_handle> on it.
-Otherwise the lock will remain for the life of your process.  If you don't
-want to use the free portable file locking, remember the C<--no-lock> flag,
-which will turn off file locking for your open handle.  Seldom, however, should
-you ever opt to not use file locking unless you really know what you are doing.
-
-If the file does not yet exist it will be created, and it will be created
-with a bitmask of [bitmask] if you specify a file creation bitmask using
-the C<'bitmask'> option, otherwise the file will be created with the default
-bitmask of 0777.  The bitmask is combined with the user's current umask,
-whether you specify a value or not.  This is a function of Perl,
-not File::Util.
-
-If specified, the bitmask must be supplied in the form required by the
-native perl umask function.  I<see L<perlfunc/"umask">> for more information
-about the format of the bitmask argument.  If the file [file name] already
-exists then the bitmask argument has no effect and is silently ignored.
-
-Any non-existent directories in the path preceding the actual file name will
-be automatically (and silently - no warnings) created for you and any new
-directories will be created with a bitmask of [dbitmask], provided you specify
-a directory creation bitmask with the C<'dbitmask'> option.
-
-If specified, the directory creation bitmask [dbitmask] must be supplied in
-the form required by the native perl umask function.
-
-If there is an error while trying to create any preceding directories, the
-failure results in a fatal error with a diagnostic error message.  If all
-directories preceding the name of the file already exist, the dbitmask
-argument has no effect and is silently ignored.
-
-=back
-
-=over
-
-=item B<Native Perl open modes>
-
-The default behavior of C<open_handle()> is to open file handles using Perl's
-native C<open()> I<(see L<perlfunc/open>)>.  Unless you use the
-C<--use-sysopen> flag, the following modes and only these modes are valid.
-
-=over
-
-=item C<< 'mode' => 'read' >>
-
-[file name] is opened in read-only mode.  If the file does not yet exist then
-a fatal error will occur with a diagnostic help message to help you troubleshoot
-the problem.
-
-=item C<< 'mode' => 'write' >> (this is the default mode)
-
-[file name] is created if it does not yet exist.  If [file name] already exists
-then its contents are overwritten with the new content provided.
-
-=item C<< 'mode' => 'append' >>
-
-[file name] is created if it does not yet exist.  If [file name] already exists
-its contents will be preserved and the new content you provide will be appended
-to the end of the file.
-
-=back
-
-=back
-
-=over
-
-=item B<System level open modes ("open a la C")>
-
-Optionally you can ask C<File::Util> to open your handle using C<CORE::sysopen>
-instead of using the native Perl C<CORE::open()>.  This is accomplished by
-passing in the C<--use-sysopen> flag.  Using this feature opens up more
-possibilities as far as the open modes you can choose from, but also carries
-with it a few caveats so you have to be careful, just as you'd have to be a
-little more careful when using C<sysopen()> anyway.
-
-Specifically you need to remember that when using this feature you must NOT
-mix different types of I/O when working with the file handle.  You can't go
-opening file handles with C<sysopen()> and print to them as you normally
-would print to a file handle.  You have to use C<syswrite()> instead.  The
-same applies here.  If you get a C<sysopen()>'d filehandle from C<open_handle()>
-it is imperative that you use C<syswrite()> on it.  You'll also need to use
-C<sysseek()> and other type of C<sys>* commands on the filehandle instead of
-their native Perl equivalents.
-
-(see L<perlfunc/sysopen>, L<perlfunc/syswrite>, L<perlfunc/sysseek>,
-L<perlfunc/sysread>)
-
-That said, here are the different modes you can choose from to get a file handle
-when using the C<--use-sysopen> flag.  Remember that these won't work unless
-you use the flag, and will generate an error if you try using them without it.
-The standard C<'read'>, C<'write'>, and C<'append'> modes are already available
-to you by default.  These are the extended modes:
-
-=over
-
-=item C<< 'mode' => 'rwcreate' >>
-
-[file name] is opened in read-write mode, and will be created for you if it
-does not already exist.
-
-=item C<< 'mode' => 'rwupdate' >>
-
-[file name] is opened for you in read-write mode, but must already exist.  If
-it does not exist, a fatal error will result and a diagnostic help message will
-be printed out to help you troubleshoot the problem.
-
-=item C<< 'mode' => 'rwclobber' >>
-
-[file name] is opened for you in read-write mode.  If the file already exists
-it's contents will be "clobbered" or wiped out.  The file will then be empty
-and you will be working with the then-truncated file.  This can not be undone.
-Once you call C<open_handle()> using this option, your file WILL be wiped out.
-If the file does not exist yet, it will be created for you.
-
-=item C<< 'mode' => 'rwappend' >>
-
-[file name] will be opened for you in read-write mode ready for appending.  The
-file's contents will not be wiped out; they will be preserved and you will be
-working in append fashion.  You will only be able to write starting at the end
-of the file.  If the file does not exist, it will be created for you.
-
-=back
-
-Remember to use C<sysread()> and not plain C<read()> when reading those
-C<sysopen()>'d filehandles!
-
-=back
-
-=over
-
-=item B<Flags accepted by C<open_handle()>>
-
-=over
-
-=item C<--binmode>
-
-Makes sure that CORE::binmode() is called on the filehandle when your content
-is written.  This is useful for times when the content you are writing to file
-is a binary stream. I<(see L<perlfunc/binmode>)>.
-
-=item C<--no-lock>
-
-By default this method will attempt to get a lock on the file while it is
-being read, following whatever rules are in place for the flock policy
-established either by default (implicitly) or changed by you in a call to
-File::Util::flock_rules()
-I<(see the L<flock_rules()|/flock_rules>) entry below>.
-
-This method will not try to get a lock on the file if the File::Util object was
-created with the option C<--no-lock> or if this method is called with the
-option C<--no-lock>.
-
-=item C<--use-sysopen>
-
-Instead of opening the file using Perl's native C<open()> command, C<File::Util>
-will open the file with the C<sysopen()> command.  You will have to remember
-that your filehandle is a C<sysopen()>'d one, and that you will not be able to
-use native Perl I/O functions on it.  You will have to use the C<sys>*
-equivalents.  See L<perlopentut> for a more in-depth explanation of why you
-can't mix native Perl I/O with system I/O.
-
-=back
-
-=back
-
-=head2 C<readlimit>
-
-=over
-
-=item I<Syntax:> C<readlimit( [integer] )>
-
-By default, the largest size file that File::Util will read into memory and
-return via the L<load_file|/load_file> is 52428800 byptes (50 megabytes).
-
-This value can be modified by calling this method with an integer value
-reflecting the new limit you want to impose, in bytes.  For example, if you want
-to set the limit to 10 megabytes, call the method with an argument of 10485760.
-
-If this method is called without an argument, the read limit currently in force
-for the File::Util object will be returned.
-
-=back
-
-=head2 C<return_path>
-
-=over
-
-=item I<Syntax:> C<return_path( [string] )>
-
-Takes the file path from the file name provided and returns it such that
-"/foo/bar/baz.txt" is returned "/foo/bar".
-
-=back
-
-=head2 C<size>
-
-=over
-
-=item I<Syntax:> C<size( [file name] )>
-
-Returns the file size of [file name] in bytes.  Returns C<0> if the file is
-empty, returns C<undef> if the file does not exist.
-
-=back
-
-=head2 C<split_path>
-
-=over
-
-=item I<Syntax:> C<split_path( [string] )>
-
-Takes a path/filename, fully-qualified or relative (it doesn't matter), and it
-returns a list comprising the root of the path (if any), each directory in
-the path, and the final part of the path (be it a file, a directory, or
-otherwise)
-
-This method doesn't divine or detect any information about the path, it simply
-manipulates the string value.  It doesn't map it to any real filesystem object.
-It doesn't matter whether or not the file/path named in the input string
-exists or not.
-
-=back
-
-=head2 C<strip_path>
-
-=over
-
-=item I<Syntax:> C<strip_path( [string] )>
-
-Strips the file path from the file name provided and returns the file name only.
-
-=back
-
-=head2 C<touch>
-
-=over
-
-=item I<Syntax:> C<touch( [file name] )>
-
-Behaves like the *nix C<touch> command; Updates the access and modification
-times of the specified file to the current time.  If the file does not exist,
-C<File::Util> tries to create it empty.  This method will fail with a fatal
-error if system permissions deny alterations to or creation of the file.
-
-Returns C<1> if successful.  If unsuccessful, fails with a descriptive error
-message about what went wrong.
-
-=back
-
-=head2 C<trunc>
-
-=over
-
-=item I<Syntax:> C<trunc( [file name] )>
-
-Truncates [file name] (i.e.- wipes out, or "clobbers" the contents of the
-specified file.  Returns C<1> if successful.  If unsuccessful, fails with a
-descriptive error message about what went wrong.
-
-=back
-
-=head2 C<unlock_open_handle>
-
-=over
-
-=item I<Syntax:> C<unlock_open_handle([file handle])>
-
-Release the flock on a file handle you opened with L<open_handle|/open_handle>.
-
-Returns true on success, false on failure.  Will not raise a fatal error if
-the unlock operation fails.  You can capture the return value from your call
-to this method and C<die()> if you so desire.  Failure is not ever very likely,
-or C<File::Util> wouldn't have been able to get a portable lock on the file
-in the first place.
-
-If C<File::Util> wasn't able to ever lock the file due to limitations of your
-operating system, a call to this method will return a true value.
-
-If file locking has been disabled on the file handle via the C<--no-lock> flag
-at the time L<open_handle|/open_handle> was called, or if file locking was
-disabled using the L<use_flock|/use_flock> method, or if file locking was
-disabled on the entire C<File::Util> object at the time of its creation
-I<(see L<new()|/new>)>, calling this method will have no effect and a true value
-will be returned.
-
-=back
-
-=head2 C<use_flock>
-
-=over
-
-=item I<Syntax:> C<use_flock( [true / false value] )>
-
-When called without any arguments, this method returns a true or false value
-to reflect the current use of C<flock()> within the File::Util object.
-
-When called with a true or false value as its single argument, this method
-will tell the File::Util object whether or not it should attempt to use
-C<flock()> in its I/O operations.  A true value indicates that the File::Util
-object will use C<flock()> if available, a false value indicates that it will
-not.  The default is to use C<flock()> when available on your system.
-
-=back
-
-=head2 C<write_file>
-
-=over
-
-=item I<Syntax:> C<< write_file( file' => [file name], 'content' => [string], [--opts] ) >>
-
-=item I<OR:> C<< write_file( file => [file name], content => [string], mode => [mode], [--opts] ) >>
-
-=item I<OR:> C<< write_file( file => [file name], content => [string], mode => [mode], bitmask => [bitmask], [--opts] ) >>
-
-=item I<OR:> C<< write_file( file => [file name], content => [string], mode => [mode], bitmask => [bitmask], dbitmask => [bitmask], [--opts] ) >>
-
-Attempts to write [string] to [file name] in mode [mode].  If the file does
-not yet exist it will be created, and it will be created with a bitmask of
-[bitmask] if you specify a file creation bitmask using the C<'bitmask'> option,
-otherwise the file will be created with the default bitmask of 0777.
-The bitmask is combined with the user's current umask, whether you specify a
-value or not.  This is a function of Perl, not File::Util.
-
-[string] should be a string or a scalar variable containing a string.  The
-string can be any type of data, such as a binary stream, or ascii text with
-line breaks, etc.  Be sure to pass in the C<--binmode> flag for binary streams.
-
-If specified, the bitmask must be supplied in the form required by the
-native perl umask function.  I<see L<perlfunc/"umask">> for more information
-about the format of the bitmask argument.  If the file [file name] already
-exists then the bitmask argument has no effect and is silently ignored.
-
-Returns 1 if successful or fails (fatal) with an error message if not
-successful.
-
-Any non-existent directories in the path preceding the actual file name will
-be automatically (and silently - no warnings) created for you and any new
-directories will be created with a bitmask of [dbitmask], provided you specify
-a directory creation bitmask with the C<'dbitmask'> option.
-
-If specified, the directory creation bitmask [dbitmask] must be supplied in
-the form required by the native perl umask function.
-
-If there is an error while trying to create any preceding directories, the
-failure results in a fatal error with a diagnostic error message.  If all
-directories preceding the name of the file already exist, the dbitmask
-argument has no effect and is silently ignored.
-
-=over
-
-=item C<< 'mode' => 'write' >> (this is the default mode)
-
-[file name] is created if it does not yet exist.  If [file name] already exists
-then its contents are overwritten with the new content provided.
-
-=item C<< 'mode' => 'append' >>
-
-[file name] is created if it does not yet exist.  If [file name] already exists
-its contents will be preserved and the new content you provide will be appended
-to the end of the file.
-
-=back
-
-=over
-
-=item B<Flags accepted by C<write_file()>>
-
-=over
-
-=item C<--binmode>
-
-Makes sure that CORE::binmode() is called on the filehandle when your content
-is written.  This is useful for times when the content you are writing to file
-is a binary stream.
-
-=item C<--empty-writes-OK>
-
-Allows you to call this method without providing a content argument (it lets
-you create an empty file without warning you or failing.  Be advised that
-if you use this flag, it will have the same effect as truncating a file
-that already has content in it (i.e.- it will "clobber" non-empty files)
-
-=item C<--no-lock>
-
-By default this method will attempt to get a lock on the file while it is
-being read, following whatever rules are in place for the flock policy
-established either by default (implicitly) or changed by you in a call to
-File::Util::flock_rules()
-I<(see the L<flock_rules()|/flock_rules>) entry below>.
-
-This method will not try to get a lock on the file if the File::Util object was
-created with the option C<--no-lock> or if this method is called with the
-option C<--no-lock>.
-
-=back
-
-=back
-
-=back
-
-=head2 C<valid_filename>
-
-=over
-
-=item I<Syntax:> C<valid_filename( [string] )>
-
-For the given string, returns 1 if the string is a legal file name for the
-system on which the program is running, or returns undef if it is not.  This
-method does not test for the validity of file paths!  It tests for the validity
-of file names only.  (It is used internally to check beforehand if a file name
-is useable when creating new files, but is also a public method available for
-external use.)
-
-=back
-
-=head1 CONSTANTS
-
-=head2 C<NL>
-
-=over
-
-=item I<Syntax:> C<NL>
-
-Returns the correct new line character (or character sequence) for the system
-on which your program runs.
-
-=back
-
-=head2 C<SL>
-
-=over
-
-=item I<Syntax:> C<SL>
-
-Returns the correct directory path separator for the system on which your
-program runs.
-
-=back
-
-=head2 C<OS>
-
-=over
-
-=item I<Syntax:> C<OS>
-
-Returns the File::Util keyword for the operating system FAMILY it detected.  The
-keyword for the detected operating system will be one of the following, derived
-from the conents of C<$^O>, or if C<$^O> can not be found, from the contents of
-C<$Config::Config{osname}> (see native L<Config> library), or if that
-doesn't contain a recognizable value, finally falls back to C<UNIX>.
-
-Generally speaking, Linux operating systems are going to be detected as C<UNIX>.
-This isn't a bug.  The OS FAMILY to which it belongs uses C<UNIX> style
-filesystem conventions and line endings, which are the relevant things to
-file handling operations.
-
-=over
-
-=item UNIX
-
-Specifics: OS name =~ /^(?:darwin|bsdos)/i
-
-=item CYGWIN
-
-Specifics: OS name =~ /^cygwin/i
-
-=item WINDOWS
-
-Specifics: OS name =~ /^MSWin/i
-
-=item VMS
-
-Specifics: OS name =~ /^vms/i
-
-=item DOS
-
-Specifics: OS name =~ /^dos/i
-
-=item MACINTOSH
-
-Specifics: OS name =~ /^MacOS/i
-
-=item EPOC
-
-Specifics: OS name =~ /^epoc/i
-
-=item OS2
-
-Specifics: OS name =~ /^os2/i
-
-=back
-
-=back
 
 =head1 PREREQUISITES
 
@@ -3887,7 +2690,7 @@ and all those who contribute their time and talents as CPAN testers.
 
 Tommy Butler L<http://www.atrixnet.com/contact>
 
-Others Wanted
+Others Welcome!
 
 =head1 COPYRIGHT
 
@@ -3907,8 +2710,11 @@ for a particular purpose.
 
 =head1 SEE ALSO
 
-L<File::Util::Manual>, L<File::Util::Cookbook>, L<File::Slurp>,
-L<Path::Class>, L<Exception::Handler>
+The rest of the documentation:
+L<File::Util::Manual>, L<File::Util::Manual::Examples>, L<File::Util::Cookbook>,
+
+Similar Modules:
+L<File::Slurp>, L<File::Spec>, L<Path::Class>
 
 =cut
 

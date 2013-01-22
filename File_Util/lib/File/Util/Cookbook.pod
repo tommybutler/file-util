@@ -1,5 +1,5 @@
 package File::Util::Cookbook;
-use strict; use warnings; # for kwalitee
+use strict; use warnings; # for kwalitee tests
 
 # ABSTRACT: File::Util in Action
 
