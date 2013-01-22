@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 17;
+use Test::More tests => 19;
 use Test::NoWarnings;
 
 use File::Temp qw( tempdir );
@@ -190,6 +190,28 @@ is_deeply [
    )
 ], [ ],
    'recursive AND path_matches that should return an empty list';
+
+is_deeply [
+   map { strip_path( $_ ) } $ftl->list_dir(
+      $tempdir => {
+         path_matches => { or => [ qr/foo$/, qr/bar$/ ] },
+         dirs_only    => 1,
+         recurse      => 1,
+      }
+   )
+], [ qw( xfoo zbar ) ],
+   'recursive OR path_matches returning only directories';
+
+is_deeply [
+   map { strip_path( $_ ) } $ftl->list_dir(
+      $tempdir => {
+         path_matches => qr/bar$/,
+         dirs_only    => 1,
+         recurse      => 1,
+      }
+   )
+], [ qw( zbar ) ],
+   'recursive single arg path_matches returning only directories';
 
 exit;
 

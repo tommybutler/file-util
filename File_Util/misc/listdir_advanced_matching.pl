@@ -212,6 +212,28 @@ $ftl->list_dir(
    }
 );
 
+say '';
+say 'MATCH DIRS IN PATH [ /foo$/ -OR- /bar$/ ] (two results)';
+say for
+$ftl->list_dir(
+   $tempdir => {
+      path_matches => { or => [ qr/foo$/, qr/bar$/ ] },
+      dirs_only    => 1,
+      recurse      => 1,
+   }
+);
+
+say '';
+say 'MATCH DIRS IN PATH /bar$/ (one result)';
+say for
+$ftl->list_dir(
+   $tempdir => {
+      path_matches => qr/bar$/,
+      dirs_only    => 1,
+      recurse      => 1,
+   }
+);
+
 exit;
 
 sub setup_test_tree {
