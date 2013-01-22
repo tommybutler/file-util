@@ -234,6 +234,18 @@ $ftl->list_dir(
    }
 );
 
+say '';
+say 'MATCH FILES [ qr/^(?!.*\.jpg$)/ AND qr/^[ijk]/ ] IN PATH /foo\/z/ (two results)';
+say for
+$ftl->list_dir(
+   $tempdir => {
+      path_matches => qr/foo\/z/,
+      files_match  => { and => [ qr/^(?!.*\.jpg$)/, qr/^[ijk]/ ] },
+      files_only   => 1,
+      recurse      => 1,
+   }
+);
+
 exit;
 
 sub setup_test_tree {

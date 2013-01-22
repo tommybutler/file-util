@@ -40,7 +40,14 @@ my $f_cb = sub
    return;
 };
 
-my $cb = sub { say 'ALL IN: ' . join ' | ', map { ref $_ or $_ } @_; say '' };
+my $cb = sub {
+   my ( $dir, $subdirs, $files ) = @_;
+
+   $subdirs = scalar @$subdirs;
+   $files   = scalar @$files;
+
+   say qq(TOTALS IN: $dir - $subdirs directories | $files files\n);
+};
 
 $ftl->list_dir(
    $tempdir => {
