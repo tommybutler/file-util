@@ -1,0 +1,419 @@
+package File::Util::Manual;
+use strict; use warnings; # for kwalitee
+
+# ABSTRACT: File::Util Reference
+
+=pod
+
+=head1 NAME
+
+File::Util::Manual - File::Util Reference
+
+=head1 INTRODUCTION
+
+This manual is fully comprised of simple examples of L<File::Util> in greater
+depth than what you see in the main man page.  These examples are simple
+and short.
+
+For examples of full Programs using File::Util, take a look at the Cookbook at
+L<File::Util::Cookbook>.
+
+=head1 EXAMPLES
+
+Many of these are demonstrated in the standalone scripts that come in the
+"examples" directory as part of this distribution.
+
+=head2 Get the names of all files and subdirectories in a directory
+
+   use File::Util;
+   my $f = File::Util->new();
+   # option --no-fsdots excludes "." and ".." from the list
+   my @dirs_and_files = $f->list_dir('/foo', '--no-fsdots');
+
+=head2 Get the names of all files and subdirectories in a directory, recursively
+
+   use File::Util;
+   my $f = File::Util->new();
+   my @dirs_and_files = $f->list_dir('/foo', '--recurse');
+
+=head2 Get the names of all files (no subdirectories) in a directory
+
+   use File::Util;
+   my $f = File::Util->new();
+   my @dirs_and_files = $f->list_dir('/foo', '--files-only');
+
+=head2 Get the names of all subdirectories (no files) in a directory
+
+   use File::Util;
+   my $f = File::Util->new();
+   my @dirs_and_files = $f->list_dir('/foo', '--dirs-only');
+
+=head2 Get the number of files and subdirectories in a directory
+
+   use File::Util;
+   my $f = File::Util->new();
+   my @dirs_and_files  = $f->list_dir('/foo', qw/--no-fsdots --count-only/);
+
+=head2 Get the names of files and subdirs in a directory as separate array refs
+
+   use File::Util;
+   my $f = File::Util->new();
+   my( $dirs, $files ) = $f->list_dir('/foo', '--as-ref');
+
+      -OR-
+   my( $dirs, $files ) = $f->list_dir('.', qw/--dirs-as-ref --files-as-ref/);
+
+=head2 Get the contents of a file in a string
+
+   use File::Util;
+   my $f = File::Util->new();
+   my $contents = $f->load_file('filename');
+
+=head2 Get the contents of a file in an array of lines in the file
+
+   use File::Util;
+   my $f = File::Util->new();
+   my @contents = $f->load_file('filename','--as-lines');
+
+=head2 Get an open file handle for reading
+
+   use File::Util;
+   my $f = File::Util->new();
+   my $fh = $f->open_handle(
+      file => 'new_filename',
+      mode => 'read'
+   );
+
+=head2 Get an open file handle for writing
+
+   use File::Util;
+   my $f = File::Util->new();
+   my $fh = $f->open_handle(
+      file => 'new_filename',
+      mode => 'write'
+   );
+
+=head2 Write to a new or existing file
+
+   use File::Util;
+   my $content = 'Pathelogically Eclectic Rubbish Lister';
+   my $f = File::Util->new();
+   $f->write_file( file => 'a new file.txt', content => $content );
+
+   # you can optionally specify a bitmask for a file if it doesn't exist yet.
+   # the bitmask is combined with the user's current umask for the creation
+   # mode of the file.  (You should usually omit this.)
+   $f->write_file(
+      file    => 'a new file.txt',
+      bitmask => oct 777,
+      content => $content
+   );
+
+=head2 Append to a new or existing file
+
+   use File::Util;
+   my $content = 'Pathelogically Eclectic Rubbish Lister';
+   my $f = File::Util->new();
+   $f->write_file(
+      file => 'a new file.txt',
+      mode => 'append',
+      content => $content
+   );
+
+=head2 Determine if something is a valid file name
+
+   use File::Util qw( valid_filename );
+
+   if (valid_filename("foo?+/bar~@/#baz.txt")) {
+      print "file name is valid"
+   else {
+      print "file name contains illegal characters"
+   }
+
+      -OR-
+   use File::Util;
+   print File::Util->valid_filename("foo?+/bar~@/#baz.txt") ? 'ok' : 'bad';
+
+      -OR-
+   use File::Util;
+   my $f = File::Util->new();
+   print $f->valid_filename("foo?+/bar~@/#baz.txt") ? 'ok' : 'bad';
+
+=head2 Get the number of lines in a file
+
+   use File::Util;
+   my $f = File::Util->new();
+   my $linecount = $f->line_count('foo.txt');
+
+=head2 Strip the path from a file name
+
+   use File::Util;
+   my $f = File::Util->new();
+
+   # On Windows
+   #  (prints "hosts")
+   my $path = $f->strip_path('C:\WINDOWS\system32\drivers\etc\hosts');
+
+   # On Linux/Unix
+   #  (prints "perl")
+   print $f->strip_path('/usr/bin/perl');
+
+   # On a Mac
+   #  (prints "baz")
+   print $f->strip_path('foo:bar:baz');
+
+=head2 Get the path preceding a file name
+
+   use File::Util;
+   my $f = File::Util->new();
+
+   # On Windows
+   #  (prints "C:\WINDOWS\system32\drivers\etc")
+   my $path = $f->return_path('C:\WINDOWS\system32\drivers\etc\hosts');
+
+   # On Linux/Unix
+   #  (prints "/usr/bin")
+   print $f->return_path('/usr/bin/perl');
+
+   # On a Mac
+   #  (prints "foo:bar")
+   print $f->return_path('foo:bar:baz');
+
+=head2 Find out if the host system can use flock
+
+   use File::Util qw( can_flock );
+   print can_flock;
+
+      -OR-
+   print File::Util->can_flock;
+
+      -OR-
+   my $f = File::Util->new();
+   print $f->can_flock;
+
+=head2 Find out if the host system needs to call binmode on binary files
+
+   use File::Util qw( needs_binmode );
+   print needs_binmode;
+
+      -OR-
+   use File::Util;
+   print File::Util->needs_binmode;
+
+      -OR-
+   use File::Util;
+   my $f = File::Util->new();
+   print $f->needs_binmode;
+
+=head2 Find out if a file can be opened for read (based on file permissions)
+
+   use File::Util;
+   my $f = File::Util->new();
+   my $is_readable = $f->can_read('foo.txt');
+
+=head2 Find out if a file can be opened for write (based on file permissions)
+
+   use File::Util;
+   my $f = File::Util->new();
+   my $is_writable = $f->can_write('foo.txt');
+
+=head2 Escape illegal characters in a potential file name (and its path)
+
+   use File::Util;
+   my $f = File::Util->new();
+
+   # prints "C__WINDOWS_system32_drivers_etc_hosts"
+   print $f->escape_filename('C:\WINDOWS\system32\drivers\etc\hosts');
+
+   # prints "baz)__@^"
+   # (strips the file path from the file name, then escapes it
+   print $f->escape_filename(
+      '/foo/bar/baz)?*@^',
+      '--strip-path'
+   );
+
+   # prints "_foo_!_@so~me#illegal$_file&(name"
+   # (yes, that is a legal filename)
+   print $f->escape_filename(q[\foo*!_@so~me#illegal$*file&(name]);
+
+=head2 Find out if the host system uses EBCDIC
+
+   use File::Util qw( ebcdic );
+   print ebcdic;
+
+      -OR-
+   use File::Util;
+   print File::Util->ebcdic;
+
+      -OR-
+   use File::Util;
+   my $f = File::Util->new();
+   print $f->ebcdic;
+
+=head2 Get the type(s) of an existent file
+
+   use File::Util qw( file_type );
+   print file_type('foo.exe');
+
+      -OR-
+   use File::Util;
+   print File::Util->file_type('bar.txt');
+
+      -OR-
+   use File::Util;
+   my $f = File::Util->new();
+   print $f->file_type('/dev/null');
+
+=head2 Get the bitmask of an existent file
+
+   use File::Util qw( bitmask );
+   print bitmask('/usr/sbin/sendmail');
+
+      -OR-
+   use File::Util;
+   print File::Util->bitmask('C:\COMMAND.COM');
+
+      -OR-
+   use File::Util;
+   my $f = File::Util->new();
+   print $f->bitmask('/dev/null');
+
+=head2 Get time of creation for a file
+
+   use File::Util qw( created );
+   print scalar localtime created('/usr/bin/exim');
+
+      -OR-
+   use File::Util;
+   print scalar localtime File::Util->created('C:\COMMAND.COM');
+
+      -OR-
+   use File::Util;
+   my $f = File::Util->new();
+   print scalar localtime $f->created('/bin/less');
+
+=head2 Get the last access time for a file
+
+   use File::Util qw( last_access );
+   print scalar localtime last_access('/usr/bin/exim');
+
+      -OR-
+   use File::Util;
+   print scalar localtime File::Util->last_access('C:\COMMAND.COM');
+
+      -OR-
+   use File::Util;
+   my $f = File::Util->new();
+   print scalar localtime $f->last_access('/bin/less');
+
+=head2 Get the inode change time for a file
+
+   use File::Util qw( last_changed );
+   print scalar localtime last_changed('/usr/bin/vim');
+
+      -OR-
+   use File::Util;
+   print scalar localtime File::Util->last_changed('C:\COMMAND.COM');
+
+      -OR-
+   use File::Util;
+   my $f = File::Util->new();
+   print scalar localtime $f->last_changed('/bin/cpio');
+
+=head2 Get the last modified time for a file
+
+   use File::Util qw( last_modified );
+   print scalar localtime last_modified('/usr/bin/exim');
+
+      -OR-
+   use File::Util;
+   print scalar localtime File::Util->last_modified('C:\COMMAND.COM');
+
+      -OR-
+   use File::Util;
+   my $f = File::Util->new();
+   print scalar localtime $f->last_modified('/bin/less');
+
+=head2 Make a new directory, recursively if neccessary
+
+   use File::Util;
+   my $f = File::Util->new();
+   $f->make_dir('/var/tmp/tempfiles/foo/bar/');
+
+   # you can optionally specify a bitmask for the new directory.
+   # the bitmask is combined with the user's current umask for the creation
+   # mode of the directory.  (You should usually omit this.)
+   $f->make_dir('/var/tmp/tempfiles/foo/bar/',0755);
+
+=head2 Touch a file
+
+   use File::Util qw( touch );
+   touch('somefile.txt');
+
+      -OR-
+   use File::Util;
+   my $f = File::Util->new();
+   $f->touch('/foo/bar/baz.tmp');
+
+=head2 Truncate a file
+
+   use File::Util;
+   my $f = File::Util->new();
+   $f->trunc('/wibble/wombat/noot.tmp');
+
+=head2 Get the correct path separator for the host system
+
+   use File::Util qw( SL );
+   print SL;
+
+      -OR-
+   use File::Util;
+   print File::Util->SL;
+
+      -OR-
+   use File::Util;
+   my $f = File::Util->new();
+   print $f->SL;
+
+=head2 Get the correct newline character for the host system
+
+   use File::Util qw( NL );
+   print NL;
+
+      -OR-
+   use File::Util;
+   print File::Util->NL;
+
+      -OR-
+   use File::Util;
+   my $f = File::Util->new();
+   print $f->NL;
+
+=head1 AUTHORS
+
+Tommy Butler L<http://www.atrixnet.com/contact>
+
+=head1 COPYRIGHT
+
+Copyright(C) 2001-2013, Tommy Butler.  All rights reserved.
+
+=head1 LICENSE
+
+This library is free software, you may redistribute it and/or modify it
+under the same terms as Perl itself. For more details, see the full text of
+the LICENSE file that is included in this distribution.
+
+=head1 LIMITATION OF WARRANTY
+
+This software is distributed in the hope that it will be useful, but without
+any warranty; without even the implied warranty of merchantability or fitness
+for a particular purpose.
+
+=head1 SEE ALSO
+
+L<File::Util::Cookbook>
+
+=cut
+
+__END__
+

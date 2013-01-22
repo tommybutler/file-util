@@ -2340,56 +2340,104 @@ File::Util - Easy, versatile, portable file handling
 
 File::Util provides a comprehensive toolbox of utilities to automate all
 kinds of common tasks on file / directories.  Its purpose is to do so
-in the most portable manner possible so that users of this module won't
-have to worry about whether their programs will work on other OSes
-and machines.
+in the most B<portable> manner possible so that users of this module won't
+have to worry about whether their programs will work on other operating systems
+and/or architectures.
+
+File::Util is written B<purely in Perl>, and requires no compiler or make
+utility on your system in order to install and run it.
+
+File::Util also aims to be as backward compatible as possible, aiming to
+run without issue on Perl installations as old as 5.006.  You are encouraged
+to run File::Util on Perl version 5.8 and above.
 
 =head1 SYNOPSIS
 
    use File::Util;
+
+   # create a new File::Util object
    my $f = File::Util->new();
 
+   # load content into a variable, be it text, or binary, either works
    my $content = $f->load_file('foo.txt');
+
+   # binary this time
    my $binary_content = $f->load_file('foo.bin');
 
+   # wrangle text
    $content =~ s/this/that/g;
 
+   # re-write the file with your changes
    $f->write_file(
       file => 'bar.txt',
       content => $content,
-      bitmask => 0644
    );
 
+   # write a binary file, using some other options as well
    $f->write_file(
       file => 'file.bin',
       content => $binary_content,
-      { binmode => 1 }
+      { binmode => 1, bitmask => oct 644 }
    );
 
-   my @lines = $f->load_file( 'randomquote.txt' => { as_lines => 1 } );
-   my $line  = int rand scalar @lines;
+   # load a file into an array, line by line
+   my @lines = $f->load_file( 'file.txt' => { as_lines => 1 } );
 
-   print $lines[ $line ];
-
+   # get a listing of files, recursively, skipping directories
    my @files = $f->list_dir( '/var/tmp' => { files_only => 1, recurse => 1 } );
 
-   my @textfiles = $f->list_dir(
-      '/var/tmp' => { files_match => qr/\.txt$/, recurse => 1 }
-   );
+   # get a listing of text files, recursively
+   my @textfiles = $f->list_dir( '/var/tmp' => {
+      files_match => qr/\.txt$/,
+      recurse     => 1
+   } );
 
-   if ( $f->can_write('wibble.log') ) {
+   # walk a directory, using an anonymous function or function ref as a
+   # callback (higher order Perl)
+   $f->list_dir( '/home/larry' => {
+      recurse  => 1,
+      callback => sub {
+         my ( $selfdir, $subdirs_ref, $files_ref ) = @_;
+
+         print "In $selfdir there are...\n";
+
+         print scalar @$subdirs_ref . " subdirectories, and ";
+         print scalar @$files_ref   . " files\n";
+
+         for my $file ( @$files_ref ) {
+
+            # ... do something with $file
+         }
+      },
+   } );
+
+   # get an entire directory tree as a hierarchal datastructure reference
+   my $tree = $f->list_dir( '/my/podcasts' => { as_tree => 1 } );
+
+   # see if you have permission to write to a file, then append to it
+   # using an auto-flock'd filehandle (for operating systems that support flock)
+   # ...you can also use the write_file() method in append mode as well...
+
+   if ( $f->can_write('captains.log') ) {
 
       my $fh = $f->open_handle(
-         file => 'wibble.log',
+         file => 'captains.log',
          mode => 'append'
       );
 
-      print $fh "Hello World! It's ", scalar localtime;
+      print $fh "Captain's log, stardate 41153.7.  Our destination is...";
 
-      close $fh
+      close $fh;
+   }
+   else { # ...or warn the crew
+
+      warn "Trouble on the bridge, the Captain can't access his log";
    }
 
-   my $log_line_count = $f->line_count('/var/log/httpd/access_log');
+   # get the number of lines in a file
+   my $log_line_count = $f->line_count('/var/log/messages');
+
+   # the next several examples show how to get different information about files
 
    print "My file has a bitmask of " . $f->bitmask('my.file');
 
@@ -2397,10 +2445,42 @@ and machines.
 
    warn 'This file is binary!' if $f->isbin('my.file');
 
-   print "My file was last modified on " .
+   print 'My file was last modified on ' .
       scalar localtime $f->last_modified('my.file');
 
    # ...and B<_lots_> more
+
+=head1 SYNTAX - PLEASE READ!
+
+In the past, File::Util relied heavily on a cumbersome invocation syntax that
+was not robust enough to support the newer features that have been added
+recently.  In addition to making new features possible, the new syntax is
+more in keeping with what the Perl community has come to expect from its
+favorite modules, like Moose or DBIx::Class.
+
+If you have code that uses the old syntax, DON'T WORRY -- it's still fully
+supported.  However, for new code that takes advantage of new
+features like higher order functions (callbacks), or advanced matching
+for directory listings, you need to use the syntax as set forth in this
+document.  The old syntax isn't covered here, because you shouldn't use it
+anymore.
+
+=head2 OLD Syntax Example
+
+   $f->list_dir( '/some/dir', '--recurse', '--as-ref', '--pattern=[^\d]' );
+
+=head2 NEW Syntax Example (more robust, supports new features)
+
+   $f->list_dir(
+      '/some/dir' => {
+         files_match    => { or  => [ qr/bender$/, qr/^flexo/   ] },
+         parent_matches => { and => [ qr/^Planet/, qr/Express$/ ] },
+         callback       => \&deliver_intersteller_shipment,
+         files_only     => 1,
+         recurse        => 1,
+         as_ref         => 1,
+      }
+   )
 
 =head1 INSTALLATION
 
@@ -2414,7 +2494,12 @@ To install this module type the following at the command prompt:
 On Windows systems, the "sudo" part of the command may be omitted, but you
 will need to run the rest of the install command with Administrative privileges
 
-=head1 ISA
+=head1 DOCUMENTATION
+
+There's more than just this document.  Take a look at the reference manual
+at L<File::Util::Manual>, and the cookbook at L<File::Util::Cookbook>.
+
+=head1 @ISA
 
 =over
 
@@ -2424,12 +2509,18 @@ will need to run the rest of the install command with Administrative privileges
 
 =head1 EXPORTED SYMBOLS
 
-Exports nothing by default.  File::Util respects your namespace.
+Exports nothing by default.  File::Util fully respects your namespace.
+You can, however, ask it for certain things (below).
 
-=head2 EXPORT_OK
+=head2 @EXPORT_OK
 
 The following symbols comprise C<@File::Util::EXPORT_OK>), and as such are
 available for import to your namespace only upon request.
+
+To get any of these functions/symbols into your namespace without having
+to use them as an object method, use this kind of syntax:
+
+   use File::Util qw( strip_path NL );
 
 C<atomize_path>       I<(see L<atomize_path|/atomize_path>)>
 
@@ -2477,7 +2568,9 @@ C<valid_filename>     I<(see L<valid_filename|/valid_filename>)>
 
 =head2 EXPORT_TAGS
 
-   :all (exports all of @File::Util::EXPORT_OK)
+   :all (imports all of @File::Util::EXPORT_OK to your namespace)
+
+   use File::Util qw( :all ); # seldom if ever necessary, but it's an option
 
 =head1 METHODS
 
@@ -3754,637 +3847,15 @@ Specifics: OS name =~ /^os2/i
 
 =item L<Perl|perl> 5.006 or better
 
-=item L<Exception::Handler>   v1.00_0 or better
-
 =back
 
 =head1 EXAMPLES
 
-Many of these are demonstrated in the standalone scripts that come in the
-"examples" directory as part of this distribution.
-
-=head2 Get the names of all files and subdirectories in a directory
-
-   use File::Util;
-   my $f = File::Util->new();
-   # option --no-fsdots excludes "." and ".." from the list
-   my @dirs_and_files = $f->list_dir('/foo', '--no-fsdots');
-
-=head2 Get the names of all files and subdirectories in a directory, recursively
-
-   use File::Util;
-   my $f = File::Util->new();
-   my @dirs_and_files = $f->list_dir('/foo', '--recurse');
-
-=head2 Get the names of all files (no subdirectories) in a directory
-
-   use File::Util;
-   my $f = File::Util->new();
-   my @dirs_and_files = $f->list_dir('/foo', '--files-only');
-
-=head2 Get the names of all subdirectories (no files) in a directory
-
-   use File::Util;
-   my $f = File::Util->new();
-   my @dirs_and_files = $f->list_dir('/foo', '--dirs-only');
-
-=head2 Get the number of files and subdirectories in a directory
-
-   use File::Util;
-   my $f = File::Util->new();
-   my @dirs_and_files  = $f->list_dir('/foo', qw/--no-fsdots --count-only/);
-
-=head2 Get the names of files and subdirs in a directory as separate array refs
-
-   use File::Util;
-   my $f = File::Util->new();
-   my( $dirs, $files ) = $f->list_dir('/foo', '--as-ref');
-
-      -OR-
-   my( $dirs, $files ) = $f->list_dir('.', qw/--dirs-as-ref --files-as-ref/);
-
-=head2 Get the contents of a file in a string
-
-   use File::Util;
-   my $f = File::Util->new();
-   my $contents = $f->load_file('filename');
-
-=head2 Get the contents of a file in an array of lines in the file
-
-   use File::Util;
-   my $f = File::Util->new();
-   my @contents = $f->load_file('filename','--as-lines');
-
-=head2 Get an open file handle for reading
-
-   use File::Util;
-   my $f = File::Util->new();
-   my $fh = $f->open_handle(
-      file => 'new_filename',
-      mode => 'read'
-   );
-
-=head2 Get an open file handle for writing
-
-   use File::Util;
-   my $f = File::Util->new();
-   my $fh = $f->open_handle(
-      file => 'new_filename',
-      mode => 'write'
-   );
-
-=head2 Write to a new or existing file
-
-   use File::Util;
-   my $content = 'Pathelogically Eclectic Rubbish Lister';
-   my $f = File::Util->new();
-   $f->write_file( file => 'a new file.txt', content => $content );
-
-   # you can optionally specify a bitmask for a file if it doesn't exist yet.
-   # the bitmask is combined with the user's current umask for the creation
-   # mode of the file.  (You should usually omit this.)
-   $f->write_file(
-      file    => 'a new file.txt',
-      bitmask => oct 777,
-      content => $content
-   );
-
-=head2 Append to a new or existing file
-
-   use File::Util;
-   my $content = 'Pathelogically Eclectic Rubbish Lister';
-   my $f = File::Util->new();
-   $f->write_file(
-      file => 'a new file.txt',
-      mode => 'append',
-      content => $content
-   );
-
-=head2 Determine if something is a valid file name
-
-   use File::Util qw( valid_filename );
-
-   if (valid_filename("foo?+/bar~@/#baz.txt")) {
-      print "file name is valid"
-   else {
-      print "file name contains illegal characters"
-   }
-
-      -OR-
-   use File::Util;
-   print File::Util->valid_filename("foo?+/bar~@/#baz.txt") ? 'ok' : 'bad';
-
-      -OR-
-   use File::Util;
-   my $f = File::Util->new();
-   print $f->valid_filename("foo?+/bar~@/#baz.txt") ? 'ok' : 'bad';
-
-=head2 Get the number of lines in a file
-
-   use File::Util;
-   my $f = File::Util->new();
-   my $linecount = $f->line_count('foo.txt');
-
-=head2 Strip the path from a file name
-
-   use File::Util;
-   my $f = File::Util->new();
-
-   # On Windows
-   #  (prints "hosts")
-   my $path = $f->strip_path('C:\WINDOWS\system32\drivers\etc\hosts');
-
-   # On Linux/Unix
-   #  (prints "perl")
-   print $f->strip_path('/usr/bin/perl');
-
-   # On a Mac
-   #  (prints "baz")
-   print $f->strip_path('foo:bar:baz');
-
-=head2 Get the path preceding a file name
-
-   use File::Util;
-   my $f = File::Util->new();
-
-   # On Windows
-   #  (prints "C:\WINDOWS\system32\drivers\etc")
-   my $path = $f->return_path('C:\WINDOWS\system32\drivers\etc\hosts');
-
-   # On Linux/Unix
-   #  (prints "/usr/bin")
-   print $f->return_path('/usr/bin/perl');
-
-   # On a Mac
-   #  (prints "foo:bar")
-   print $f->return_path('foo:bar:baz');
-
-=head2 Find out if the host system can use flock
-
-   use File::Util qw( can_flock );
-   print can_flock;
-
-      -OR-
-   print File::Util->can_flock;
-
-      -OR-
-   my $f = File::Util->new();
-   print $f->can_flock;
-
-=head2 Find out if the host system needs to call binmode on binary files
-
-   use File::Util qw( needs_binmode );
-   print needs_binmode;
-
-      -OR-
-   use File::Util;
-   print File::Util->needs_binmode;
-
-      -OR-
-   use File::Util;
-   my $f = File::Util->new();
-   print $f->needs_binmode;
-
-=head2 Find out if a file can be opened for read (based on file permissions)
-
-   use File::Util;
-   my $f = File::Util->new();
-   my $is_readable = $f->can_read('foo.txt');
-
-=head2 Find out if a file can be opened for write (based on file permissions)
-
-   use File::Util;
-   my $f = File::Util->new();
-   my $is_writable = $f->can_write('foo.txt');
-
-=head2 Escape illegal characters in a potential file name (and its path)
-
-   use File::Util;
-   my $f = File::Util->new();
-
-   # prints "C__WINDOWS_system32_drivers_etc_hosts"
-   print $f->escape_filename('C:\WINDOWS\system32\drivers\etc\hosts');
-
-   # prints "baz)__@^"
-   # (strips the file path from the file name, then escapes it
-   print $f->escape_filename(
-      '/foo/bar/baz)?*@^',
-      '--strip-path'
-   );
-
-   # prints "_foo_!_@so~me#illegal$_file&(name"
-   # (yes, that is a legal filename)
-   print $f->escape_filename(q[\foo*!_@so~me#illegal$*file&(name]);
-
-=head2 Find out if the host system uses EBCDIC
-
-   use File::Util qw( ebcdic );
-   print ebcdic;
-
-      -OR-
-   use File::Util;
-   print File::Util->ebcdic;
-
-      -OR-
-   use File::Util;
-   my $f = File::Util->new();
-   print $f->ebcdic;
-
-=head2 Get the type(s) of an existent file
-
-   use File::Util qw( file_type );
-   print file_type('foo.exe');
-
-      -OR-
-   use File::Util;
-   print File::Util->file_type('bar.txt');
-
-      -OR-
-   use File::Util;
-   my $f = File::Util->new();
-   print $f->file_type('/dev/null');
-
-=head2 Get the bitmask of an existent file
-
-   use File::Util qw( bitmask );
-   print bitmask('/usr/sbin/sendmail');
-
-      -OR-
-   use File::Util;
-   print File::Util->bitmask('C:\COMMAND.COM');
-
-      -OR-
-   use File::Util;
-   my $f = File::Util->new();
-   print $f->bitmask('/dev/null');
-
-=head2 Get time of creation for a file
-
-   use File::Util qw( created );
-   print scalar localtime created('/usr/bin/exim');
-
-      -OR-
-   use File::Util;
-   print scalar localtime File::Util->created('C:\COMMAND.COM');
-
-      -OR-
-   use File::Util;
-   my $f = File::Util->new();
-   print scalar localtime $f->created('/bin/less');
-
-=head2 Get the last access time for a file
-
-   use File::Util qw( last_access );
-   print scalar localtime last_access('/usr/bin/exim');
-
-      -OR-
-   use File::Util;
-   print scalar localtime File::Util->last_access('C:\COMMAND.COM');
-
-      -OR-
-   use File::Util;
-   my $f = File::Util->new();
-   print scalar localtime $f->last_access('/bin/less');
-
-=head2 Get the inode change time for a file
-
-   use File::Util qw( last_changed );
-   print scalar localtime last_changed('/usr/bin/vim');
-
-      -OR-
-   use File::Util;
-   print scalar localtime File::Util->last_changed('C:\COMMAND.COM');
-
-      -OR-
-   use File::Util;
-   my $f = File::Util->new();
-   print scalar localtime $f->last_changed('/bin/cpio');
-
-=head2 Get the last modified time for a file
-
-   use File::Util qw( last_modified );
-   print scalar localtime last_modified('/usr/bin/exim');
-
-      -OR-
-   use File::Util;
-   print scalar localtime File::Util->last_modified('C:\COMMAND.COM');
-
-      -OR-
-   use File::Util;
-   my $f = File::Util->new();
-   print scalar localtime $f->last_modified('/bin/less');
-
-=head2 Make a new directory, recursively if neccessary
-
-   use File::Util;
-   my $f = File::Util->new();
-   $f->make_dir('/var/tmp/tempfiles/foo/bar/');
-
-   # you can optionally specify a bitmask for the new directory.
-   # the bitmask is combined with the user's current umask for the creation
-   # mode of the directory.  (You should usually omit this.)
-   $f->make_dir('/var/tmp/tempfiles/foo/bar/',0755);
-
-=head2 Touch a file
-
-   use File::Util qw( touch );
-   touch('somefile.txt');
-
-      -OR-
-   use File::Util;
-   my $f = File::Util->new();
-   $f->touch('/foo/bar/baz.tmp');
-
-=head2 Truncate a file
-
-   use File::Util;
-   my $f = File::Util->new();
-   $f->trunc('/wibble/wombat/noot.tmp');
-
-=head2 Get the correct path separator for the host system
-
-   use File::Util qw( SL );
-   print SL;
-
-      -OR-
-   use File::Util;
-   print File::Util->SL;
-
-      -OR-
-   use File::Util;
-   my $f = File::Util->new();
-   print $f->SL;
-
-=head2 Get the correct newline character for the host system
-
-   use File::Util qw( NL );
-   print NL;
-
-      -OR-
-   use File::Util;
-   print File::Util->NL;
-
-      -OR-
-   use File::Util;
-   my $f = File::Util->new();
-   print $f->NL;
+See L<File::Util::Manual>
 
 =head1 EXAMPLES (Full Programs)
 
-These are included in the standalone scripts that come in the
-"examples" directory as part of this distribution.
-
-=head2 Batch File Rename
-
-   # This code changes the file suffix of all files in a directory
-   # ending in *.log so that they end in *.txt
-   #
-   # Note - This example is NOT recursive.
-
-   use strict;
-   use warnings;
-   use vars qw( $dir );
-
-   # Regarding "SL" below: On Win/DOS, it is "\" and on Mac/BSD/Linux it is "/"
-   # File::Util will automatically detect this for you.
-   use File::Util qw( NL SL );
-
-   my $ftl   = File::Util->new();
-   my $dir   = 'some/log/directory';
-   my @files = $ftl->list_dir( $dir, '--files-only' );
-
-   foreach my $file ( @files ) {
-
-      # don't change the file suffix unless it is *.log
-      next unless $file =~ /log$/;
-
-      my $newname = $file;
-         $newname =~ s/\.log$/\.txt/;
-
-      if ( rename $dir . SL . $file, $dir . SL . $newname ) {
-
-         print qq($file -> $newname), NL
-      }
-      else {
-
-         warn qq(Couldn't rename "$_" to "$newname" - $!)
-      }
-   }
-
-   exit;
-
-=head2 Recursively remove a directory and all its contents
-
-   # This code removes a directory and everything in it
-
-   use strict;
-   use warnings;
-   use File::Util qw( NL );
-
-   my $ftl = File::Util->new();
-   my $removedir = '/path/to/directory/youwanttodelete';
-
-   my @gonners = $ftl->list_dir( $removedir, '--recurse' );
-
-   # remove directory and everything in it
-   @gonners = reverse sort { length $a <=> length $b } @gonners;
-
-   foreach my $gonner ( @gonners, $removedir ) {
-
-      print "Removing $gonner ...", NL;
-
-      -d $gonner ? rmdir $gonner || die $! : unlink $gonner || die $!;
-    }
-
-   print 'Done!', NL;
-
-   exit;
-
-=head2 Wrap the lines in a file at 72 columns, then save it
-
-   # This code opens a file, wraps its lines, and saves the file with
-   # the newly formatted content
-
-   use strict; # always
-   use warnings;
-
-   use File::Util qw( NL );
-   use Text::Wrap qw( wrap );
-
-   $Text::Wrap::columns = 72; # wrap text at this many columns
-
-   my $f = File::Util->new();
-   my $textfile = 'myreport.txt'; # file to wrap and save
-
-   $f->write_file(
-     filename => $textfile,
-     content => wrap('', '', $f->load_file($textfile))
-   );
-
-   print 'Done.', NL x 2;
-
-=head2 Read and increment a counter file, then save it
-
-   # This code opens a file, reads a number value, increments it,
-   # then saves the newly incremented value back to the file
-
-   # For the sake of simplicity, this code assumes:
-   #   * the counter file already exist and is writeable
-   #   * the counter file has one line, which contains only numbers
-
-   use strict; # always
-   use warnings;
-
-   use File::Util;
-
-   my $ftl = File::Util->new();
-   my $counterfile = 'counter.txt'; # the counter file needs to already exist
-
-   my $count = $ftl->load_file( $counterfile );
-
-   # convert textual number to in-memory int type, -this will default
-   # to a zero if it encounters non-numerical or empty content
-   chomp $count;
-   $count = int $count;
-
-   print "Count value from file: $count.";
-
-   $count++; # increment the counter value by 1
-
-   # save the incremented count back to the counter file
-   $ftl->write_file( filename => $counterfile, content => $count );
-
-   # verify that it worked
-   print ' Count is now: ' . $ftl->load_file( $counterfile );
-
-   exit;
-
-=head2 Batch Search & Replace
-
-   # Code does a recursive batch search/replace on the content of all files
-   # in a given directory
-   #
-   # Note - this code skips binary files
-
-   use strict;
-   use warnings;
-   use File::Util qw( NL SL );
-
-   # will get search pattern from file named below
-   use constant SFILE => './sr/searchfor';
-
-   # will get replace pattern from file named below
-   use constant RFILE => './sr/replacewith';
-
-   # will perform batch operation in directory named below
-   use constant INDIR => '/foo/bar/baz';
-
-
-   # create new File::Util object, set File::Util to send a warning for
-   # fatal errors instead of dying
-   my $ftl   = File::Util->new( '--fatals-as-warning' );
-   my $rstr  = $ftl->load_file( RFILE );
-   my $spat  = quotemeta $ftl->load_file( SFILE ); $spat = qr/$spat/;
-   my $gsbt  = 0;
-   my @opts  = qw/ --files-only --with-paths --recurse /;
-   my @files = $ftl->list_dir( INDIR, @opts );
-
-   for (my $i = 0; $i < @files; ++$i) {
-
-      next if $ftl->isbin( $files[$i] );
-
-      my $sbt = 0; my $file = $ftl->load_file( $files[$i] );
-
-      $file =~ s/$spat/++$sbt;++$gsbt;$rstr/ge;
-
-      $ftl->write_file( file => $files[$i], content => $file );
-
-      print $sbt ? qq($sbt replacements in $files[$i]) . NL : '';
-   }
-
-   print NL . <<__DONE__ . NL;
-   $gsbt replacements in ${\ scalar @files } files.
-   __DONE__
-
-   exit;
-
-=head2 Pretty-Print A Directory Recursively
-
-   # set this to the name of the directory to pretty-print
-   my $treetrunk = '/tmp';
-
-   use strict;
-   use warnings;
-
-   use File::Util qw( NL );
-
-   my $indent = '';
-   my $ftl    = File::Util->new();
-   my @opts   = qw(
-      --with-paths
-      --sl-after-dirs
-      --no-fsdots
-      --files-as-ref
-      --dirs-as-ref
-   );
-
-   my $filetree  = { };
-   my( $subdirs, $sfiles ) = $ftl->list_dir( $treetrunk, @opts );
-
-   $filetree = [{
-      $treetrunk => [ sort { uc $a cmp uc $b } @$subdirs, @$sfiles ]
-   }];
-
-   descend( $filetree->[0]{ $treetrunk }, scalar @$subdirs );
-
-   walk( @$filetree );
-
-   exit;
-
-   sub descend {
-
-      my( $parent, $dirnum ) = @_;
-
-      for ( my $i = 0; $i < $dirnum; ++$i ) {
-
-         my $current = $parent->[ $i ];
-
-         next unless -d $current;
-
-         my( $subdirs, $sfiles ) = $ftl->list_dir( $current, @opts );
-
-         map { $_ = $ftl->strip_path( $_ ) } @$sfiles;
-
-         splice @$parent, $i, 1,
-         { $current => [ sort { uc $a cmp uc $b } @$subdirs, @$sfiles ] };
-
-         descend( $parent->[$i]{ $current }, scalar @$subdirs );
-      }
-
-      return $parent;
-   }
-
-   sub walk {
-
-      my $dir = shift @_;
-
-      foreach ( @{ [ %$dir ]->[1] } ) {
-
-         my $mem = $_;
-
-         if ( ref $mem eq 'HASH' ) {
-
-            print $indent . $ftl->strip_path([ %$mem ]->[0]) . '/', NL;
-
-            $indent .= ' ' x 3; # increase indent
-
-            walk( $mem );
-
-            $indent = substr( $indent, 3 ); # decrease indent
-
-         } else { print $indent . $mem, NL }
-      }
-   }
+See L<File::Util::Cookbook>
 
 =head1 BUGS
 
@@ -4393,15 +3864,18 @@ L<https://rt.cpan.org/Dist/Display.html?Name=File%3A%3AUtil>
 
 =head1 RESOURCES
 
-If you want to get help, contact the authors (links below in the AUTHORS section)
+If you want to get help, contact the authors (links below in AUTHORS section)
 
-I fully endorse L<http://www.perlmonks.org> as an excellent source of help with Perl in general.
+I fully endorse L<http://www.perlmonks.org> as an excellent source of help
+with Perl in general.
 
 =head1 CONTRIBUTING
 
-The project website for File::Util is at L<https://github.com/tommybutler/file-util/wiki>
+The project website for File::Util is at
+L<https://github.com/tommybutler/file-util/wiki>
 
-The git repository for File::Util is on Github at L<https://github.com/tommybutler/file-util>
+The git repository for File::Util is on Github at
+L<https://github.com/tommybutler/file-util>
 
 Clone it at L<git://github.com/tommybutler/file-util.git>
 
@@ -4412,6 +3886,8 @@ and all those who contribute their time and talents as CPAN testers.
 =head1 AUTHORS
 
 Tommy Butler L<http://www.atrixnet.com/contact>
+
+Others Wanted
 
 =head1 COPYRIGHT
 
@@ -4431,7 +3907,8 @@ for a particular purpose.
 
 =head1 SEE ALSO
 
-L<File::Slurp>, L<Path::Class>, L<Exception::Handler>
+L<File::Util::Manual>, L<File::Util::Cookbook>, L<File::Slurp>,
+L<Path::Class>, L<Exception::Handler>
 
 =cut
 

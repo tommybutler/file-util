@@ -1,5 +1,19 @@
 NEWS for File::Util
 
+Tue Jan 22 00:28:30 CST 2013
+   4.0 has (and never will be) released to the CPAN, as it was still in
+   active development at the time it hit that mark.  Development continues,
+   and the first formal release of the 4.x version distributions is soon
+   approaching.  Documentation seems all that is left.  There's a whole
+   slew of new features to document (higher order functions and the new
+   method invocation syntax are just two examples).
+
+   Much more has been done in the way of improving the test suite, and
+   the dist is being constantly tested on Windows, Solaris, and Unix so
+   future releases to the CPAN will never bring surprises like those that
+   happened when development first shifted to the use of Dist::Zilla.
+
+
 Thu Jan 10 22:44:45 CST 2013
    The latest release (v 4.0) brings many fixes to the table.  The fixes
    affect nearly all platforms and architectures.  Users are encouraged to
@@ -78,4 +92,3 @@ Mon Dec 31 23:25:00 CST 2012
    http://www.perlmonks.org/?node_id=1011110
 
    Happy new year!
-      - Tommy Butler
