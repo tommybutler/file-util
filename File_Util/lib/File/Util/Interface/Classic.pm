@@ -32,7 +32,7 @@ $AUTHORITY  = 'cpan:TOMMY';
 # --------------------------------------------------------
 sub _myargs {
 
-   shift @_ if blessed $_[0];
+   shift @_ if ( blessed $_[0] || ( $_[0] && $_[0] =~ /^File::Util/ ) );
 
    return wantarray ? @_ : $_[0]
 }
