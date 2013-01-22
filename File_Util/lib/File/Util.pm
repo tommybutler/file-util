@@ -23,7 +23,7 @@ $AUTHORITY  = 'cpan:TOMMY';
    SL     strip_path  can_read     can_write     valid_filename
    OS     bitmask     return_path  file_type     escape_filename
    isbin  created     last_access  last_changed  last_modified
-   size   atomize_path
+   size   split_path  atomize_path
 );
 
 %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
@@ -183,6 +183,8 @@ sub list_dir {
 
    @files = _list_dir_matching( $opts, $path, \@files );
 
+# SEPARATION OF DIRS FROM FILES
+
    # prepend full path information to each file name if paths were
    # requested, or if we are recursing.  Then separate the directories
    # and files off into @dirs and @itmes, respectively
@@ -242,17 +244,19 @@ sub list_dir {
          # options would otherwise break recursion and/or cause confusion
 
          my $recurse_opts = {
-            with_paths  => 1,
-            recursing   => 1,
-            no_fsdots   => 1,
-            max_dives   => $maxd,
-            rpattern    => $opts->{rpattern},
-            match_files => $opts->{match_files},
-            match_dirs  => $opts->{match_dirs},
-            callback    => $opts->{callback},
-            d_callback  => $opts->{d_callback},
-            f_callback  => $opts->{f_callback},
-            as_ref      => 1,
+            as_ref         => 1,
+            with_paths     => 1,
+            recursing      => 1,
+            no_fsdots      => 1,
+            max_dives      => $maxd,
+            rpattern       => $opts->{rpattern},
+            files_match    => $opts->{files_match},
+            dirs_match     => $opts->{dirs_match},
+            parent_matches => $opts->{parent_matches},
+            path_matches   => $opts->{path_matches},
+            callback       => $opts->{callback},
+            d_callback     => $opts->{d_callback},
+            f_callback     => $opts->{f_callback},
          };
 
          my ( $dirs_ref, $files_ref ) =
@@ -265,7 +269,17 @@ sub list_dir {
 
 # FINAL PREPARATIONS before returning results
 
-   # cosmetic formatting for directories
+   if (
+        !$opts->{recursing} &&
+      (
+         $opts->{path_matches} ||
+         $opts->{parent_matches}
+      )
+   ) {
+      @dirs = _list_dir_lastround_dirmatch( $opts, \@dirs );
+   }
+
+   # cosmetic formatting for directories/
    if ( $opts->{sl_after_dirs} ) {
 
       # append directory separator to everything but the "dots"
@@ -325,8 +339,8 @@ sub _list_dir_matching {
 
    @qualified_files = grep { !exists $dirs_only{ $_ } } @qualified_files;
 
-   my @files_to_match = map { strip_path( $_ ) } @qualified_files;
-   my @dirs_to_match  = map { strip_path( $_ ) } @qualified_dirs;
+   my @files_match = map { strip_path( $_ ) } @qualified_files;
+   my @dirs_match  = map { strip_path( $_ ) } @qualified_dirs;
 
    # memory management
    undef %dirs_only;
@@ -335,75 +349,224 @@ sub _list_dir_matching {
 
 # COLLECT PATTERN(S) TO BE APPLIED
 
-   my @match_files_and =
-      defined $opts->{match_files} &&
-      ref $opts->{match_files} eq 'HASH' &&
-      defined $opts->{match_files}->{and} &&
-      ref $opts->{match_files}->{and} eq 'ARRAY'
-         ? @{ $opts->{match_files}->{and} }
-         : defined $opts->{match_files} &&
-           ref $opts->{match_files} eq 'Regexp'
-            ? ( $opts->{match_files} )
-            : ( );
+   my @files_match_or;
+   my @files_match_and  = _gather_and_patterns( $opts->{files_match} );
+      @files_match_or   = _gather_or_patterns( $opts->{files_match} )
+         unless scalar @files_match_and;
 
-   my @match_files_or =
-      !scalar @match_files_and &&
-      defined $opts->{match_files} &&
-      ref $opts->{match_files} eq 'HASH' &&
-      defined $opts->{match_files}->{or} &&
-      ref $opts->{match_files}->{or} eq 'ARRAY'
-         ? @{ $opts->{match_files}->{or} }
-         : ( );
+   my @dirs_match_or;
+   my @dirs_match_and   = _gather_and_patterns( $opts->{dirs_match} );
+      @dirs_match_or    = _gather_or_patterns( $opts->{dirs_match} )
+         unless scalar @dirs_match_and;
 
-   my @match_dirs_and =
-      defined $opts->{match_dirs} &&
-      ref $opts->{match_dirs} eq 'HASH' &&
-      defined $opts->{match_dirs}->{and} &&
-      ref $opts->{match_dirs}->{and} eq 'ARRAY'
-         ? @{ $opts->{match_dirs}->{and} }
-         : defined $opts->{match_dirs} &&
-           ref $opts->{match_dirs} eq 'Regexp'
-            ? ( $opts->{match_dirs} )
-            : ( );
+   my @parent_matches_or;
+   my @parent_matches_and = _gather_and_patterns( $opts->{parent_matches} );
+      @parent_matches_or  = _gather_or_patterns( $opts->{parent_matches} )
+         unless scalar @parent_matches_and;
 
-   my @match_dirs_or = !scalar @match_dirs_and &&
-      !scalar @match_dirs_and &&
-      defined $opts->{match_dirs} &&
-      ref $opts->{match_dirs} eq 'HASH' &&
-      defined $opts->{match_dirs}->{or} &&
-      ref $opts->{match_dirs}->{or} eq 'ARRAY'
-         ? @{ $opts->{match_dirs}->{or} }
-         : ( );
+   my @path_matches_or;
+   my @path_matches_and   = _gather_and_patterns( $opts->{path_matches} );
+      @path_matches_or    = _gather_or_patterns( $opts->{path_matches} )
+         unless scalar @path_matches_and;
 
 # FILE MATCHING
 
-   for my $pattern ( @match_files_and ) {
+   for my $pattern ( @files_match_and ) {
 
-      @files_to_match = grep { /$pattern/ } @files_to_match;
+      @files_match = grep { /$pattern/ } @files_match;
    }
 
-   @files_to_match = _match_and( \@match_files_and, \@files_to_match )
-      if scalar @match_files_and;
+   @files_match = _match_and( \@files_match_and, \@files_match )
+      if scalar @files_match_and;
 
-   @files_to_match = _match_or( \@match_files_or, \@files_to_match )
-      if scalar @match_files_or;
+   @files_match = _match_or( \@files_match_or, \@files_match )
+      if scalar @files_match_or;
 
 # DIRECTORY MATCHING
 
-   @dirs_to_match = _match_and( \@match_dirs_and, \@dirs_to_match )
-      if scalar @match_dirs_and;
+   @dirs_match = _match_and( \@dirs_match_and, \@dirs_match )
+      if scalar @dirs_match_and;
 
-   @dirs_to_match = _match_or( \@match_dirs_or, \@dirs_to_match )
-      if scalar @match_dirs_or;
+   @dirs_match = _match_or( \@dirs_match_or, \@dirs_match )
+      if scalar @dirs_match_or;
 
 # FILE &'ed DIRECTORY MATCHING
-   if ( $opts->{match_files} && $opts->{match_dirs} ) {
 
-      @files_to_match = ( )
-         unless _match_and( \@match_dirs_and, [ strip_path( $path ) ] );
+   if ( $opts->{files_match} && $opts->{dirs_match} ) {
+
+      @files_match = ( )
+         unless _match_and( \@dirs_match_and, [ strip_path( $path ) ] );
    }
 
-   return ( @dirs_to_match, @files_to_match );
+# MATCHING FILES BY PARENT DIR
+
+   if ( $opts->{parent_matches} ) {
+
+      if ( @parent_matches_and ) {
+
+         @files_match = ( )
+            unless _match_and( \@parent_matches_and, [ strip_path( $path ) ] );
+      }
+      elsif ( @parent_matches_or ) {
+
+         @files_match = ( )
+            unless _match_or( \@parent_matches_or, [ strip_path( $path ) ] );
+      }
+   }
+
+# MATCHING FILES BY PATH
+
+   if ( $opts->{path_matches} ) {
+
+      if ( @path_matches_and ) {
+
+         @files_match = ( )
+            unless _match_and( \@path_matches_and, [ $path ] );
+      }
+      elsif ( @path_matches_or ) {
+
+         @files_match = ( )
+            unless _match_or( \@path_matches_or, [ $path ] );
+      }
+   }
+
+   return ( @dirs_match, @files_match );
+}
+
+
+# --------------------------------------------------------
+# File::Util::_list_dir_lastround_dirmatch()
+# --------------------------------------------------------
+sub _list_dir_lastround_dirmatch {
+   my ( $opts, $dirs ) = @_;
+
+   my @return_dirs;
+
+   my @qualified_dirs = splice @$dirs, 0;
+   # can't keep multiple ^^^^^ potentially huge lists of files in RAM
+
+   my @parent_matches_or;
+   my @parent_matches_and = _gather_and_patterns( $opts->{parent_matches} );
+      @parent_matches_or  = _gather_or_patterns( $opts->{parent_matches} )
+         unless scalar @parent_matches_and;
+
+   my @path_matches_or;
+   my @path_matches_and   = _gather_and_patterns( $opts->{path_matches} );
+      @path_matches_or    = _gather_or_patterns( $opts->{path_matches} )
+         unless scalar @path_matches_and;
+
+# LAST ROUND MATCHING DIRS BY PARENT DIR
+
+   if ( $opts->{parent_matches} ) {
+
+      my %return_dirs;
+
+      if ( @parent_matches_and ) {
+
+         for my $qfd_dir ( @qualified_dirs ) {
+
+            my ( $root, $in_path ) = atomize_path( $qfd_dir );
+
+            $in_path = $root . $in_path if $root;
+
+            $return_dirs{ $in_path } = $in_path
+            if _match_and( \@parent_matches_and, [ strip_path( $in_path ) ] );
+         }
+      }
+      elsif ( @parent_matches_or ) {
+
+         for my $qfd_dir ( @qualified_dirs ) {
+
+            my ( $root, $in_path ) = atomize_path( $qfd_dir );
+
+            $in_path = $root . $in_path if $root;
+
+            $return_dirs{ $in_path } = $in_path
+            if _match_or( \@parent_matches_or, [ strip_path( $in_path ) ] );
+         }
+      }
+
+      push @return_dirs, keys %return_dirs;
+   }
+
+# LAST ROUND MATCHING DIRS BY PATH
+
+   if ( $opts->{path_matches} ) {
+
+      my %return_dirs;
+
+      if ( @path_matches_and ) {
+
+         for my $qfd_dir ( @qualified_dirs ) {
+
+            my ( $root, $in_path ) = atomize_path( $qfd_dir );
+
+            $in_path = $root . $in_path if $root;
+
+            $return_dirs{ $in_path } = $in_path
+               if _match_and( \@path_matches_and, [ $in_path ] );
+
+            $return_dirs{ $qfd_dir } = $qfd_dir
+               if _match_and( \@path_matches_and, [ $qfd_dir ] );
+         }
+      }
+      elsif ( @path_matches_or ) {
+
+         for my $qfd_dir ( @qualified_dirs ) {
+
+            my ( $root, $in_path ) = atomize_path( $qfd_dir );
+
+            $in_path = $root . $in_path if $root;
+
+            $return_dirs{ $in_path } = $in_path
+               if _match_or( \@path_matches_or, [ $in_path ] );
+
+            $return_dirs{ $qfd_dir } = $qfd_dir
+               if _match_or( \@path_matches_or, [ $qfd_dir ] );
+         }
+      }
+
+      push @return_dirs, keys %return_dirs;
+   }
+
+   return @return_dirs;
+}
+
+
+# --------------------------------------------------------
+# File::Util::_gather_and_patterns()
+# --------------------------------------------------------
+sub _gather_and_patterns {
+
+   my $pattern_ref = shift @_;
+
+   return
+      defined $pattern_ref &&
+      ref $pattern_ref eq 'HASH' &&
+      defined $pattern_ref->{and} &&
+      ref $pattern_ref->{and} eq 'ARRAY'
+         ? @{ $pattern_ref->{and} }
+         : defined $pattern_ref &&
+           ref $pattern_ref eq 'Regexp'
+            ? ( $pattern_ref )
+            : ( );
+}
+
+
+# --------------------------------------------------------
+# File::Util::_gather_or_patterns()
+# --------------------------------------------------------
+sub _gather_or_patterns {
+
+   my $pattern_ref = shift @_;
+
+   return
+      defined $pattern_ref &&
+      ref $pattern_ref eq 'HASH' &&
+      defined $pattern_ref->{or} &&
+      ref $pattern_ref->{or} eq 'ARRAY'
+         ? @{ $pattern_ref->{or} }
+         : ( );
 }
 
 
@@ -526,8 +689,14 @@ sub _as_tree {
 
    $this->list_dir(
       $dir => {
-         callback  => $treeify,
-         recurse   => $opts->{recurse}
+         callback       => $treeify,
+         recurse        => $opts->{recurse},
+         files_match    => $opts->{files_match},
+         dirs_match     => $opts->{dirs_match},
+         parent_matches => $opts->{parent_matches},
+         path_matches   => $opts->{path_matches},
+         pattern        => $opts->{pattern},
+         rpattern       => $opts->{rpattern},
       }
    );
 
@@ -2192,27 +2361,32 @@ and machines.
    );
 
    $f->write_file(
-      file => 'file.bin', content => $binary_content, '--binmode'
+      file => 'file.bin',
+      content => $binary_content,
+      { binmode => 1 }
    );
 
-   my @lines = $f->load_file('randomquote.txt', '--as-lines');
+   my @lines = $f->load_file( 'randomquote.txt' => { as_lines => 1 } );
    my $line  = int rand scalar @lines;
 
    print $lines[ $line ];
 
-   my @files = $f->list_dir('/var/tmp', qw/ --files-only --recurse /);
-   my @textfiles = $f->list_dir('/var/tmp', '--pattern=\.txt$');
+   my @files = $f->list_dir( '/var/tmp' => { files_only => 1, recurse => 1 } );
+
+   my @textfiles = $f->list_dir(
+      '/var/tmp' => { files_match => qr/\.txt$/, recurse => 1 }
+   );
 
    if ( $f->can_write('wibble.log') ) {
 
-      my $HANDLE = $f->open_handle(
+      my $fh = $f->open_handle(
          file => 'wibble.log',
          mode => 'append'
       );
 
-      print $HANDLE "Hello World! It's ", scalar localtime;
+      print $fh "Hello World! It's ", scalar localtime;
 
-      close $HANDLE
+      close $fh
    }
 
    my $log_line_count = $f->line_count('/var/log/httpd/access_log');
@@ -2226,7 +2400,7 @@ and machines.
    print "My file was last modified on " .
       scalar localtime $f->last_modified('my.file');
 
-   # ...and _lots_ more
+   # ...and B<_lots_> more
 
 =head1 INSTALLATION
 
@@ -2294,6 +2468,8 @@ C<return_path>        I<(see L<return_path|/return_path>)>
 C<size>               I<(see L<size|/size>)>
 
 C<SL>                 I<(see L<SL|/SL>)>
+
+C<split_path>         I<(see L<split_path|/split_path>)>
 
 C<strip_path>         I<(see L<strip_path|/strip_path>)>
 
@@ -3280,6 +3456,24 @@ Takes the file path from the file name provided and returns it such that
 
 Returns the file size of [file name] in bytes.  Returns C<0> if the file is
 empty, returns C<undef> if the file does not exist.
+
+=back
+
+=head2 C<split_path>
+
+=over
+
+=item I<Syntax:> C<split_path( [string] )>
+
+Takes a path/filename, fully-qualified or relative (it doesn't matter), and it
+returns a list comprising the root of the path (if any), each directory in
+the path, and the final part of the path (be it a file, a directory, or
+otherwise)
+
+This method doesn't divine or detect any information about the path, it simply
+manipulates the string value.  It doesn't map it to any real filesystem object.
+It doesn't matter whether or not the file/path named in the input string
+exists or not.
 
 =back
 

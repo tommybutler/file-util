@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-
+use 5.10.0;
 use warnings;
 use strict;
 
@@ -14,7 +14,8 @@ my $tempdir = tempdir( CLEANUP => 1 );
 
 setup_test_tree();
 
-print join "\n", $ftl->list_dir( $tempdir => { recurse => 1 } );
+say 'ALL FILES RECURSIVELY:';
+say for $ftl->list_dir( $tempdir => { recurse => 1 } );
 
 print "\n\n";
 
@@ -24,10 +25,43 @@ use Data::Dumper;
    $Data::Dumper::Terse    = 1;
    $Data::Dumper::Sortkeys = 1;
 
+say 'AS TREE';
 print Dumper $ftl->list_dir(
    $tempdir => {
       as_tree => 1,
       recurse => 1,
+   }
+);
+
+say 'AS TREE, WITHOUT DIRMETA, MATCHING FILES /^[abcjkl]/';
+print Dumper $ftl->list_dir(
+   $tempdir => {
+      as_tree     => 1,
+      recurse     => 1,
+      no_dirmeta  => 1,
+      files_match => qr/^[abcjkl]/,
+   }
+);
+
+say 'AS TREE, WITHOUT DIRMETA, LEGACY-STYLE MATCHING FILES /^[jbc]/, MATCHING PARENT /bar$/';
+print Dumper $ftl->list_dir(
+   $tempdir => {
+      as_tree    => 1,
+      recurse    => 1,
+      no_dirmeta => 1,
+      rpattern   => '^[jbc]',
+      parent_matches => qr/bar$/,
+   }
+);
+
+say 'AS TREE, WITHOUT DIRMETA, MATCHING FILES /^[ak]/, MATCHING PARENT /^[[:alnum:]\-_\.]{10}$/ -OR- /oo$/';
+print Dumper $ftl->list_dir(
+   $tempdir => {
+      as_tree      => 1,
+      recurse      => 1,
+      no_dirmeta   => 1,
+      files_match  => qr/^[ak]/,
+      parent_matches => { or => [ qr/^[[:alnum:]\-_\.]{10}$/, qr/oo$/ ] },
    }
 );
 

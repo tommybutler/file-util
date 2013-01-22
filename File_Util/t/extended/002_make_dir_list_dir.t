@@ -123,15 +123,5 @@ is_deeply
    [ sort { uc $a cmp uc $b } @list_as_lines ],
    'compare recursive listing to recursive callback return';
 
-__END__
+exit;
 
-$ftl->list_dir(
-   $tempdir => {
-     #d_callback  => $d_cb,
-     #f_callback  => $f_cb,
-      callback    => \&callback,
-      recurse     => 1, # set to zero if you want to see diff output
-      with_paths  => 1, # unnecessary if recurse => 1
-      no_fsdots   => 1, # unnecessary if recurse => 1
-   }
-);
