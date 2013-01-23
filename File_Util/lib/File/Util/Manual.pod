@@ -644,10 +644,6 @@ The type of data structure returned is determined by the optional data-type
 switch.  Only one option may be used for a given call to this method.
 Recognized options are listed below.
 
-=over
-
-=item B<Flags accepted by C<load_dir()>>
-
    my $files_ref = $f->load_dir( $dirname );
 
       -OR-
@@ -657,6 +653,10 @@ Recognized options are listed below.
       -OR-
 
    my @dir_files = $f->load_dir( $dirname => { as_list => 1 } );
+
+=over
+
+=item B<Flags accepted by C<load_dir()>>
 
 =over
 
