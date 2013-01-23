@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 use Test::NoWarnings;
 
 use File::Temp qw( tempdir );
@@ -39,6 +39,15 @@ is_deeply $dir_ref => [
   'JAPH', 'JAPH'
 ] => 'load_dir() loads directory into listref';
 
+$dir_ref = [ $ftl->load_dir( $testbed => { as_list => 1 } ) ];
+
+is_deeply $dir_ref => [
+  'JAPH', 'JAPH',
+  'JAPH', 'JAPH',
+  'JAPH', 'JAPH',
+  'JAPH', 'JAPH'
+] => 'load_dir() loads directory into list';
+
 exit;
 
 sub setup_test_tree {
@@ -47,7 +56,7 @@ sub setup_test_tree {
 
    $ftl->make_dir( $deeper );
 
-   @test_files = qw(
+   my @test_files = qw(
       i.jpg   j.xls
       k.ppt   l.scr
       m.html  n.js
