@@ -579,7 +579,10 @@ A multiple-argument matching examples with B<OR>
       }
    );
 
-A couple multiple-argument matching examples with B<AND>
+   # ... same concepts apply to "files_match", "dirs_match",
+   #     and "parent_matches" searches
+
+Multiple-argument matching examples with B<AND>
 
    $f->list_dir(
       '/home/leia' => {
@@ -595,17 +598,34 @@ A couple multiple-argument matching examples with B<AND>
       }
    );
 
+   # ... same concepts apply to "files_match" and "dirs_match" searches
+
 B<***When you specify regexes for more than one search type parameter>, the
 patterns are AND'ed together, as you'd expect, and all matching criteria must
 be satisfied for a successful overall match.
 
    $f->list_dir(
       '/var' => {
-         dirs_match  => { or => [ qr/^log$/, qr/^lib$/ ] },
-         files_match => { or => [ qr/^syslog/, qr/\.isam$/i ] },
+         dirs_match     => { or => [ qr/^log$/, qr/^lib$/ ] },
+         files_match    => { or => [ qr/^syslog/, qr/\.isam$/i ] },
+         parent_matches => qr/[[:alpha:]]+/
+         path_matches   => qr/^(?!.*home)/,
          recurse     => 1,
          files_only  => 1,
       }
+
+B<Negative matches> (when you want to NOT match something) - use Perl!
+
+As shown in the L<File::Util::Manual::Examples>, Perl already provides
+support for negated matching in the form of "zero-width negative assertions".
+(see L<perlre> for details on how they work.  The basic idea has already been
+shown in some of the documentation here.  Use syntax like the regular
+expression below to match anything that is NOT part of the subpattern.
+
+   # match all files that are not *.MP3 files
+   my @no_music = $f->list_dir(
+      '/opt/music' => { files_match => qr/^(?!mp3$)/i }
+   );
 
 =back
 
@@ -615,7 +635,7 @@ be satisfied for a successful overall match.
 
 =over
 
-=item I<Syntax:> C<load_dir( [directory name] , [--ds-type] )>
+=item I<Syntax:> C<< load_dir( [directory name] => { options } ) >>
 
 Returns a data structure containing the contents of each file present in the
 named directory.
@@ -628,19 +648,29 @@ Recognized options are listed below.
 
 =item B<Flags accepted by C<load_dir()>>
 
+   my $files_ref = $f->load_dir( $dirname );
+
+      -OR-
+
+   my $files = $f->load_dir( $dirname => { as_listref => 1 } );
+
+      -OR-
+
+   my @dir_files = $f->load_dir( $dirname => { as_list => 1 } );
+
 =over
 
-=item C<--as-list>
+=item C<as_list>
 
 Causes the method to return a list comprised of the contents loaded from
 each file (in case-sensitive order) located in the named directory.
 
-=item C<--as-listref>
+=item C<as_listref>
 
 Same as above, except an array reference to the list of items is returned
 rather than the list itself.
 
-=item C<--as-hashref> *(default)
+=item C<as_hashref> *(default)
 
 Implicit.  If no option is passed in, the default behavior is to return a
 reference to an anonymous hash whose keys are the names of each file in the
@@ -648,6 +678,20 @@ specified directory; the hash values for contain the contents of the file
 represented by its corresponding key.
 
 =back
+
+C<load_dir()> does not recurse or accept matching parameters, etc.  It's an
+effective tool for loading up things like a directory of template files on
+a webserver, or to store binary data streams in memory.  Use it however you
+like.
+
+If you want to load files into a hashref/listref or array while using the
+advanced features of C<list_dir()>, just use list_dir to return the files
+and map the contents into your variable.
+
+   my $hash_ref = {};
+
+   %$hash_ref = map { $_ => $ftl->load_file( $_ ) }
+                $ftl->list_dir( $dir_name => { advanced opts...} );
 
 =back
 
@@ -680,7 +724,7 @@ and 'd.conf')
 
 =over
 
-=item I<Syntax:> C<load_file( [file name] , [--opts] )>
+=item I<Syntax:> C<< load_file( [file name] => { options } ) >>
 
 =item I<OR:> C<< load_file( 'FH' => [file handle reference] , [--opts] ) >>
 
