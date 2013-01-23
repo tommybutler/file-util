@@ -1653,45 +1653,50 @@ sub last_changed {
 # File::Util::load_dir()
 # --------------------------------------------------------
 sub load_dir {
-   my $this = shift @_; my $opts = $this->_remove_opts( \@_ );
-   my $dir  = shift @_ ||''; my @files = ();
-   my $dir_hash = { }; my $dir_list = [];
+   my $this = shift @_;
+   my $opts = $this->_remove_opts( \@_ );
+   my $dir  = shift @_;
 
-   return $this->_throw
-      (
-         'no input',
-         {
-            'meth'      => 'load_dir',
-            'missing'   => 'a directory name',
-            'opts'      => $opts,
-         }
-      )
-   unless length $dir;
+   my @files    = ( );
+   my $dir_hash = { };
+   my $dir_list = [ ];
 
-   @files = $this->list_dir($dir,'--files-only');
+   $dir ||= '';
+
+   return $this->_throw(
+      'no input' => {
+         meth    => 'load_dir',
+         missing => 'a directory name',
+         opts    => $opts,
+      }
+   ) unless length $dir;
+
+   @files = $this->list_dir( $dir => { files_only => 1 } );
 
    # map the content of each file into a hash key-value element where the
    # key name for each file is the name of the file
-   if (!$opts->{'--as-list'} and !$opts->{'--as-listref'}) {
+   if ( !$opts->{as_list} && !$opts->{as_listref} ) {
 
-      foreach (@files) {
+      foreach ( @files ) {
 
          $dir_hash->{ $_ } = $this->load_file( $dir . SL . $_ );
       }
 
-      return($dir_hash);
+      return $dir_hash;
    }
    else {
 
-      foreach (@files) {
+      foreach ( @files ) {
 
-         push(@{$dir_list},$this->load_file( $dir . SL . $_ ));
+         push @$dir_list, $this->load_file( $dir . SL . $_ );
       }
 
-      return($dir_list) if ($opts->{'--as-listref'}); return(@{$dir_list});
+      return $dir_list if $opts->{as_listref};
+
+      return @$dir_list;
    }
 
-   $dir_hash;
+   return $dir_hash;
 }
 
 
