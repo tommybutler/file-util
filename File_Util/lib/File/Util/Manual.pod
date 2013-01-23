@@ -234,6 +234,18 @@ cascading order when a File::Util object attempts to lock a file, so if the
 actions specified by the first rule don't result in success, the second rule
 is applied, and so on.
 
+This setting can be dynamically changed in your code during execution by
+calling this method as desired.
+
+B<The default behavior of File::Util is to try and obtain an exclusive lock>
+B<on all file opens (if supported by your operating system).  If a lock cannot>
+B<be obtained, File::Util will throw an exception and exit.>
+
+If you want to change that behavior, this method is the way to do it.  One
+common situation is for someone to want their code to first try for a lock,
+and failing that, to wait until one can be obtained.  If that's what you
+want, see the examples after the keywords list below.
+
 Recognized keywords:
 
 =over
@@ -280,14 +292,14 @@ Examples:
 
 =over
 
-=item ex- C<flock_rules( qw/ NOBLOCKEX FAIL / );>
+=item ex- C<flock_rules( qw( NOBLOCKEX FAIL ) );>
 
 This is the default policy.  When in effect, the File::Util object will first
 attempt to get a non-blocking exclusive lock on the file.  If that attempt
 fails the File::Util object will call die() with a detailed error message and
 a stack trace.
 
-=item ex- C<flock_rules( qw/ NOBLOCKEX BLOCKEX FAIL / );>
+=item ex- C<flock_rules( qw( NOBLOCKEX BLOCKEX FAIL ) );>
 
 The File::Util object will first attempt to get a non-blocking exclusive lock
 on the file.  If that attempt fails it falls back to the second policy rule
@@ -295,7 +307,7 @@ on the file.  If that attempt fails it falls back to the second policy rule
 by blocking (waiting for its turn).  If that second attempt fails, the
 File::Util object will fail with a detailed error message and a stack trace.
 
-=item ex- C<flock_rules( qw/ BLOCKEX IGNORE / );>
+=item ex- C<flock_rules( qw( BLOCKEX IGNORE ) );>
 
 The File::Util object will first attempt to get a file non-blocking lock on
 the file.  If that attempt fails it will ignore the error, and go on to open
@@ -371,18 +383,29 @@ named file does not exist.
 
 =over
 
-=item I<Syntax:> C<list_dir( [directory name] , [--opts] )>
+=item I<Syntax:> C<< list_dir( [directory name] => { option => value, ... } ) >>
 
 Returns alphabetically sorted all file names in the directory specified if it
 exists.  Fails with an error message if no such directory is found, or the
 directory is inaccessible.
 
-The behavior of this method has changed slightly after version 3.29.  If running
-with the C<--fatals-as-warning> flag, the previous behavior was to abort
-immediately.  This is not the case anymore.  If running with the
-C<--fatals-as-warning> flag, C<list_dir()> will still emit a warning when it
-encounters an otherwise fatal error, but it will also return whatever directory
-contents it is able to successfully access.
+Note that this is one of File::Util's most robust methods, and is very useful.
+It can be used as a higher order function (accept callback subrefs), and can
+be used for advanced pattern matching against files.  It can even return a
+heirarchal datastructure of the file tree you ask it to search.
+
+See the L<File::Util::Manual::Examples> for several useful ways to use
+C<list_dir()>.
+
+B<First, another note on L<SYNTAX|File::Util/SYNTAX>>:
+
+B<To enable a flag, pass it in with the options hashref that must follow the>
+B<initial directory name argument, and set the option to a true value (1).>
+
+Syntax example to recursively return a list of subdirectories in
+directory "dirname":
+
+   $f->list_dir( 'dirname' => { dirs_only => 1, recurse => 1 } );
 
 =over
 
@@ -390,67 +413,50 @@ contents it is able to successfully access.
 
 =over
 
-=item C<--dirs-only>
+=item C<dirs_only>
 
 return only directory contents which are directories
 
-=item C<--files-only>
+=item C<files_only>
 
 return only directory contents which are files
 
-=item C<--no-fsdots>
+=item C<no_fsdots>
 
 do not include "." and ".." in the list of directory contents
 
-=item C<--pattern>
-
-return only files/directories matching pattern provided. argument
-should be plain text string.  It will be converted to a perl regex and passed
-to CORE::grep as the method scans through directory listings for a match.
-
-(ex- C<'--pattern=\.txt$'> returns all file/directory names ending in ".txt".
-It will match "foo.txt", but not "foo.txt.gz" because of the "$" anchor in the
-regular expression passed in.)
-
-or for the opposite effect, C<< '--pattern=.*(?<!\.txt)$' >> returns all
-file/directory names that don't end in ".txt"
-
-=item C<--with-paths>
+=item C<with_paths>
 
 Include file paths with the contents of the directory list, relative
 to the directory named in the call.
 
-=item C<--recurse>
+=item C<recurse>
 
 Recurse subdirectories
 
-=item C<--follow>
-
-Recurse subdirectories, same as C<--recurse>
-
-=item C<--dirs-as-ref>
+=item C<dirs_as_ref>
 
 When returning directory listing, include first a reference to the list
 of subdirectories found, followed by anything else returned by the call.
 
-=item C<--files-as-ref>
+=item C<files_as_ref>
 
 When returning directory listing, include last a reference to the list
 of files found, preceded by a list of subdirectories found (or preceded
 by a list reference to subdirectories found if C<--dirs-as-ref> was also used).
 
-=item C<--as-ref>
+=item C<as_ref>
 
 Return a pair list references: the first is a reference to any subdirectories
 found by the call, the second is a reference to any files found by the call.
 
-=item C<--sl-after-dirs>
+=item C<sl_after_dirs>
 
 Append a directory separator ("/, "\", or ":" depending on your system)
 to all directories found by the call.  Useful in visual displays for quick
 differentiation between subdirectories and files.
 
-=item C<--ignore-case>
+=item C<ignore_case>
 
 Items returned by the call to this method are sorted alphabetically by
 default, so "Zoo.txt" comes before "alligator.txt" because the alphabetical
@@ -460,14 +466,146 @@ system level on most operating systems.
 If you'd like the directory contents returned by this method to be
 sorted without regard to case , use this flag.
 
-=item C<--count-only>
+=item C<count_only>
 
 Returns a single value: an integer reflecting the number of items
 found in the directory after applying the filter criteria specified by any
 other flags (ie- "--dirs-only", "--recurse", etc.) that may have been passed
 in as well.
 
+=item C<as_tree>
+
+B<Very powerful.>  I<PLEASE> See L<The "Examples" section of the manual|File::Util::Manual::Examples/Get a directory tree in a hierarchal hashref>
+for the details you need to know when using this option.
+
+Returns a hierarchal datastructure (hashref) of the file tree in the directory
+you specify as the first argument to C<list_dir()>.  Use in combination with
+other options/flags to get the exact results you want in the datastructure.
+
 =back
+
+=item B<Searching and Matching with C<list_dir()>>
+
+C<list_dir()> can use Perl L<Regular Expressions|perlre> to match against
+the results it returns.  It can match based on file name, directory name,
+the path preceeding results, and the parent directory of results.  The matching
+arguments you use must be real regular expression references as shown
+(i.e.- NOT strings).
+
+Regular expressions can be provided as a single argument value, or a
+specially crafted hashref designating a list of patterns to match against in
+either an "or" manner, or an "and"ed cumulative manner.
+
+Some short examples of proper syntax will be provided after the list of
+matching options below
+
+=over
+
+=item C<files_match>
+
+Return only file names matching the regex(es).  Preceeding directories are
+included in the results; for technical reasons they are not excluded (if they
+were excluded, C<list_dir()> would not be able to "cascade" or recurse into
+subdirectories in search of matching files.
+
+Use the C<files_only> option in combination with this matching parameter to
+exclude the preceeding directory names.
+
+=item C<dirs_match>
+
+Return only files and subdirectory names in directories that match the
+regex(es) you specify.  B<BE CAREFUL> with this one!!  It doesn't "cascade"
+the way you might expect; for technical reasons, it won't descend into
+directories that don't match the regex(es) you provide.  If you want to match
+a directory name that is three levels deep against a given pattern, but don't
+know (or don't care about) the names of the intermediate directories--
+THIS IS NOT THE OPTION YOU ARE LOOKING FOR.  Use the C<path_matches> option
+instead.  This is all irrelevant if you aren't using the C<recurse> option.
+
+Bear in mind that just because you tell <list_dir()> to match each directory
+against the regex(es) you specify here, that doesn't mean you are telling it to
+only show directories in its results.  You will get file names included in
+the results as well, unless you combine this with the C<dirs_only> option.
+
+=item C<path_matches>
+
+Return only files and subdirectory names with preceeding paths that match the
+regex(es) you specify.
+
+=item C<parent_matches>
+
+Return only files and subdirectory names whose parent directory matches the
+regex(es) you specify.
+
+=back
+
+=item Examples of matching with C<listdir()>
+
+Single-argument matching examples
+
+   $f->list_dir(
+      '../notes' => { files_match => qr/\.txt$/i, files_only => 1 }
+   );
+
+   $f->list_dir(
+      '/var' => {
+         dirs_match => qr/log|spool/i,
+         recurse => 1,
+         dirs_only => 1,
+      }
+   );
+
+   $f->list_dir(
+      '/home' => {
+         path_matches => qr/Desktop/,
+         recurse => 1,
+         dirs_only => 1,
+      }
+   );
+
+   $f->list_dir(
+      '/home/tommy/projects' => {
+         parent_matches => qr/^\.git$/,
+         recurse => 1,
+      }
+   );
+
+A multiple-argument matching examples with B<OR>
+
+   $f->list_dir(
+      'C:\Users\bill' => {
+         parent_matches => { or => [ qr/Desktop/, qr/Pictures/ ] }
+         recurse => 1,
+      }
+   );
+
+A couple multiple-argument matching examples with B<AND>
+
+   $f->list_dir(
+      '/home/leia' => {
+         parent_matches => { and => [ qr/Anakin/, qr/Amidala/ ] }
+         recurse => 1,
+      }
+   );
+
+   $f->list_dir(
+      '/home/mace' => {
+         path_matches => { and => [ qr/^(?!.*dark.side)/i, qr/[Ff]orce/ ] }
+         recurse => 1,
+      }
+   );
+
+B<***When you specify regexes for more than one search type parameter>, the
+patterns are AND'ed together, as you'd expect, and all matching criteria must
+be satisfied for a successful overall match.
+
+   $f->list_dir(
+      '/var' => {
+         dirs_match  => { or => [ qr/^log$/, qr/^lib$/ ] },
+         files_match => { or => [ qr/^syslog/, qr/\.isam$/i ] },
+         recurse     => 1,
+         files_only  => 1,
+      }
 
 =back
 
