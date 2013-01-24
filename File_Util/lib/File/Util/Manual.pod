@@ -12,13 +12,106 @@ File::Util::Manual - File::Util Reference
 =head1 INTRODUCTION
 
 This manual is is the complete reference to all available public methods for use
-in File::Util.
+in L<File::Util>.
 
 For a "Nutshell"-type reference full of actual small example code snippets, take
 a look ath the L<File::Util::Manual::Examples>
 
 For examples of full Programs using File::Util, take a look at the
 L<File::Util::Cookbook>.
+
+We'll start out with some brief notes up front, and then the rest of this
+document will cover the use of each feature in File::Util...
+
+=head2 WHAT File::Util IS
+
+File::Util is a "Pure Perl" library that provides you with several easy-to-use
+tools to wrangle files and directory contents.  It has higher order methods
+(that's fancy talk for saying that you can feed anonymous subroutines or
+subroutine references to some of File::Util's routines and they will be treated
+like "callbacks").
+
+File::Util is mainly Object-Oriented Perl, but strives to be gentle and
+accomodating to those who do not know about or who do not like "OO" interfaces.
+As such, many of the object methods available in File::Util can also be
+imported into your namespace and I<used like regular subroutines> to make
+short work of simple tasks.
+
+For more advanced tasks and features, you will need to use File::Util's
+object-oriented interface.  Don't worry, it's easy, and there are plenty of
+examples here in the documentation to get you off to a great and productive
+start.  If you run into trouble, the developers of File::Util are
+L<here to help you|File::Util/SUPPORT>.
+
+File::Util accomplishes all of this by adhering to some guiding design
+principles:
+
+=over
+
+=item B<Be easy>
+
+Make hard things easier and safer to do while avoiding common mistakes
+associated with file handling in Perl.  Code using File::Util will
+automatically be abiding by best practices with regard to Perl IO.
+
+File::Util makes the right decisions for you with regard to all the little
+details involved in the vast majority of file-related tasks.  File locking
+is automatically performed for you!  File handles are always lexically
+scoped.  Safe reads and writes are performed with hard limits on the amount
+of RAM you are allowed to consume in your process per file read.  (You can
+adjust the limits)
+
+=item B<Be portable>
+
+We make sure that File::Util is going to work on your computer or virtual
+machine.  If you run Windows, Mac, Linux, BSD, some flavor of Unix, etc...
+File::Util should work right out of the box.  There are currently no platforms
+where Perl runs that we do not support.  If Perl can run on it, File::Util
+can run on it.
+
+=item B<Be compatible>
+
+File::Util has been around for a long time, and so has Perl.  We'd like to
+think that this is because they are good things!  This means there is a lot
+of backward-compatibility to account for, even within File::Util itself.
+
+In the last several years, there has never been a release of File::Util that
+intentionally broke code running a previous version.  We are unaware of that
+even happening.  File::Util is written to support both old and new features,
+syntaxes, and interfaces with full backward-compatibility.
+
+=item B<Be helpful>
+
+By default, File::Util outputs extremely detailed error messages when something
+goes wrong in your program using File::Util for a given file operation.  The
+error messages are diagnostic in nature and provide not only information about
+what went wrong, but also hints on how to fix it.
+
+These error messages can be turned off in production code, by customizing your
+call to the constructor.  See L<< File::Util->new()|/new >> for the details.
+
+=item B<Be Pure>
+
+File::Util uses no XS or C underpinnings that require you to have a compiler
+or make utility on your system in order to use it.  Simply follow the
+installation procedures (L<INSTALLATION|File::Util/INSTALLATION>) and you're
+done.  No compiling required.
+
+=back
+
+=head2 WHAT File::Util IS NOT
+
+File::Util is B<NOT> a performance-optimized file-finding/searching utility.
+While it does provide robust tools to allow you to filter the results of
+recursive directory listings against regular expressions, and tailor, tune, and
+customize what you get back when walking directories,
+I<it is not a file-finder.>
+
+If you are looking for a tool that allows you to search rapidly through directory
+trees, B<I<NOT just filtering results>>, take a look at L<File::Find>.  There
+are many up-and-comers in the Perl file searching utilities niche that you can
+also try, however they are still hard pressed to meet with the raw performance
+and speed of File::Find in very large file trees.
 
 =head1 METHODS
 
@@ -409,7 +502,7 @@ directory "dirname":
 
 =over
 
-=item B<Flags accepted by C<list_dir()>>
+=item B<Options accepted by C<list_dir()>>
 
 =over
 
@@ -656,7 +749,7 @@ Recognized options are listed below.
 
 =over
 
-=item B<Flags accepted by C<load_dir()>>
+=item B<Options accepted by C<load_dir()>>
 
 =over
 
@@ -712,10 +805,10 @@ and 'd.conf')
 
    my $files =
       {
-         'a.txt'  => "the contents of file a.txt",
-         'b.html' => "the contents of file b.html",
-         'c.dat'  => "the contents of file c.dat",
-         'd.conf' => "the contents of file d.conf",
+         'a.txt'  => 'the contents of file a.txt',
+         'b.html' => 'the contents of file b.html',
+         'c.dat'  => 'the contents of file c.dat',
+         'd.conf' => 'the contents of file d.conf',
       };
 
 =back
@@ -726,7 +819,7 @@ and 'd.conf')
 
 =item I<Syntax:> C<< load_file( [file name] => { options } ) >>
 
-=item I<OR:> C<< load_file( 'FH' => [file handle reference] , [--opts] ) >>
+=item I<OR:> C<< load_file( file_handle => [file handle reference] => { options } ) >>
 
 If [file name] is passed, returns the contents of [file name] in a string.
 If a [file handle reference] is passed instead, the filehandle will be
@@ -734,15 +827,15 @@ C<CORE::read()> and the data obtained by the read will be returned in a string.
 
 If you desire the contents of the file (or file handle data) in a list of
 lines instead of a single string, this can be accomplished through the use
-of the C<--as-lines> flag (see below).
+of the C<as_lines> option (see below).
 
 =over
 
-=item B<Flags accepted by C<load_file()>>
+=item B<Options accepted by C<load_file()>>
 
 =over
 
-=item C<--as-lines>
+=item C<as_lines>
 
 If this flag is passed then your call to C<load_file> will return an ordered
 list of strings, each of which is a line from the file [file name].  The lines
@@ -753,7 +846,7 @@ This is not the default behavior.  The default behavior is for C<load_file> to
 return a single string containing the entire contents of the file, including
 line break characters.
 
-=item C<--no-lock>
+=item C<no_lock>
 
 By default this method will attempt to get a lock on the file while it is
 being read, following whatever rules are in place for the flock policy
@@ -762,8 +855,8 @@ File::Util::flock_rules()
 I<(see the L<flock_rules()|/flock_rules>) entry below>.
 
 This method will not try to get a lock on the file if the File::Util object was
-created with the option C<--no-lock> or if the method was called with the
-option C<--no-lock>.
+created with the option C<no_lock> or if the method was called with the
+option C<no_lock>.
 
 This method will automatically call binmode() on binary files for you.  If you
 pass in a filehandle instead of a file name you do not get this automatic
@@ -788,14 +881,14 @@ files opened by this method as well.  Adjust the readlimit as necessary.
 
 =over
 
-=item I<Syntax:> C<make_dir( [new directory name] , [bitmask], [--opts] )>
+=item I<Syntax:> C<< make_dir( [new directory name], [bitmask] => { options } ) >>
 
 Attempts to create (recursively) a directory as [new directory name] with
 the [bitmask] provided.  The bitmask is an optional argument and defaults to
-0777, combined with the user's current umask.  If specified, the bitmask
-must be supplied in the form required by the native perl umask function.
-I<see L<perlfunc/"umask">> for more information about the format of the
-bitmask argument.
+oct 777, B<combined with the user's current umask>.  If specified, the bitmask
+must be supplied in the form required by the native perl umask function (as
+an octal number).  I<see L<perlfunc/"umask">> for more information about the
+format of the bitmask argument.
 
 As mentioned above, the recursive creation of directories is transparently
 handled for you.  This means that if the name of the directory you pass in
@@ -807,24 +900,28 @@ Simply put, if [new directory] is "/path/to/directory" and the directory
 "/path/to" does not exist, the directory "/path/to" will be created and the
 "/path/to/directory" directory will be created thereafter.  All directories
 created will be created with the [bitmask] you specify, or with the default
-of 0777.
+of 0777, B<combined with the user's current umask>.
 
 Upon successful creation of the [new directory name], the [new directory name]
 is returned to the caller.
 
 =over
 
-=item B<Flags accepted by C<make_dir()>>
+=item B<Options accepted by C<make_dir()>>
 
 =over
 
-=item C<--if-not-exists>
+=item C<if_not_exists>
+
+Example:
+
+   $f->make_dir( '/home/jspice' => 644 => { if_not_exists => 1 } );
 
 If this flag is passed in then make_dir will not attempt to create the directory
 if it already exists.  Rather it will return the name of the directory as it
 normally would if the directory did not exist previous to calling this method.
 
-If a call to this method is made without the C<--if-not-exists> flag and the
+If a call to this method is made without the C<if_not_exists> flag and the
 directory specified as [new directory name] does in fact exist, an error will
 result as it is impossible to create a directory that already exists.
 
@@ -844,7 +941,7 @@ When called without any arguments, this method returns an integer reflecting
 the current number of times the File::Util object will dive into the
 subdirectories it discovers when recursively listing directory contents from
 a call to C<File::Util::list_dir()>.  The default is 1000.  If the number is
-exceeded, the File::Util object will fail with a diagnostic error message.
+exceeded, the File::Util object will fail with an error message.
 
 When called with an argument, it sets the maximum number of times a File::Util
 object will recurse into subdirectories before failing with an error message.
@@ -852,7 +949,7 @@ object will recurse into subdirectories before failing with an error message.
 This method can only be called with a numeric integer value.  Passing a bad
 argument to this method will cause it to fail with an error message.
 
-I<(see L<list_dir|/list_dir>)>
+I<(see also: L<list_dir|/list_dir>)>
 
 =back
 
@@ -874,7 +971,7 @@ is executed.
 
 =over
 
-=item I<Syntax:> C<< new( ['parameters' => 'values', etc], [--flags] ) >>
+=item I<Syntax:> C<< new( { options } ) >>
 
 This is the File::Util constructor method.  eg- It returns a new File::Util
 object reference when you call it.  It recognizes various parameters and flags
@@ -886,7 +983,7 @@ that govern the behavior of the new File::Util object.
 
 =over
 
-=item use_flock   => true/false value
+=item C<use_flock>
 
 Optionally specify this option to the C<File::Util::new> method instruct the
 new object that it should never attempt to use C<flock()> in it's I/O
@@ -894,7 +991,7 @@ operations.  The default is to use C<flock()> when available on your system.
 Specify this option with a true or false value, true to use C<flock()>, false
 to not use it.
 
-=item readlimit   => positive integer
+=item C<readlimit>
 
 Optionally specify this option to the File::Util::new method to instruct the
 new object that it should never attempt to open and read in a file greater
@@ -902,7 +999,7 @@ than the number of bytes you specify.  Obviously this argument can only be
 a numeric integer value, otherwise it will be silently ignored.  The default
 readlimit for File::Util objects is 52428800 bytes (50 megabytes).
 
-=item max_dives   => positive integer
+=item C<max_dives>
 
 Optionally specify this option to the File::Util::new method to instruct the
 new object to set the maximum number of times it will recurse into
@@ -910,26 +1007,22 @@ subdirectories while performing directory listing operations before failing
 with an error message.  This argument can only be a numeric integer value,
 otherwise it will be silently ignored.
 
-=back
+I<(see also: L<max_dives()|/max_dives>)>
 
-=item B<Flags accepted by C<new()>>
-
-=over
-
-=item C<--fatals-as-warning>
+=item C<fatals_as_warning>
 
 Directive to instruct the new File::Util object that when any call to one of
 its methods results in a fatal error that it should return B<C<undef>>
 instead of the value(s) that would normally be returned by the call, and to
 send an error message to STDERR as well.
 
-=item C<--fatals-as-status>
+=item C<fatals_as_status>
 
 Directive to instruct the new File::Util object that when any call to one of
 its methods results in a fatal error that it should return B<C<undef>>
 instead of the value(s) that would normally be returned by the call.
 
-=item C<--fatals-as-errmsg>
+=item C<fatals_as_errmsg>
 
 Directive to instruct the new File::Util object that when any call to one of
 its methods results in a fatal error that it should return B<an error message>
@@ -1106,7 +1199,7 @@ C<sysopen()>'d filehandles!
 
 =over
 
-=item B<Flags accepted by C<open_handle()>>
+=item B<Options accepted by C<open_handle()>>
 
 =over
 
@@ -1341,7 +1434,7 @@ to the end of the file.
 
 =over
 
-=item B<Flags accepted by C<write_file()>>
+=item B<Options accepted by C<write_file()>>
 
 =over
 
@@ -1498,7 +1591,7 @@ for a particular purpose.
 
 =head1 SEE ALSO
 
-L<File::Util::Cookbook>
+L<File::Util::Cookbook>, L<File::Util::Manual::Examples>, L<File::Util>
 
 =cut
 

@@ -754,6 +754,11 @@ sub load_file {
    my ( $file, $root, $path, $clean_name, $content, $mode  ) =
       ( '',    '',    '',    '',          '',       'read' );
 
+   # support old-school "FH" option, *and* the new, more sensible "file_handle"
+   $opts->{FH} = $opts->{file_handle}
+      if defined $opts->{file_handle} &&
+         ref $opts->{file_handle} eq 'GLOB';
+
    if ( scalar @_ == 1 ) {
 
       $file = shift @_ || '';
@@ -2392,10 +2397,13 @@ to run File::Util on Perl version 5.8 and above.
    my @files = $f->list_dir( '/var/tmp' => { files_only => 1, recurse => 1 } );
 
    # get a listing of text files, recursively
-   my @textfiles = $f->list_dir( '/var/tmp' => {
-      files_match => qr/\.txt$/,
-      recurse     => 1
-   } );
+   my @textfiles = $f->list_dir(
+      '/var/tmp' => {
+         files_match => qr/\.txt$/,
+         files_only  => 1,
+         recurse     => 1,
+      }
+   );
 
    # walk a directory, using an anonymous function or function ref as a
    # callback (higher order Perl)
@@ -2653,6 +2661,8 @@ valid_filename
 
 =over
 
+=item L<Exception::Handler> for graceful error handling
+
 =item L<Perl|perl> 5.006 or better
 
 =back
@@ -2670,7 +2680,7 @@ See L<File::Util::Cookbook>
 Send bug reports and patches to the CPAN Bug Tracker for File::Util at
 L<https://rt.cpan.org/Dist/Display.html?Name=File%3A%3AUtil>
 
-=head1 RESOURCES
+=head1 SUPPORT
 
 If you want to get help, contact the authors (links below in AUTHORS section)
 
@@ -2718,7 +2728,7 @@ for a particular purpose.
 The rest of the documentation:
 L<File::Util::Manual>, L<File::Util::Manual::Examples>, L<File::Util::Cookbook>,
 
-Similar Modules:
+Other Useful Modules that do similar things:
 L<File::Slurp>, L<File::Spec>, L<Path::Class>
 
 =cut
