@@ -1,4 +1,8 @@
 *.swp
 *.swo
 *~
+.build
 *vimsess
+_build
+File-Util*gz
+File-Util-[0-9]*/
