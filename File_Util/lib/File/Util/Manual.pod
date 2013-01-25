@@ -113,6 +113,8 @@ are many up-and-comers in the Perl file searching utilities niche that you can
 also try, however they are still hard pressed to meet with the raw performance
 and speed of File::Find in very large file trees.
 
+
+
 =head1 METHODS
 
 B<Note:> In the past, some of the methods listed would state that they were
@@ -1416,7 +1418,7 @@ You may have to explicitly disable file locking completely.
 
 =item I<OR:> C<< write_file( { file => [file name], content => [string], mode => [mode], other_options } ) >>
 
-Example:
+Syntax Examples:
 
    # get some content (a string returned from a function call, perhaps)
    my $answer = ask_commissioner( 'Can he be trusted?' );
@@ -1425,17 +1427,19 @@ Example:
 
       -OR-
 
-   $ftl->write_file( 'Harvey_Dent.txt' => $answer => { mode => 'append' } );
+   # get some binary content, maybe a picture
+   my $binary_data = get_mugshot( alias => 'twoface' );
+
+   $ftl->write_file( 'suspect.png' => $binary_data => { binmode => 1 } );
 
       -OR-
 
    $ftl->write_file( {
-      file     => 'Harvey_Dent.txt',
-      content  => $answer,
-      mode     => 'append',
-      bitmask  => oct 644,
-      dbitmask => oct 755,
-   } );
+      file     => '/gotham/city/ballots/Bruce_Wayne.txt',
+      content  => 'Vote for Harvey!  I believe in Harvey Dent!',
+      bitmask  => oct 600,  # <-- use secret ballot file permissions
+      fatals_as_status => 1 # <-- I'll create my own error message
+   } ) or die 'Bane broke my back!';
 
 Attempts to write [string] to [file name] in mode [mode].  If the file does
 not yet exist it will be created, and it will be created with a bitmask of
@@ -1614,10 +1618,6 @@ Specifics: OS name =~ /^os2/i
 =back
 
 =back
-
-
-
-
 
 
 

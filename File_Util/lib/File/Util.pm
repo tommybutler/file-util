@@ -1046,12 +1046,12 @@ sub write_file {
    ( $root, $path, $file ) = atomize_path( $file );
 
    $mode = 'trunc' if $mode eq 'truncate';
+   $content = '' if $mode eq 'trunc';
 
    # if the call to this method didn't include a filename to which the caller
    # wants us to write, then complain about it
    return $this->_throw(
-      'no input',
-      {
+      'no input' => {
          meth    => 'write_file',
          missing => 'a file name to create, write, or append',
          opts    => $in,
@@ -1066,11 +1066,10 @@ sub write_file {
       $try_filename =~ s/$WINROOT//; # windows abs paths would throw this off
 
       return $this->_throw(
-         'bad chars',
-         {
-            string  => $raw_name,
-            purpose => 'the name of a file or directory',
-            opts    => $in,
+         'bad chars' => {
+            string   => $raw_name,
+            purpose  => 'the name of a file or directory',
+            opts     => $in,
          }
       ) if $try_filename =~ /(?:$DIRSPLIT){2,}/;
    }
@@ -1183,7 +1182,7 @@ sub write_file {
       ) unless -w $root . $path;
    }
 
-   # if you use the --no-lock option, please consider the risks
+   # if you use the no_lock option, please consider the risks
 
    if ( $$in{no_lock} || !$USE_FLOCK ) {
 
@@ -2333,7 +2332,7 @@ sub size { my $f = _myargs( @_ ); $f ||= ''; return unless -e $f; -s $f }
 # --------------------------------------------------------
 # File::Util::trunc()
 # --------------------------------------------------------
-sub trunc { $_[0]->write_file( mode => 'trunc', file => $_[1]) }
+sub trunc { $_[0]->write_file( { mode => trunc => file => $_[1] } ) }
 
 
 # --------------------------------------------------------

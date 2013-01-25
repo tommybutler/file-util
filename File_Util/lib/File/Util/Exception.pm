@@ -37,6 +37,10 @@ sub _throw {
    map { $fatal_rules{ $_ } = $_ }
    grep /^fatals/o, keys %$opts;
 
+   map { $fatal_rules{ $_ } = $_ }
+   grep /^fatals/o, keys %{ $opts->{opts} }
+      if $opts->{opts} && ref $opts->{opts} eq 'HASH';
+
    unless ( scalar keys %fatal_rules ) {
       map { $fatal_rules{ $_ } = $_ }
       grep /^fatals/o, keys %{ $this->{opts} }
