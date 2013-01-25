@@ -52,7 +52,9 @@ sub write_ref_args {
 
    for my $tfile ( @test_files )
    {
-      $ftl->write_file( { file => $tempdir . SL . $tfile, content => 'PeRl' } );
+      $ftl->write_file(
+         { file => $tempdir . SL . $tfile, content => 'PeRl' }
+      );
    }
 
    return;
@@ -72,7 +74,9 @@ sub write_hybrid {
 
    for my $tfile ( @test_files )
    {
-      $ftl->write_file( $tempdir . SL . $tfile => 'Raptor' => { mode => 'append' } );
+      $ftl->write_file(
+         $tempdir . SL . $tfile => 'Raptor' => { mode => 'append' }
+      );
    }
 
    return;

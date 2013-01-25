@@ -2341,9 +2341,9 @@ sub trunc { $_[0]->write_file( { mode => trunc => file => $_[1] } ) }
 sub use_flock {
    my $arg = _myargs( @_ );
 
-   if (defined($arg)) { $USE_FLOCK = $arg }
+   $USE_FLOCK = !!$arg if defined $arg;
 
-   $USE_FLOCK
+   return $USE_FLOCK;
 }
 
 
@@ -2505,7 +2505,7 @@ anymore.
       '/some/dir' => {
          files_match    => { or  => [ qr/bender$/, qr/^flexo/   ] },
          parent_matches => { and => [ qr/^Planet/, qr/Express$/ ] },
-         callback       => \&deliver_intersteller_shipment,
+         callback       => \&deliver_interstellar_shipment,
          files_only     => 1,
          recurse        => 1,
          as_ref         => 1,
