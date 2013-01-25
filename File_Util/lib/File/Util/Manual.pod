@@ -1434,12 +1434,13 @@ Syntax Examples:
 
       -OR-
 
-   $ftl->write_file( {
-      file     => '/gotham/city/ballots/Bruce_Wayne.txt',
-      content  => 'Vote for Harvey!  I believe in Harvey Dent!',
-      bitmask  => oct 600,  # <-- use secret ballot file permissions
-      fatals_as_status => 1 # <-- I'll create my own error message
-   } ) or die 'Bane broke my back!';
+   $ftl->write_file(
+      {
+         file    => '/gotham/city/ballots/Bruce_Wayne.txt',
+         content => 'Vote for Harvey!  I believe in Harvey Dent!',
+         bitmask => oct 600, # <-- use secret ballot file permissions
+      }
+   );
 
 Attempts to write [string] to [file name] in mode [mode].  If the file does
 not yet exist it will be created, and it will be created with a bitmask of
