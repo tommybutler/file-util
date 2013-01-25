@@ -492,13 +492,13 @@ C<list_dir()>.
 
 B<First, another note on L<SYNTAX|File::Util/SYNTAX>>:
 
-B<To enable a flag, pass it in with the options hashref that must follow the>
-B<initial directory name argument, and set the option to a true value (1).>
+B<To enable an option, pass it in with the options hashref that must follow>
+B<the initial directory name argument, and set the value to 1>
 
 Syntax example to recursively return a list of subdirectories in
 directory "dirname":
 
-   $f->list_dir( 'dirname' => { dirs_only => 1, recurse => 1 } );
+   $f->list_dir( 'dir_name' => { dirs_only => 1, recurse => 1 } );
 
 =over
 
@@ -536,7 +536,7 @@ of subdirectories found, followed by anything else returned by the call.
 
 When returning directory listing, include last a reference to the list
 of files found, preceded by a list of subdirectories found (or preceded
-by a list reference to subdirectories found if C<--dirs-as-ref> was also used).
+by a list reference to subdirectories found if C<dirs_as_ref> was also used).
 
 =item C<as_ref>
 
@@ -557,13 +557,13 @@ sort is case-sensitive.  This is also the way directories are listed at the
 system level on most operating systems.
 
 If you'd like the directory contents returned by this method to be
-sorted without regard to case , use this flag.
+sorted without regard to case , use this option.
 
 =item C<count_only>
 
 Returns a single value: an integer reflecting the number of items
 found in the directory after applying the filter criteria specified by any
-other flags (ie- "--dirs-only", "--recurse", etc.) that may have been passed
+other options (i.e.- "dirs_only", "recurse", etc) that may have been passed
 in as well.
 
 =item C<as_tree>
@@ -573,21 +573,38 @@ for the details you need to know when using this option.
 
 Returns a hierarchal datastructure (hashref) of the file tree in the directory
 you specify as the first argument to C<list_dir()>.  Use in combination with
-other options/flags to get the exact results you want in the datastructure.
+other options to get the exact results you want in the datastructure.
+
+When using this option, the hashref you get back will have certain metadata
+entries at each level of the hierarchy, namely there will be two special
+keys: "_DIR_SELF", and "_DIR_PARENT_".  Their values will be the name of
+the directory itself, and the name of its parent, respectively.
+
+That metadata can be extremely helpful when iterating over and parsing the
+hashref later on, but if you don't want the metadata, include the
+C<dirmeta> option and set it to a zero (false) value as shown below:
+
+   my $tree = $ftl->list_dir(
+      '/some/dir' => {
+         as_tree  => 1,
+         recurse  => 1,
+         dirmeta  => 0,
+      }
+   );
 
 =back
 
-=item B<Searching and Matching with C<list_dir()>>
+=item B<Filtering and Matching with C<list_dir()>>
 
 C<list_dir()> can use Perl L<Regular Expressions|perlre> to match against
-the results it returns.  It can match based on file name, directory name,
-the path preceeding results, and the parent directory of results.  The matching
-arguments you use must be real regular expression references as shown
-(i.e.- NOT strings).
+and thereby filter the results it returns.  It can match based on file name,
+directory name, the path preceeding results, and the parent directory of
+results.  The matching arguments you use must be real regular expression
+references as shown (i.e.- NOT strings).
 
 Regular expressions can be provided as a single argument value, or a
-specially crafted hashref designating a list of patterns to match against in
-either an "or" manner, or an "and"ed cumulative manner.
+specifically crafted hashref designating a list of patterns to match against
+in either an "or" manner, or an "and"ed cumulative manner.
 
 Some short examples of proper syntax will be provided after the list of
 matching options below
@@ -615,10 +632,11 @@ know (or don't care about) the names of the intermediate directories--
 THIS IS NOT THE OPTION YOU ARE LOOKING FOR.  Use the C<path_matches> option
 instead.  This is all irrelevant if you aren't using the C<recurse> option.
 
-Bear in mind that just because you tell <list_dir()> to match each directory
-against the regex(es) you specify here, that doesn't mean you are telling it to
-only show directories in its results.  You will get file names included in
-the results as well, unless you combine this with the C<dirs_only> option.
+B<*NOTE:> Bear in mind that just because you tell <list_dir()> to match each
+directory against the regex(es) you specify here, that doesn't mean you are
+telling it to only show directories in its results.  You will get file names
+in matching directories included in the results as well, unless you combine
+this with the C<dirs_only> option.
 
 =item C<path_matches>
 
@@ -632,15 +650,15 @@ regex(es) you specify.
 
 =back
 
-=item Examples of matching with C<listdir()>
+=item Examples of matching and filtering results in C<listdir()>
 
 Single-argument matching examples
 
-   $f->list_dir(
+   my @files = $f->list_dir(
       '../notes' => { files_match => qr/\.txt$/i, files_only => 1 }
    );
 
-   $f->list_dir(
+   my @dirs = $f->list_dir(
       '/var' => {
          dirs_match => qr/log|spool/i,
          recurse => 1,
@@ -648,7 +666,7 @@ Single-argument matching examples
       }
    );
 
-   $f->list_dir(
+   my @dirs = $f->list_dir(
       '/home' => {
          path_matches => qr/Desktop/,
          recurse => 1,
@@ -656,7 +674,7 @@ Single-argument matching examples
       }
    );
 
-   $f->list_dir(
+   my @files = $f->list_dir(
       '/home/tommy/projects' => {
          parent_matches => qr/^\.git$/,
          recurse => 1,
@@ -665,8 +683,8 @@ Single-argument matching examples
 
 A multiple-argument matching examples with B<OR>
 
-   $f->list_dir(
-      'C:\Users\bill' => {
+   my @files = $f->list_dir(
+      'C:\Users\Billy G' => {
          parent_matches => { or => [ qr/Desktop/, qr/Pictures/ ] }
          recurse => 1,
       }
@@ -677,14 +695,14 @@ A multiple-argument matching examples with B<OR>
 
 Multiple-argument matching examples with B<AND>
 
-   $f->list_dir(
+   my @files = $f->list_dir(
       '/home/leia' => {
          parent_matches => { and => [ qr/Anakin/, qr/Amidala/ ] }
          recurse => 1,
       }
    );
 
-   $f->list_dir(
+   my @files = $f->list_dir(
       '/home/mace' => {
          path_matches => { and => [ qr/^(?!.*dark.side)/i, qr/[Ff]orce/ ] }
          recurse => 1,
@@ -694,10 +712,10 @@ Multiple-argument matching examples with B<AND>
    # ... same concepts apply to "files_match" and "dirs_match" searches
 
 B<***When you specify regexes for more than one search type parameter>, the
-patterns are AND'ed together, as you'd expect, and all matching criteria must
+patterns are I<AND'ed> together, as you'd expect, and all matching criteria must
 be satisfied for a successful overall match.
 
-   $f->list_dir(
+   my @files = $f->list_dir(
       '/var' => {
          dirs_match     => { or => [ qr/^log$/, qr/^lib$/ ] },
          files_match    => { or => [ qr/^syslog/, qr/\.isam$/i ] },
@@ -711,13 +729,12 @@ B<Negative matches> (when you want to NOT match something) - use Perl!
 
 As shown in the L<File::Util::Manual::Examples>, Perl already provides
 support for negated matching in the form of "zero-width negative assertions".
-(see L<perlre> for details on how they work.  The basic idea has already been
-shown in some of the documentation here.  Use syntax like the regular
+(See L<perlre> for details on how they work).  Use syntax like the regular
 expression below to match anything that is NOT part of the subpattern.
 
    # match all files that are not *.MP3 files
    my @no_music = $f->list_dir(
-      '/opt/music' => { files_match => qr/^(?!mp3$)/i }
+      '/opt/music' => { files_match => qr/^(?!.*mp3$)/i }
    );
 
 =back
@@ -734,14 +751,14 @@ Returns a data structure containing the contents of each file present in the
 named directory.
 
 The type of data structure returned is determined by the optional data-type
-switch.  Only one option may be used for a given call to this method.
+option parameter.  Only one option may be used for a given call to this method.
 Recognized options are listed below.
 
-   my $files_ref = $f->load_dir( $dirname );
+   my $files_ref = $f->load_dir( $dirname ); # default (hashref)
 
       -OR-
 
-   my $files = $f->load_dir( $dirname => { as_listref => 1 } );
+   my $files_ref = $f->load_dir( $dirname => { as_listref => 1 } );
 
       -OR-
 
@@ -753,22 +770,26 @@ Recognized options are listed below.
 
 =over
 
-=item C<as_list>
-
-Causes the method to return a list comprised of the contents loaded from
-each file (in case-sensitive order) located in the named directory.
-
-=item C<as_listref>
-
-Same as above, except an array reference to the list of items is returned
-rather than the list itself.
-
 =item C<as_hashref> *(default)
 
 Implicit.  If no option is passed in, the default behavior is to return a
 reference to an anonymous hash whose keys are the names of each file in the
 specified directory; the hash values for contain the contents of the file
 represented by its corresponding key.
+
+=item C<as_list>
+
+Causes the method to return a list comprised of the contents loaded from
+each file (in case-sensitive order) located in the named directory.
+
+This is useful in situations where you don't care what the filenames were
+and you just want a list of file contents.
+
+=item C<as_listref>
+
+Same as above, except an array reference to the list of items is returned
+rather than the list itself.  This is more efficient than the above,
+particularly when dealing with large lists.
 
 =back
 
@@ -777,14 +798,14 @@ effective tool for loading up things like a directory of template files on
 a webserver, or to store binary data streams in memory.  Use it however you
 like.
 
-If you want to load files into a hashref/listref or array while using the
+If you do want to load files into a hashref/listref or array while using the
 advanced features of C<list_dir()>, just use list_dir to return the files
 and map the contents into your variable.
 
    my $hash_ref = {};
 
    %$hash_ref = map { $_ => $ftl->load_file( $_ ) }
-                $ftl->list_dir( $dir_name => { advanced opts...} );
+                $ftl->list_dir( $dir_name => { advanced options... } );
 
 =back
 
@@ -837,10 +858,10 @@ of the C<as_lines> option (see below).
 
 =item C<as_lines>
 
-If this flag is passed then your call to C<load_file> will return an ordered
-list of strings, each of which is a line from the file [file name].  The lines
-are returned in the order they are read, from the beginning of the file to the
-end.
+If this option is enabled then your call to C<load_file> will return a list of
+strings, each one of which is a line as it was read from the file [file name].
+The lines are returned in the order they are read, from the beginning of the
+file to the end.
 
 This is not the default behavior.  The default behavior is for C<load_file> to
 return a single string containing the entire contents of the file, including
@@ -917,11 +938,11 @@ Example:
 
    $f->make_dir( '/home/jspice' => 644 => { if_not_exists => 1 } );
 
-If this flag is passed in then make_dir will not attempt to create the directory
+If this option is enabled then make_dir will not attempt to create the directory
 if it already exists.  Rather it will return the name of the directory as it
 normally would if the directory did not exist previous to calling this method.
 
-If a call to this method is made without the C<if_not_exists> flag and the
+If a call to this method is made without the C<if_not_exists> option and the
 directory specified as [new directory name] does in fact exist, an error will
 result as it is impossible to create a directory that already exists.
 
@@ -974,8 +995,8 @@ is executed.
 =item I<Syntax:> C<< new( { options } ) >>
 
 This is the File::Util constructor method.  eg- It returns a new File::Util
-object reference when you call it.  It recognizes various parameters and flags
-that govern the behavior of the new File::Util object.
+object reference when you call it.  It recognizes various options that govern
+the behavior of the new File::Util object.
 
 =over
 
@@ -1038,16 +1059,10 @@ instead of the value(s) that would normally be returned by the call.
 
 =over
 
-=item I<Syntax:> C<< open_handle( file => [file name], [--opts] ) >>
+=item I<Syntax:> C<< open_handle( file => [file name] => { options } ) >>
 
-=item I<OR:> C<< open_handle( file => [file name], mode => [mode], [--opts] ) >>
-
-=item I<OR:> C<< open_handle( file => [file name], mode => [mode], bitmask => [bitmask], [--opts] ) >>
-
-=item I<OR:> C<< open_handle( file => [file name], mode => [mode], bitmask => [bitmask], dbitmask => [bitmask], [--opts] ) >>
-
-Attempts to get a unique open file handle on [file name] in [mode] mode.
-Returns the file handle if successful or generates a fatal error with a
+Attempts to get a lexically scoped open file handle on [file name] in [mode]
+mode.  Returns the file handle if successful or generates a fatal error with a
 diagnostic message if the operation fails.
 
 You will need to remember to call C<close()> on the filehandle yourself, at
@@ -1057,7 +1072,7 @@ is not recommended.  I<see L<perlfunc/close>>).
 Once you have the file handle you would use it as you would use any file handle.
 Remember that unless you specifically turn file locking off when the
 C<File::Util> object is created (see I<(see L<new|/new>)> or by using the
-C<--no-lock> flag when calling C<open_handle>, that file locking is going to
+C<no_lock> option when calling C<open_handle>, that file locking is going to
 automagically be handled for you behind the scenes, so long as your OS supports
 file locking of any kind at all.  Great!  It's very convenient for you to not
 have to worry about portably taking care of file locking between one
@@ -1071,7 +1086,7 @@ C<File::Util> can't manage it for you anymore once it hands the handle over
 to you.  At that point, it's all yours.  In order to release the file lock
 on your file handle, call L<unlock_open_handle()|/unlock_open_handle> on it.
 Otherwise the lock will remain for the life of your process.  If you don't
-want to use the free portable file locking, remember the C<--no-lock> flag,
+want to use the free portable file locking, remember the C<no_lock> option,
 which will turn off file locking for your open handle.  Seldom, however, should
 you ever opt to not use file locking unless you really know what you are doing.
 
@@ -1108,7 +1123,7 @@ argument has no effect and is silently ignored.
 
 The default behavior of C<open_handle()> is to open file handles using Perl's
 native C<open()> I<(see L<perlfunc/open>)>.  Unless you use the
-C<--use-sysopen> flag, the following modes and only these modes are valid.
+C<use_sysopen> option, the following modes and only these modes are valid.
 
 =over
 
@@ -1139,7 +1154,7 @@ to the end of the file.
 
 Optionally you can ask C<File::Util> to open your handle using C<CORE::sysopen>
 instead of using the native Perl C<CORE::open()>.  This is accomplished by
-passing in the C<--use-sysopen> flag.  Using this feature opens up more
+enabling the C<use_sysopen> option.  Using this feature opens up more
 possibilities as far as the open modes you can choose from, but also carries
 with it a few caveats so you have to be careful, just as you'd have to be a
 little more careful when using C<sysopen()> anyway.
@@ -1157,8 +1172,8 @@ their native Perl equivalents.
 L<perlfunc/sysread>)
 
 That said, here are the different modes you can choose from to get a file handle
-when using the C<--use-sysopen> flag.  Remember that these won't work unless
-you use the flag, and will generate an error if you try using them without it.
+when using the C<use_sysopen> option.  Remember that these won't work unless
+you use that option, and will generate an error if you try using them without it.
 The standard C<'read'>, C<'write'>, and C<'append'> modes are already available
 to you by default.  These are the extended modes:
 
@@ -1203,13 +1218,13 @@ C<sysopen()>'d filehandles!
 
 =over
 
-=item C<--binmode>
+=item C<binmode>
 
 Makes sure that CORE::binmode() is called on the filehandle when your content
 is written.  This is useful for times when the content you are writing to file
 is a binary stream. I<(see L<perlfunc/binmode>)>.
 
-=item C<--no-lock>
+=item C<no_lock>
 
 By default this method will attempt to get a lock on the file while it is
 being read, following whatever rules are in place for the flock policy
@@ -1218,10 +1233,10 @@ File::Util::flock_rules()
 I<(see the L<flock_rules()|/flock_rules>) entry below>.
 
 This method will not try to get a lock on the file if the File::Util object was
-created with the option C<--no-lock> or if this method is called with the
-option C<--no-lock>.
+created with the option C<no_lock> or if this method is called with the
+option C<no_lock>.
 
-=item C<--use-sysopen>
+=item C<use_sysopen>
 
 Instead of opening the file using Perl's native C<open()> command, C<File::Util>
 will open the file with the C<sysopen()> command.  You will have to remember
@@ -1259,7 +1274,7 @@ for the File::Util object will be returned.
 =item I<Syntax:> C<return_path( [string] )>
 
 Takes the file path from the file name provided and returns it such that
-"/foo/bar/baz.txt" is returned "/foo/bar".
+C</who/you/callin/scruffy.txt> is returned as C</who/you/callin>.
 
 =back
 
@@ -1299,6 +1314,10 @@ exists or not.
 =item I<Syntax:> C<strip_path( [string] )>
 
 Strips the file path from the file name provided and returns the file name only.
+
+Given C</kessel/run/12/parsecs>, it returns C<parsecs>
+
+Given C<C:\you\scoundrel>, it returns C<scoundrel>
 
 =back
 
@@ -1347,7 +1366,7 @@ in the first place.
 If C<File::Util> wasn't able to ever lock the file due to limitations of your
 operating system, a call to this method will return a true value.
 
-If file locking has been disabled on the file handle via the C<--no-lock> flag
+If file locking has been disabled on the file handle via the C<no_lock> option
 at the time L<open_handle|/open_handle> was called, or if file locking was
 disabled using the L<use_flock|/use_flock> method, or if file locking was
 disabled on the entire C<File::Util> object at the time of its creation
@@ -1371,19 +1390,52 @@ C<flock()> in its I/O operations.  A true value indicates that the File::Util
 object will use C<flock()> if available, a false value indicates that it will
 not.  The default is to use C<flock()> when available on your system.
 
+=over
+
+=item I<B<A WORD OF CAUTION FOR SOLARIS USERS>>
+
+File locking has known issues on B<SOLARIS>.  Solaris claims to offer
+a native C<flock()> implementation, but after obtaining a lock on a file,
+Solaris will very often just silently refuse to unlock it again until
+your process has completely exited.  This is not an issue with File::Util or
+even with Perl itself.  Other programming languages encounter the same
+problems; it is a system-level issue.  So please be aware of this if you are
+a Solaris user and want to use file locking on your OS.
+
+You may have to explicitly disable file locking completely.
+
+=back
+
 =back
 
 =head2 C<write_file>
 
 =over
 
-=item I<Syntax:> C<< write_file( file' => [file name], 'content' => [string], [--opts] ) >>
+=item I<Syntax:> C<< write_file( [file name] => [string] => { other_options } ) >>
 
-=item I<OR:> C<< write_file( file => [file name], content => [string], mode => [mode], [--opts] ) >>
+=item I<OR:> C<< write_file( { file => [file name], content => [string], mode => [mode], other_options } ) >>
 
-=item I<OR:> C<< write_file( file => [file name], content => [string], mode => [mode], bitmask => [bitmask], [--opts] ) >>
+Example:
 
-=item I<OR:> C<< write_file( file => [file name], content => [string], mode => [mode], bitmask => [bitmask], dbitmask => [bitmask], [--opts] ) >>
+   # get some content (a string returned from a function call, perhaps)
+   my $answer = ask_commissioner( 'Can he be trusted?' );
+
+   $ftl->write_file( 'Harvey_Dent.txt' => $answer );
+
+      -OR-
+
+   $ftl->write_file( 'Harvey_Dent.txt' => $answer => { mode => 'append' } );
+
+      -OR-
+
+   $ftl->write_file( {
+      file     => 'Harvey_Dent.txt',
+      content  => $answer,
+      mode     => 'append',
+      bitmask  => oct 644,
+      dbitmask => oct 755,
+   } );
 
 Attempts to write [string] to [file name] in mode [mode].  If the file does
 not yet exist it will be created, and it will be created with a bitmask of
@@ -1394,7 +1446,7 @@ value or not.  This is a function of Perl, not File::Util.
 
 [string] should be a string or a scalar variable containing a string.  The
 string can be any type of data, such as a binary stream, or ascii text with
-line breaks, etc.  Be sure to pass in the C<--binmode> flag for binary streams.
+line breaks, etc.  Be sure to enable the C<binmode> option for binary streams.
 
 If specified, the bitmask must be supplied in the form required by the
 native perl umask function.  I<see L<perlfunc/"umask">> for more information
@@ -1438,20 +1490,20 @@ to the end of the file.
 
 =over
 
-=item C<--binmode>
+=item C<binmode>
 
 Makes sure that CORE::binmode() is called on the filehandle when your content
 is written.  This is useful for times when the content you are writing to file
 is a binary stream.
 
-=item C<--empty-writes-OK>
+=item C<empty_writes_OK>
 
 Allows you to call this method without providing a content argument (it lets
 you create an empty file without warning you or failing.  Be advised that
-if you use this flag, it will have the same effect as truncating a file
+if you enable this option, it will have the same effect as truncating a file
 that already has content in it (i.e.- it will "clobber" non-empty files)
 
-=item C<--no-lock>
+=item C<no_lock>
 
 By default this method will attempt to get a lock on the file while it is
 being read, following whatever rules are in place for the flock policy
@@ -1460,8 +1512,8 @@ File::Util::flock_rules()
 I<(see the L<flock_rules()|/flock_rules>) entry below>.
 
 This method will not try to get a lock on the file if the File::Util object was
-created with the option C<--no-lock> or if this method is called with the
-option C<--no-lock>.
+created with the option C<no_lock> or if this method is called with the
+option C<no_lock> enabled.
 
 =back
 

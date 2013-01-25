@@ -237,8 +237,14 @@ the L<File::Util::Cookbook>
             }
    }
 
-*You can add the C<no_dirmeta> option, set to 1, to remove the special entries
-C<_DIR_PARENT_> and C<_DIR_SELF_> from each subdirectory branch.
+*You can add the C<dirmeta> option, set to 0 (false), to remove the special
+entries C<_DIR_PARENT_> and C<_DIR_SELF_> from each subdirectory branch.
+
+Example:
+
+   my $tree = $f->list_dir(
+      '/tmp' => { as_tree => 1, dirmeta => 0, recurse => 1 }
+   );
 
 *You can still combine the C<as_tree> option with other options, such as the
 regex pattern matching options covered above, or options like C<recurse>, or

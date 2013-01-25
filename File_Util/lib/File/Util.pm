@@ -657,8 +657,11 @@ sub _as_tree {
 
          $ancestory->{ $self } ||= { };
 
-         if ( !$opts->{ no_dirmeta } ) {
-
+         unless (
+            exists  $opts->{dirmeta} &&
+            defined $opts->{dirmeta} &&
+            $opts->{dirmeta} == 0
+         ) {
             $ancestory->{ $self }{ _DIR_PARENT_ } = $parent;
 
             $ancestory->{ $self }{ _DIR_SELF_ }   =
@@ -1004,14 +1007,41 @@ sub load_file {
 sub write_file {
    my $this     = shift @_;
    my $in       = _parse_in( @_ );
-   my $file     = $in->{file}    || $in->{filename} || '';
-   my $content  = $in->{content} || '';
-   my $mode     = $in->{mode}    || 'write';
-   my $bitmask  = $in->{bitmask} || oct 777;
-   my $raw_name = $file;
+   my $content  = '';
+   my $raw_name = '';
+   my $file     = '';
+   my $mode     = $in->{mode}     || 'write';
+   my $bitmask  = $in->{bitmask}  || oct 777;
    my $write_fh; # will be the lexical file handle local to this block
    my ( $root, $path, $clean_name, @dirs ) =
       ( '',    '',    '',          ()    );
+
+   # get name of file when passed in as a name/value pair...
+
+   $file =
+      exists  $in->{filename} &&
+      defined $in->{filename} &&
+      length  $in->{filename}
+         ? $in->{filename}
+         : exists  $in->{file} &&
+           defined $in->{file} &&
+           length  $in->{file}
+            ? $in->{file}
+            : '';
+
+   # ...or fall back to support of two-argument form of invocation
+
+   my $maybe_file    = shift @_; $maybe_file    = '' if !defined $maybe_file;
+   my $maybe_content = shift @_; $maybe_content = '' if !defined $maybe_content;
+
+   $file    = $maybe_file if !ref $maybe_file && $file eq '';
+   $content =
+      !ref $maybe_content &&
+      !exists $in->{content}
+         ? $maybe_content
+         : $in->{content};
+
+   $raw_name = $file; # preserve original filename input before line below:
 
    ( $root, $path, $file ) = atomize_path( $file );
 
@@ -1048,8 +1078,7 @@ sub write_file {
    # if the call to this method didn't include any data which the caller
    # wants us to write or append to the file, then complain about it
    return $this->_throw(
-      'no input',
-      {
+      'no input' => {
          meth    => 'write_file',
          missing => 'the content you want to write or append',
          opts    => $in,
@@ -1062,12 +1091,13 @@ sub write_file {
       !$EMPTY_WRITES_OK
          &&
       !$in->{empty_writes_OK}
+         &&
+      !$in->{empty_writes_ok}
    );
 
    # check if file already exists in the form of a directory
    return $this->_throw(
-      'cant write_file on a dir',
-      {
+      'cant write_file on a dir' => {
          filename => $raw_name,
          opts     => $in,
       }
@@ -1081,11 +1111,10 @@ sub write_file {
    foreach ( @dirs ) {
 
       return $this->_throw(
-         'bad chars',
-         {
-            string  => $_,
-            purpose => 'the name of a file or directory',
-            opts    => $in,
+         'bad chars' => {
+            string   => $_,
+            purpose  => 'the name of a file or directory',
+            opts     => $in,
          }
       ) if !$this->valid_filename( $_ );
    }
@@ -1097,8 +1126,7 @@ sub write_file {
    unless ( $mode eq 'write' || $mode eq 'append' || $mode eq 'trunc' ) {
 
       return $this->_throw(
-         'bad openmode popen',
-         {
+         'bad openmode popen' => {
             meth     => 'write_file',
             filename => $raw_name,
             badmode  => $mode,
@@ -1136,11 +1164,10 @@ sub write_file {
    if ( -e $clean_name ) {
 
       return $this->_throw(
-         'cant fwrite',
-         {
-            filename => $clean_name,
-            dirname  => $root . $path,
-            opts     => $in,
+         'cant fwrite' => {
+            filename   => $clean_name,
+            dirname    => $root . $path,
+            opts       => $in,
          }
       ) unless -w $clean_name;
    }
@@ -1148,11 +1175,10 @@ sub write_file {
 
       # if file doesn't exist, see if we can create it
       return $this->_throw(
-         'cant fcreate',
-         {
-            filename => $clean_name,
-            dirname  => $root . $path,
-            opts     => $in,
+         'cant fcreate' => {
+            filename    => $clean_name,
+            dirname     => $root . $path,
+            opts        => $in,
          }
       ) unless -w $root . $path;
    }
@@ -1169,8 +1195,7 @@ sub write_file {
             $clean_name,
             $$MODES{sysopen}{ $mode }
          or return $this->_throw(
-               'bad open',
-               {
+               'bad open'   => {
                   filename  => $clean_name,
                   mode      => $mode,
                   exception => $!,
@@ -1187,8 +1212,7 @@ sub write_file {
             $$MODES{sysopen}{ $mode },
             $bitmask
          or return $this->_throw(
-            'bad open',
-            {
+            'bad open'   => {
                filename  => $clean_name,
                mode      => $mode,
                exception => $!,
@@ -1204,8 +1228,7 @@ sub write_file {
 
          open $write_fh, '<', $clean_name or
             return $this->_throw(
-               'bad open',
-               {
+               'bad open'   => {
                   filename  => $clean_name,
                   mode      => 'read',
                   exception => $!,
@@ -1224,8 +1247,7 @@ sub write_file {
             $clean_name,
             $$MODES{sysopen}{ $mode }
          or return $this->_throw(
-            'bad open',
-            {
+            'bad open'   => {
                filename  => $clean_name,
                mode      => $mode,
                opts      => $in,
@@ -1242,8 +1264,7 @@ sub write_file {
             $$MODES{sysopen}{ $mode },
             $bitmask
          or return $this->_throw(
-            'bad open',
-            {
+            'bad open'   => {
                filename  => $clean_name,
                mode      => $mode,
                opts      => $in,
@@ -1262,20 +1283,18 @@ sub write_file {
       if ( $mode ne 'append' ) {
 
          truncate( $write_fh, 0 ) or return $this->_throw(
-            'bad systrunc',
-            {
-               filename  => $clean_name,
-               exception => $!,
-               opts      => $in,
+            'bad systrunc' => {
+               filename    => $clean_name,
+               exception   => $!,
+               opts        => $in,
             }
          );
-
       }
    }
 
    CORE::binmode( $write_fh ) if $in->{binmode};
 
-   $in->{content} ||= ''; syswrite( $write_fh, $in->{content} );
+   syswrite( $write_fh, $content );
 
    # release lock on the file
 
@@ -1283,8 +1302,7 @@ sub write_file {
 
    close $write_fh or
       return $this->_throw(
-         'bad close',
-         {
+         'bad close'  => {
             filename  => $clean_name,
             mode      => $mode,
             exception => $!,
