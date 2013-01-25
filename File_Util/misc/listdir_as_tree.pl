@@ -38,7 +38,7 @@ print Dumper $ftl->list_dir(
    $tempdir => {
       as_tree     => 1,
       recurse     => 1,
-      no_dirmeta  => 1,
+      dirmeta     => 0,
       files_match => qr/^[abcjkl]/,
    }
 );
@@ -48,7 +48,7 @@ print Dumper $ftl->list_dir(
    $tempdir => {
       as_tree    => 1,
       recurse    => 1,
-      no_dirmeta => 1,
+      dirmeta    => 0,
       rpattern   => '^[jbc]',
       parent_matches => qr/bar$/,
    }
@@ -59,7 +59,7 @@ print Dumper $ftl->list_dir(
    $tempdir => {
       as_tree      => 1,
       recurse      => 1,
-      no_dirmeta   => 1,
+      dirmeta      => 0,
       files_match  => qr/^[ak]/,
       parent_matches => { or => [ qr/^[[:alnum:]\-_\.]{10}$/, qr/oo$/ ] },
    }
