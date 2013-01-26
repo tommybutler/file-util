@@ -41,7 +41,7 @@ These are included in the standalone scripts that come in the
 
    my $ftl   = File::Util->new();
    my $dir   = 'some/log/directory';
-   my @files = $ftl->list_dir( $dir, '--files-only' );
+   my @files = $ftl->list_dir( $dir => { files_only => 1 } );
 
    foreach my $file ( @files ) {
 
@@ -74,7 +74,7 @@ These are included in the standalone scripts that come in the
    my $ftl = File::Util->new();
    my $removedir = '/path/to/directory/youwanttodelete';
 
-   my @gonners = $ftl->list_dir( $removedir, '--recurse' );
+   my @gonners = $ftl->list_dir( $removedir => { recurse => 1 } );
 
    # remove directory and everything in it
    @gonners = reverse sort { length $a <=> length $b } @gonners;
@@ -172,12 +172,12 @@ These are included in the standalone scripts that come in the
 
    # create new File::Util object, set File::Util to send a warning for
    # fatal errors instead of dying
-   my $ftl   = File::Util->new( '--fatals-as-warning' );
+   my $ftl   = File::Util->new( onfail => 'warn' );
    my $rstr  = $ftl->load_file( RFILE );
    my $spat  = quotemeta $ftl->load_file( SFILE ); $spat = qr/$spat/;
    my $gsbt  = 0;
-   my @opts  = qw/ --files-only --with-paths --recurse /;
-   my @files = $ftl->list_dir( INDIR, @opts );
+   my $opts  = { files_only => 1, with_paths => 1, recurse => 1 };
+   my @files = $ftl->list_dir( INDIR => $opts );
 
    for (my $i = 0; $i < @files; ++$i) {
 
@@ -210,16 +210,15 @@ These are included in the standalone scripts that come in the
 
    my $indent = '';
    my $ftl    = File::Util->new();
-   my @opts   = qw(
-      --with-paths
-      --sl-after-dirs
-      --no-fsdots
-      --files-as-ref
-      --dirs-as-ref
-   );
+   my $opts   = {
+      with_paths    => 1,
+      sl_after_dirs => 1,
+      no_fsdots     => 1,
+      as_ref        => 1,
+   };
 
    my $filetree  = { };
-   my( $subdirs, $sfiles ) = $ftl->list_dir( $treetrunk, @opts );
+   my( $subdirs, $sfiles ) = $ftl->list_dir( $treetrunk => $opts );
 
    $filetree = [{
       $treetrunk => [ sort { uc $a cmp uc $b } @$subdirs, @$sfiles ]
@@ -241,7 +240,7 @@ These are included in the standalone scripts that come in the
 
          next unless -d $current;
 
-         my( $subdirs, $sfiles ) = $ftl->list_dir( $current, @opts );
+         my( $subdirs, $sfiles ) = $ftl->list_dir( $current => $opts );
 
          map { $_ = $ftl->strip_path( $_ ) } @$sfiles;
 

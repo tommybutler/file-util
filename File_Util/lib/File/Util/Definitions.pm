@@ -130,12 +130,12 @@ $_LOCKS->{BLOCKSH}   = sub {
 };
 $_LOCKS->{WARN} = sub {
    $_[0]->_throw(
-      'bad flock',
+      'bad flock' =>
       {
          filename  => $_[1],
          exception => $!,
+         onfail    => 'warn',
       },
-      '--as-warning',
    ); return
 };
 $_LOCKS->{FAIL} = sub {

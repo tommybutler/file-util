@@ -1996,8 +1996,8 @@ sub open_handle {
 
    # make sure that open mode is a valid mode
    if (
-      !exists $opts->{'--use-sysopen'} &&
-      !defined $opts->{'--use-sysopen'}
+      !exists $opts->{use_sysopen} &&
+      !defined $opts->{use_sysopen}
    ) {
       # native Perl open modes
       unless (
@@ -2136,10 +2136,10 @@ sub open_handle {
    }
    # input validation sequence finished
 
-   if ( $$opts{'--no-lock'} || !$USE_FLOCK ) {
+   if ( $$opts{no_lock} || !$USE_FLOCK ) {
       if (
-         !exists $opts->{'--use-sysopen'} &&
-         !defined $opts->{'--use-sysopen'}
+         !exists $opts->{use_sysopen} &&
+         !defined $opts->{use_sysopen}
       ) { # perl open
          # get open mode
          $mode = $$MODES{popen}{ $mode };
@@ -2175,8 +2175,8 @@ sub open_handle {
    }
    else {
       if (
-         !exists $opts->{'--use-sysopen'} &&
-         !defined $opts->{'--use-sysopen'}
+         !exists $opts->{use_sysopen} &&
+         !defined $opts->{use_sysopen}
       ) { # perl open
          # open read-only first to safely check if we can get a lock.
          if ( -e $clean_name ) {
@@ -2291,7 +2291,7 @@ sub open_handle {
    }
 
    # call binmode on the filehandle if it was requested
-   CORE::binmode( $fh ) if $in->{binmode} || $opts->{'--binmode'};
+   CORE::binmode( $fh ) if $in->{binmode} || $opts->{binmode};
 
    # return file handle reference to the caller
    return $fh;

@@ -20,8 +20,10 @@ a look ath the L<File::Util::Manual::Examples>
 For examples of full Programs using File::Util, take a look at the
 L<File::Util::Cookbook>.
 
-We'll start out with some brief notes up front, and then the rest of this
-document will cover the use of each feature in File::Util...
+Now we'll start out with some brief notes about what File::Util is (and isn't),
+then we'll talk about custom error handling in File::Util, and finally the rest
+of this document will cover File::Util's object methods, one by one, with brief
+usage examples.
 
 =head2 WHAT File::Util IS
 
@@ -112,6 +114,120 @@ trees, B<I<NOT just filtering results>>, take a look at L<File::Find>.  There
 are many up-and-comers in the Perl file searching utilities niche that you can
 also try, however they are still hard pressed to meet with the raw performance
 and speed of File::Find in very large file trees.
+
+
+=head1 ERROR HANDLING
+
+=head2 Feature Summary
+
+Managing potential errors is a big part of Perl IO.  File::Util gives you
+options.  In fact, every single call to a File::Util method can include
+an error handling directive.  File::Util has some pre-defined error handling
+behaviors that you can choose from, or you can supply your own error handler
+routine.  This is accomplished via the B<C<onfail>> option.
+
+As an added convenience, when you use this option with the
+L<File::Util constructor method|/new>, it sets the default error
+handling policy for all failures; in other words, you can set up one error
+handler for everything and never have to worry about it after that.
+
+=head2 Details
+
+The predefined B<C<onfail>> behaviors and their syntaxes are covered below.
+
+=over
+
+=item keyword: B<C<die>>
+
+This is what File::Util already does: it calls C<CORE::die()> with an error
+message when it encounters a fatal error, and your program terminates.
+
+Example:
+
+   File::Util->new( ... { onfail => 'die' } );
+
+=item keyword: B<C<zero>>
+
+When you use the predefined B<C<zero>> behavior as the C<onfail> handler,
+File::Util will return a zero value (the integer C<0>) if it encounters a fatal
+error, instead of dying.  File::Util won't warn about the error or abort
+execution.  You will just get a zero back instead of what you would have
+gotten otherwise, and execution will continue as if no error happened.
+
+Example:
+
+   File::Util->load_file( ... { onfail => 'zero' } );
+
+=item keyword: B<C<warn>>
+
+When you use the predefined B<C<warn>> behavior as the C<onfail> handler,
+File::Util will return C<undef>  if it encounters a fatal error, instead of
+dying.  File::Util WILL emit a warning with details about the error, but will
+not abort execution.  You will just get a warning message sent to STDERR
+and C<undef> gets sent back to the caller instead of what you would have
+gotten otherwise.  Other than the warning, execution will continue as if no
+error ever happened.
+
+Example:
+
+   File::Util->write_file( ... { onfail => 'warn' } );
+
+=item keyword: B<C<message>>
+
+When you use the predefined B<C<message>> behavior as the C<onfail> handler,
+if File::Util runs into a fatal error it will return an error message in the
+form of a string containing details about the problem.  Execution will not
+be aborted, and no warnings will be issued.  You will just get an error message
+sent back to the caller instead of what you would have gotten otherwise.
+Execution will then continue on as if no error happened.
+
+Example:
+
+   File::Util->list_dir( ... { onfail => 'message' } );
+
+=item B<C<subroutine reference>>
+
+If you supply a code reference to the C<onfail> option in a File::Util method
+call, it will execute that code if it encounters a fatal error.  You must
+supply a true code reference, as shown in the examples below, either to a
+named or anonymous subroutine.
+
+The subroutine you specify will receive two arguments as its input in "C<@_>".
+The first will be the text of the error message, and the second will be a
+stack trace in text format.  You can send them to a logger, to your
+sysadmin in an email alert, or whatever you like-- because it is B<*your*>
+error handler.
+
+B<WARNING! >
+B<If you do not call C<die> or C<exit> at the end of your error handler,>
+B<File::Util will NOT exit, but continue to execute.>  When you opt to use
+this feature, you are fully responsible for your process' error handling
+and post-error execution.
+
+Examples:
+
+   # step 1) define your custom error handler
+   sub politician_error_handler {
+
+      my ( $err, $stack ) = @_;
+
+      # do stuff like ...
+
+      $logger->debug( $stack );
+
+      die 'We neither confirm nor deny that an IO error has happened.';
+   }
+
+   # step 2) apply your error handler
+   File::Util->new( { onfail => \&politician_error_handler } );
+
+      -OR-
+
+   # Define and apply your error handler in one step:
+
+   File::Util->new( { onfail => sub { my ( $err, $stack ) = @_; ... } } );
+
+=back
 
 
 
@@ -498,7 +614,7 @@ B<To enable an option, pass it in with the options hashref that must follow>
 B<the initial directory name argument, and set the value to 1>
 
 Syntax example to recursively return a list of subdirectories in
-directory "dirname":
+directory "dir_name":
 
    $f->list_dir( 'dir_name' => { dirs_only => 1, recurse => 1 } );
 
@@ -1011,8 +1127,8 @@ the behavior of the new File::Util object.
 Optionally specify this option to the C<File::Util::new> method instruct the
 new object that it should never attempt to use C<flock()> in it's I/O
 operations.  The default is to use C<flock()> when available on your system.
-Specify this option with a true or false value, true to use C<flock()>, false
-to not use it.
+Specify this option with a true or false value ( 1 or 0 ), true to use
+C<flock()>, false to not use it.
 
 =item C<readlimit>
 
@@ -1032,24 +1148,17 @@ otherwise it will be silently ignored.
 
 I<(see also: L<max_dives()|/max_dives>)>
 
-=item C<fatals_as_warning>
+=item B<C<onfail>>
 
-Directive to instruct the new File::Util object that when any call to one of
-its methods results in a fatal error that it should return B<C<undef>>
-instead of the value(s) that would normally be returned by the call, and to
-send an error message to STDERR as well.
+Set the I<default> policy for how File::Util handles fatal errors.  This option
+takes any one of a list of predefined keywords, or a reference to a named or
+anonymous error handling subroutine of your own.
 
-=item C<fatals_as_status>
+You can supply an C<onfail> handler to any function in File::Util, but when
+you do so for the C<new()> constructor, you are setting the I<default>.
 
-Directive to instruct the new File::Util object that when any call to one of
-its methods results in a fatal error that it should return B<C<undef>>
-instead of the value(s) that would normally be returned by the call.
-
-=item C<fatals_as_errmsg>
-
-Directive to instruct the new File::Util object that when any call to one of
-its methods results in a fatal error that it should return B<an error message>
-instead of the value(s) that would normally be returned by the call.
+Acceptable values are all covered in the L<ERROR HANDLING|/ERROR HANDLING>
+section (above), along with proper syntax and example usage.
 
 =back
 
@@ -1427,7 +1536,7 @@ Syntax Examples:
 
       -OR-
 
-   # get some binary content, maybe a picture
+   # get some binary content, maybe a picture...
    my $binary_data = get_mugshot( alias => 'twoface' );
 
    $ftl->write_file( 'suspect.png' => $binary_data => { binmode => 1 } );
@@ -1437,8 +1546,8 @@ Syntax Examples:
    $ftl->write_file(
       {
          file    => '/gotham/city/ballots/Bruce_Wayne.txt',
-         content => 'Vote for Harvey!  I believe in Harvey Dent!',
-         bitmask => oct 600, # <-- use secret ballot file permissions
+         content => 'Vote for Harvey!',
+         bitmask => oct 600, # <- secret ballot file permissions
       }
    );
 

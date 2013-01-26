@@ -31,6 +31,22 @@ sub _throw {
    my $opts = $this->_remove_opts( \@_ );
    my %fatal_rules = ();
 
+   # here we handle support for the legacy error handling policy syntax,
+   # such as things like "fatals_as_status => 1"
+   #
+   # ...and we also handle support for the newer, more pretty error
+   # handling policy syntax using "onfail" keywords/subrefs
+
+   $opts->{onfail} ||= $this->{opts}->{onfail};
+
+   $opts->{onfail} ||=
+      $opts->{opts} &&
+      ref $opts->{opts} eq 'HASH'
+         ? $opts->{opts}->{onfail}
+         : '';
+
+   $opts->{onfail} ||= '';
+
    # fatalality-handling rules passed to the failing caller trump the
    # rules set up in the attributes of the object; the mechanism below
    # also allows for the implicit handling of fatals_are_fatal => 1
@@ -46,7 +62,7 @@ sub _throw {
       grep /^fatals/o, keys %{ $this->{opts} }
    }
 
-   return 0 if $fatal_rules{fatals_as_status};
+   return 0 if $fatal_rules{fatals_as_status} || $opts->{onfail} eq 'zero';
 
    $this->{expt} ||= { };
 
@@ -100,37 +116,28 @@ sub _throw {
             . &NL . q{__ERRORBLOCK__}
          );
 
-   if ( $fatal_rules{fatals_as_warning} ) {
-
+   if (
+      $opts->{onfail} eq 'warn' ||
+      $fatal_rules{fatals_as_warning}
+   ) {
       warn $this->{expt}->trace( $@ || $bad_news ) and return;
    }
-   elsif ( $fatal_rules{fatals_as_errmsg} || $opts->{return} ) {
-
+   elsif (
+      $opts->{onfail} eq 'message'   ||
+      $fatal_rules{fatals_as_errmsg} ||
+      $opts->{return}
+   ) {
       return $this->{expt}->trace( $@ || $bad_news );
-   }
-
-   foreach ( keys %$opts ) {
-
-      next if $_ eq 'opts';
-
-      $bad_news .= qq[ARG   $_ = $opts->{$_}] . $NL;
-   }
-
-   if ( $opts->{opts} ) {
-
-      foreach ( keys %{ $$opts{opts} } ) {
-
-         $_ = defined $_ ? $_  : 'empty value';
-
-         $bad_news .= qq[OPT   $_] . $NL;
-      }
    }
 
    warn $this->{expt}->trace( $@ || $bad_news ) if $opts->{warn_also};
 
-   $this->{expt}->fail( $@ || $bad_news );
+   die $this->{expt}->trace( $@ || $bad_news )
+      unless ref $opts->{onfail} eq 'CODE';
 
-   return '';
+   @_ = ( $bad_news, $this->{expt}->trace() );
+
+   goto $opts->{onfail};
 }
 
 
