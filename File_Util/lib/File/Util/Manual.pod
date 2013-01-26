@@ -14,7 +14,7 @@ File::Util::Manual - File::Util Reference
 This manual is is the complete reference to all available public methods for use
 in L<File::Util>.
 
-For a "Nutshell"-type reference full of actual small example code snippets, take
+For a "nutshell"-type reference full of actual small example code snippets, take
 a look ath the L<File::Util::Manual::Examples>
 
 For examples of full Programs using File::Util, take a look at the
@@ -144,7 +144,7 @@ message when it encounters a fatal error, and your program terminates.
 
 Example:
 
-   File::Util->new( ... { onfail => 'die' } );
+   my $ftl = File::Util->new( ... { onfail => 'die' } );
 
 =item keyword: B<C<zero>>
 
@@ -156,7 +156,7 @@ gotten otherwise, and execution will continue as if no error happened.
 
 Example:
 
-   File::Util->load_file( ... { onfail => 'zero' } );
+   my $ftl = File::Util->load_file( ... { onfail => 'zero' } );
 
 =item keyword: B<C<warn>>
 
@@ -170,7 +170,7 @@ error ever happened.
 
 Example:
 
-   File::Util->write_file( ... { onfail => 'warn' } );
+   my $ftl = File::Util->write_file( ... { onfail => 'warn' } );
 
 =item keyword: B<C<message>>
 
@@ -183,7 +183,7 @@ Execution will then continue on as if no error happened.
 
 Example:
 
-   File::Util->list_dir( ... { onfail => 'message' } );
+   my $ftl = File::Util->list_dir( ... { onfail => 'message' } );
 
 =item B<C<subroutine reference>>
 
@@ -219,13 +219,21 @@ Examples:
    }
 
    # step 2) apply your error handler
-   File::Util->new( { onfail => \&politician_error_handler } );
+   my $ftl = File::Util->new( { onfail => \&politician_error_handler } );
 
       -OR-
 
    # Define and apply your error handler in one step:
 
-   File::Util->new( { onfail => sub { my ( $err, $stack ) = @_; ... } } );
+   my $ftl = File::Util->new(
+      {
+         onfail => sub {
+            my ( $err, $stack ) = @_;
+
+            # do stuff ...
+         }
+      }
+   );
 
 =back
 
@@ -603,7 +611,7 @@ directory is inaccessible.
 Note that this is one of File::Util's most robust methods, and is very useful.
 It can be used as a higher order function (accept callback subrefs), and can
 be used for advanced pattern matching against files.  It can even return a
-heirarchal datastructure of the file tree you ask it to search.
+heirarchal datastructure of the file tree you ask it to walk.
 
 See the L<File::Util::Manual::Examples> for several useful ways to use
 C<list_dir()>.
@@ -616,7 +624,7 @@ B<the initial directory name argument, and set the value to 1>
 Syntax example to recursively return a list of subdirectories in
 directory "dir_name":
 
-   $f->list_dir( 'dir_name' => { dirs_only => 1, recurse => 1 } );
+   my @dirs = $f->list_dir( 'dir_name' => { dirs_only => 1, recurse => 1 } );
 
 =over
 
@@ -643,7 +651,9 @@ to the directory named in the call.
 
 =item C<recurse>
 
-Recurse subdirectories
+Recurse into subdirectories.  (Open up subdirectories and continue to
+descend into the directory tree either as far as it goes, or until the
+C<max_dives> limit is reached. I<See L<max_dives()|/max_dives>>)
 
 =item C<dirs_as_ref>
 
@@ -692,6 +702,15 @@ for the details you need to know when using this option.
 Returns a hierarchal datastructure (hashref) of the file tree in the directory
 you specify as the first argument to C<list_dir()>.  Use in combination with
 other options to get the exact results you want in the datastructure.
+
+One quick example:
+
+   my $tree = $ftl->list_dir(
+      '/some/dir' => {
+         as_tree  => 1,
+         recurse  => 1,
+      }
+   );
 
 When using this option, the hashref you get back will have certain metadata
 entries at each level of the hierarchy, namely there will be two special
@@ -750,7 +769,7 @@ know (or don't care about) the names of the intermediate directories--
 THIS IS NOT THE OPTION YOU ARE LOOKING FOR.  Use the C<path_matches> option
 instead.  This is all irrelevant if you aren't using the C<recurse> option.
 
-B<*NOTE:> Bear in mind that just because you tell <list_dir()> to match each
+B<*NOTE:> Bear in mind that just because you tell C<list_dir()> to match each
 directory against the regex(es) you specify here, that doesn't mean you are
 telling it to only show directories in its results.  You will get file names
 in matching directories included in the results as well, unless you combine
@@ -809,7 +828,7 @@ A multiple-argument matching examples with B<OR>
    );
 
    # ... same concepts apply to "files_match", "dirs_match",
-   #     and "parent_matches" searches
+   #     and "parent_matches" filtering
 
 Multiple-argument matching examples with B<AND>
 
@@ -827,15 +846,15 @@ Multiple-argument matching examples with B<AND>
       }
    );
 
-   # ... same concepts apply to "files_match" and "dirs_match" searches
+   # ... same concepts apply to "files_match" and "dirs_match" filtering
 
-B<***When you specify regexes for more than one search type parameter>, the
+B<**When you specify regexes for more than one filter type parameter>, the
 patterns are I<AND'ed> together, as you'd expect, and all matching criteria must
 be satisfied for a successful overall match.
 
    my @files = $f->list_dir(
       '/var' => {
-         dirs_match     => { or => [ qr/^log$/, qr/^lib$/ ] },
+         dirs_match     => { or => [ qr/^log$/,   qr/^lib$/    ] },
          files_match    => { or => [ qr/^syslog/, qr/\.isam$/i ] },
          parent_matches => qr/[[:alpha:]]+/
          path_matches   => qr/^(?!.*home)/,
@@ -848,11 +867,19 @@ B<Negative matches> (when you want to NOT match something) - use Perl!
 As shown in the L<File::Util::Manual::Examples>, Perl already provides
 support for negated matching in the form of "zero-width negative assertions".
 (See L<perlre> for details on how they work).  Use syntax like the regular
-expression below to match anything that is NOT part of the subpattern.
+expressions below to match anything that is NOT part of the subpattern.
 
-   # match all files that are not *.MP3 files
+   # match all files with names that do NOT contain "apple" (case sensitive)
    my @no_music = $f->list_dir(
-      '/opt/music' => { files_match => qr/^(?!.*mp3$)/i }
+      'Pictures/fruit' => { files_match => qr/^(?!.*apple)/ }
+   );
+
+   # match all files that that do NOT end in *.mp3 (case INsensitive)
+   # also, don't match files that end in *.wav either
+   my @no_music = $f->list_dir(
+      '/opt/music' => {
+         files_match => { and => [ qr/^(?!.*mp3$)/i, qr/^(?!.*wav$)/i ]
+      }
    );
 
 =back
@@ -872,15 +899,15 @@ The type of data structure returned is determined by the optional data-type
 option parameter.  Only one option may be used for a given call to this method.
 Recognized options are listed below.
 
-   my $files_ref = $f->load_dir( $dirname ); # default (hashref)
+   my $files_hash_ref = $f->load_dir( $dirname ); # default (hashref)
 
       -OR-
 
-   my $files_ref = $f->load_dir( $dirname => { as_listref => 1 } );
+   my $files_list_ref = $f->load_dir( $dirname => { as_listref => 1 } );
 
       -OR-
 
-   my @dir_files = $f->load_dir( $dirname => { as_list => 1 } );
+   my @files = $f->load_dir( $dirname => { as_list => 1 } );
 
 =over
 
@@ -932,9 +959,10 @@ types such as binaries, FIFOs, sockets, etc.
 
 Restrictions imposed by the current "read limit"
 I<(see the L<readlimit()|/readlimit>) entry below> will be applied to the
-files opened by this method as well.  Adjust the readlimit as necessary.
+individual files opened by this method as well.  Adjust the readlimit as
+necessary.
 
-   my $files = $f->load_dir( 'directory/to/load/' );
+   my $templates = $f->load_dir( 'templates/stock-ticker' );
 
 The above code creates an anonymous hash reference that is stored in the
 variable named "C<$files>".  The keys and values of the hash referenced by
