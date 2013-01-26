@@ -156,7 +156,7 @@ gotten otherwise, and execution will continue as if no error happened.
 
 Example:
 
-   my $ftl = File::Util->load_file( ... { onfail => 'zero' } );
+   my $content = File::Util->load_file( ... { onfail => 'zero' } );
 
 =item keyword: B<C<warn>>
 
@@ -170,7 +170,7 @@ error ever happened.
 
 Example:
 
-   my $ftl = File::Util->write_file( ... { onfail => 'warn' } );
+   my $write_ok = File::Util->write_file( ... { onfail => 'warn' } );
 
 =item keyword: B<C<message>>
 
@@ -183,7 +183,7 @@ Execution will then continue on as if no error happened.
 
 Example:
 
-   my $ftl = File::Util->list_dir( ... { onfail => 'message' } );
+   my @files = File::Util->list_dir( ... { onfail => 'message' } );
 
 =item B<C<subroutine reference>>
 
