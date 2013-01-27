@@ -20,12 +20,14 @@ a look ath the L<File::Util::Manual::Examples>
 For examples of full Programs using File::Util, take a look at the
 L<File::Util::Cookbook>.
 
-Now we'll start out with some brief notes about what File::Util is (and isn't),
-then we'll talk about custom error handling in File::Util, and finally the rest
-of this document will cover File::Util's object methods, one by one, with brief
-usage examples.
+=head2 The layout of the Manual
 
-=head2 WHAT File::Util IS
+Now we'll start out with some brief notes about what File::Util is (and isn't),
+then we'll talk about the syntax used in File::Util.  After that we discuss
+custom error handling in File::Util, and then the rest of this document will
+cover File::Util's object methods, one by one, with brief usage examples.
+
+=head2 What File::Util Is
 
 File::Util is a "Pure Perl" library that provides you with several easy-to-use
 tools to wrangle files and directory contents.  It has higher order methods
@@ -101,7 +103,7 @@ done.  No compiling required.
 
 =back
 
-=head2 WHAT File::Util IS NOT
+=head2 What File::Util Is NOT
 
 File::Util is B<NOT> a performance-optimized file-finding/searching utility.
 While it does provide robust tools to allow you to filter the results of
@@ -115,6 +117,67 @@ are many up-and-comers in the Perl file searching utilities niche that you can
 also try, however they are still hard pressed to meet with the raw performance
 and speed of File::Find in very large file trees.
 
+=head1 SYNTAX
+
+In the past, File::Util relied on an older method invocation syntax that
+was not robust enough to support the newer features that have been added
+since version 4.0.  In addition to making new features possible, the new
+syntax is more in keeping with what the Perl community has come to expect
+from its favorite modules, like Moose or DBIx::Class.
+
+=head2 OLD Syntax Example
+
+   # this legacy syntax looks clunky and kind of smells like shell scripting
+   $f->list_dir( '/some/dir', '--recurse', '--as-ref', '--pattern=[^\d]' );
+
+=head2 NEW Syntax Example
+
+   # This syntax is much more robust, and supports new features
+   $f->list_dir(
+      '/some/dir' => {
+         files_match    => { or  => [ qr/bender$/, qr/^flexo/   ] },
+         parent_matches => { and => [ qr/^Planet/, qr/Express$/ ] },
+         callback       => \&deliver_interstellar_shipment,
+         files_only     => 1,
+         recurse        => 1,
+         as_ref         => 1,
+      }
+   )
+
+If you have code that uses the old syntax, DON'T WORRY -- it's still fully
+supported behind the scenes.  However, for new code that takes advantage of
+new features like higher order functions (callbacks), or advanced matching
+for directory listings, you need to use the syntax as set forth in this
+document.  The old syntax isn't covered here, because you shouldn't use it
+anymore.
+
+=head3 I<An Explanation Of The "Options Hashref">
+
+As shown in the code example above, the new syntax uses hash references to
+specify options for calls to File::Util methods.  This documentation refers to
+these as the "options hashref".  The code examples below illustrates what they
+are and how they are used.  Advanced Perl programmers will recognize these
+right away.
+
+NOTE: I<"hashref" is short for "hash reference".>  Hash references use curly
+brackets and look like this:
+
+   my $hashref = { name => 'Larry', language => 'Perl', pet => 'Velociraptor' };
+
+File::Util uses these hash references as argument modifiers that allow you to
+enable or disable certain features or behaviors, so you get the output you
+want, like this:
+
+   my $result = $ftl->some_method_call( arg1, arg2, { options hashref } );
+                                                    # ^^^^^^^^^^^^^^^ #
+
+A couple of real examples would look like this:
+
+   $ftl->write_file( '/some/file.txt', 'Hello World!', { mode => 'append' } );
+                                                       # ^^^^^^^^^^^^^^^^ #
+
+   $ftl->list_dir( '/home/ian' => { recurse => 'append', files_only => 1 } );
+                                  # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ #
 
 =head1 ERROR HANDLING
 
@@ -125,31 +188,17 @@ several options.  In fact, every single call to a File::Util method which
 accepts an "options hashref" can also include an error handling directive.
 File::Util has some pre-defined error handling behaviors that you can choose
 from, or you can supply your own error handler routine.  This is accomplished
-via the B<C<onfail>> option.  If you are not sure if a given method accepts an
-"options hashref", just keep reading -- each method is covered in detail
-in the L<METHODS|/METHODS> section below.
-
-I<An explanation of the "options hashref":>
-
-   # "hashref" is short for "hash reference".  Hash references look like:
-   my $hashref = { name => 'Larry', language => 'Perl', pet => 'Velociraptor' };
-
-   # File::Util often uses hash references as arguments to allow you to enable
-   # or disable certain features or behaviors, so you get the output you want.
-   my $result = $ftl->some_method_call( arg1, arg2, { options hashref } );
-
-   # A real example would look like this:
-   $ftl->write_file( '/some/file.txt', 'Hello World!', { mode => 'append' } );
+via the B<C<onfail>> option.
 
 As an added convenience, when you use this option with the
 L<File::Util constructor method|/new>, it sets the default error handling
 policy for all failures; in other words, you can set up one error handler
 for everything and never have to worry about it after that.
 
-   # every error will cause a warning instead of dying with an error:
+   # Set every error to cause a warning instead of dying by default
    my $ftl = File::Util->new( { onfail => 'warn' } );
 
-   $ftl->write_file( 'C:\\' => 'bogus' ); # now this call will warn and not die
+   $ftl->write_file( 'C:\\' => 'woof!' ); # now this call will warn and not die
 
 =head2 Details
 
@@ -636,7 +685,7 @@ heirarchal datastructure of the file tree you ask it to walk.
 See the L<File::Util::Manual::Examples> for several useful ways to use
 C<list_dir()>.
 
-B<First, another note on L<SYNTAX|File::Util/SYNTAX>>:
+B<First, another note on L<SYNTAX|/SYNTAX>>:
 
 B<To enable an option, pass it in with the options hashref that must follow>
 B<the initial directory name argument, and set the value to 1>

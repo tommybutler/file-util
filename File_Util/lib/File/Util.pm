@@ -1934,13 +1934,42 @@ sub open_handle {
    my $this     = shift @_;
    my $opts     = $this->_remove_opts( \@_ );
    my $in       = $this->_names_values( @_ );
-   my $file     = $in->{file} || $in->{filename} || '';
-   my $mode     = $in->{mode} || 'write';
+   my $file     = '';
+   my $mode     = '';
    my $bitmask  = $in->{bitmask} || oct 777;
    my $raw_name = $file;
    my $fh; # will be the lexical file handle scoped to this method
    my ( $root, $path, $clean_name, @dirs ) =
       ( '',    '',    '',          ()    );
+
+   # get name of file when passed in as a name/value pair...
+
+   $file =
+      exists  $in->{filename} &&
+      defined $in->{filename} &&
+      length  $in->{filename}
+         ? $in->{filename}
+         : exists  $in->{file} &&
+           defined $in->{file} &&
+           length  $in->{file}
+            ? $in->{file}
+            : '';
+
+   # ...or fall back to support of two-argument form of invocation
+
+   my $maybe_file = shift @_; $maybe_file = '' if !defined $maybe_file;
+   my $maybe_mode = shift @_; $maybe_mode = '' if !defined $maybe_mode;
+
+   $file = $maybe_file if !ref $maybe_file && $file eq '';
+   $mode =
+      !ref $maybe_mode &&
+      !exists $in->{mode}
+         ? $maybe_mode
+         : $in->{mode};
+
+   $mode ||= 'write';
+
+   $raw_name = $file; # preserve original filename input before line below:
 
    ( $root, $path, $file ) = atomize_path( $file );
 
@@ -2366,7 +2395,7 @@ File::Util - Easy, versatile, portable file handling
 =head1 DESCRIPTION
 
 File::Util provides a comprehensive toolbox of utilities to automate all
-kinds of common tasks on file / directories.  Its purpose is to do so
+kinds of common tasks on files and directories.  Its purpose is to do so
 in the most B<portable> manner possible so that users of this module won't
 have to worry about whether their programs will work on other operating systems
 and/or architectures.  It works on Linux, Windows, Mac, BSD, Unix and others.
@@ -2374,9 +2403,9 @@ and/or architectures.  It works on Linux, Windows, Mac, BSD, Unix and others.
 File::Util is written B<purely in Perl>, and requires no compiler or make
 utility on your system in order to install and run it.
 
-File::Util also aims to be as backward compatible as possible, aiming to
-run without issue on Perl installations as old as 5.006.  You are encouraged
-to run File::Util on Perl version 5.8 and above.
+File::Util also aims to be as backward compatible as possible, running without
+problems on Perl installations as old as 5.006.  You are encouraged to run
+File::Util on Perl version 5.8 and above.
 
 =head1 SYNOPSIS
 
@@ -2386,29 +2415,52 @@ to run File::Util on Perl version 5.8 and above.
    my $f = File::Util->new();
 
    # load content into a variable, be it text, or binary, either works
-   my $content = $f->load_file( 'foo.txt' );
-
-   # binary this time
-   my $binary_content = $f->load_file( 'foo.bin' );
+   my $content = $f->load_file( 'Meeting Notes.txt' );
 
    # wrangle text
    $content =~ s/this/that/g;
 
    # re-write the file with your changes
    $f->write_file(
-      file => 'bar.txt',
+      file => 'Meeting Notes.txt',
       content => $content,
    );
 
-   # write a binary file, using some other options as well
+   # try binary this time
+   my $binary_content = $f->load_file( 'cat-movie.avi' );
+
+   # get some image data from somewhere...
+   my $picture_data = get_image_upload();
+
+   # ...and write a binary image file, using some other options as well
    $f->write_file(
-      file => 'file.bin',
-      content => $binary_content,
+      file => 'llama.jpg',
+      content => $picture_data,
       { binmode => 1, bitmask => oct 644 }
    );
 
    # load a file into an array, line by line
    my @lines = $f->load_file( 'file.txt' => { as_lines => 1 } );
+
+   # get an open file handle for reading
+   my $fh = $f->open_handle( file => 'Ian likes cats.txt', mode => 'read' );
+
+   while ( my $line = <$fh> ) { # read the file, line by line
+
+      # ... do stuff
+   }
+
+   close $fh or die $!; # don't forget to close ;-)
+
+   # get an open file handle for writing
+   my $fh = $f->open_handle(
+      file => 'John prefers dachshunds.txt',
+      mode => 'write'
+   );
+
+   print $fh 'Shout out to Bob!';
+
+   close $fh or die $!; # _never_ forget to close ;-)
 
    # get a listing of files, recursively, skipping directories
    my @files = $f->list_dir( '/var/tmp' => { files_only => 1, recurse => 1 } );
@@ -2427,14 +2479,14 @@ to run File::Util on Perl version 5.8 and above.
    $f->list_dir( '/home/larry' => {
       recurse  => 1,
       callback => sub {
-         my ( $selfdir, $subdirs_ref, $files_ref ) = @_;
+         my ( $selfdir, $subdirs, $files ) = @_;
 
          print "In $selfdir there are...\n";
 
-         print scalar @$subdirs_ref . " subdirectories, and ";
-         print scalar @$files_ref   . " files\n";
+         print scalar @$subdirs . " subdirectories, and ";
+         print scalar @$files   . " files\n";
 
-         for my $file ( @$files_ref ) {
+         for my $file ( @$files ) {
 
             # ... do something with $file
          }
@@ -2457,7 +2509,7 @@ to run File::Util on Perl version 5.8 and above.
 
       print $fh "Captain's log, stardate 41153.7.  Our destination is...";
 
-      close $fh;
+      close $fh or die $!;
    }
    else { # ...or warn the crew
 
@@ -2478,39 +2530,13 @@ to run File::Util on Perl version 5.8 and above.
    print 'My file was last modified on ' .
       scalar localtime $f->last_modified( 'my.file' );
 
-   # ...and B<_lots_> more
+=begin workaround
 
-=head1 SYNTAX - PLEASE READ!
+Test::Synopsis breaks without this
 
-In the past, File::Util relied heavily on a cumbersome invocation syntax that
-was not robust enough to support the newer features that have been added
-recently.  In addition to making new features possible, the new syntax is
-more in keeping with what the Perl community has come to expect from its
-favorite modules, like Moose or DBIx::Class.
+=end workaround
 
-If you have code that uses the old syntax, DON'T WORRY -- it's still fully
-supported.  However, for new code that takes advantage of new
-features like higher order functions (callbacks), or advanced matching
-for directory listings, you need to use the syntax as set forth in this
-document.  The old syntax isn't covered here, because you shouldn't use it
-anymore.
-
-=head2 OLD Syntax Example
-
-   $f->list_dir( '/some/dir', '--recurse', '--as-ref', '--pattern=[^\d]' );
-
-=head2 NEW Syntax Example (more robust, supports new features)
-
-   $f->list_dir(
-      '/some/dir' => {
-         files_match    => { or  => [ qr/bender$/, qr/^flexo/   ] },
-         parent_matches => { and => [ qr/^Planet/, qr/Express$/ ] },
-         callback       => \&deliver_interstellar_shipment,
-         files_only     => 1,
-         recurse        => 1,
-         as_ref         => 1,
-      }
-   )
+...and B<_lots_> more, See the L<File::Util::Manual> for details.
 
 =head1 INSTALLATION
 
@@ -2583,6 +2609,8 @@ This is just an itemized table of contents.
 =item max_dives            I<(see L<max_dives|File::Util::Manual/max_dives>)>
 
 =item needs_binmode        I<(see L<needs_binmode|File::Util::Manual/needs_binmode>)>
+
+=item new                  I<(see L<new|File::Util::Manual/new>)>
 
 =item open_handle          I<(see L<open_handle|File::Util::Manual/open_handle>)>
 
