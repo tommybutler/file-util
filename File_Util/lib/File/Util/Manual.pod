@@ -121,15 +121,35 @@ and speed of File::Find in very large file trees.
 =head2 Feature Summary
 
 Managing potential errors is a big part of Perl IO.  File::Util gives you
-options.  In fact, every single call to a File::Util method can include
-an error handling directive.  File::Util has some pre-defined error handling
-behaviors that you can choose from, or you can supply your own error handler
-routine.  This is accomplished via the B<C<onfail>> option.
+several options.  In fact, every single call to a File::Util method which
+accepts an "options hashref" can also include an error handling directive.
+File::Util has some pre-defined error handling behaviors that you can choose
+from, or you can supply your own error handler routine.  This is accomplished
+via the B<C<onfail>> option.  If you are not sure if a given method accepts an
+"options hashref", just keep reading -- each method is covered in detail
+in the L<METHODS|/METHODS> section below.
+
+I<An explanation of the "options hashref":>
+
+   # "hashref" is short for "hash reference".  Hash references look like:
+   my $hashref = { name => 'Larry', language => 'Perl', pet => 'Velociraptor' };
+
+   # File::Util often uses hash references as arguments to allow you to enable
+   # or disable certain features or behaviors, so you get the output you want.
+   my $result = $ftl->some_method_call( arg1, arg2, { options hashref } );
+
+   # A real example would look like this:
+   $ftl->write_file( '/some/file.txt', 'Hello World!', { mode => 'append' } );
 
 As an added convenience, when you use this option with the
-L<File::Util constructor method|/new>, it sets the default error
-handling policy for all failures; in other words, you can set up one error
-handler for everything and never have to worry about it after that.
+L<File::Util constructor method|/new>, it sets the default error handling
+policy for all failures; in other words, you can set up one error handler
+for everything and never have to worry about it after that.
+
+   # every error will cause a warning instead of dying with an error:
+   my $ftl = File::Util->new( { onfail => 'warn' } );
+
+   $ftl->write_file( 'C:\\' => 'bogus' ); # now this call will warn and not die
 
 =head2 Details
 
