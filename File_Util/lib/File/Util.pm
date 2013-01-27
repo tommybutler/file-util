@@ -2532,7 +2532,7 @@ File::Util on Perl version 5.8 and above.
 
 =begin workaround
 
-Test::Synopsis breaks without this
+Test::Synopsis breaks without this; please disregard this text.
 
 =end workaround
 
