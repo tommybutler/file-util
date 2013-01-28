@@ -2,13 +2,26 @@
 use strict;
 use warnings;
 
-use Test::More tests => 8;
-use Test::NoWarnings;
+use Test::More;
 
-use vars qw( $stderr_str $callback_err $sig_warn );
+if ( $ENV{RELEASE_TESTING} || $ENV{AUTHOR_TESTING} || $ENV{AUTHOR_TESTS} )
+{                            # the tests in this file have a higher probability
+   plan tests => 8;          # of failing in the wild, and so are reserved for
+                             # the author/maintainers as release tests
+   CORE::eval # hide the eval...
+   '
+use Test::NoWarnings;
+   '; # ...from dist parsers
+}
+else
+{
+   plan skip_all => 'these tests are for release candidate testing';
+}
 
 use lib './lib';
 use File::Util;
+
+use vars qw( $stderr_str $callback_err $sig_warn );
 
 # one recognized instantiation setting
 my $ftl = File::Util->new( );
