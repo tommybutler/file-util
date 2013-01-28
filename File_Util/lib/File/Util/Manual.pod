@@ -1699,12 +1699,12 @@ argument has no effect and is silently ignored.
 
 =over
 
-=item C<< 'mode' => 'write' >> (this is the default mode)
+=item C<< mode => 'write' >> (this is the default mode)
 
 [file name] is created if it does not yet exist.  If [file name] already exists
 then its contents are overwritten with the new content provided.
 
-=item C<< 'mode' => 'append' >>
+=item C<< mode => 'append' >>
 
 [file name] is created if it does not yet exist.  If [file name] already exists
 its contents will be preserved and the new content you provide will be appended
