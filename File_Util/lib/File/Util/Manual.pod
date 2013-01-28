@@ -1282,7 +1282,9 @@ section (above), along with proper syntax and example usage.
 
 =over
 
-=item I<Syntax:> C<< open_handle( file => [file name] => { options } ) >>
+=item I<Syntax:> C<< open_handle( [file name] => [mode] => { options } ) >>
+
+=item I<OR:> C<< open_handle( file => [file name] => mode => [mode] => { options } ) >>
 
 Attempts to get a lexically scoped open file handle on [file name] in [mode]
 mode.  Returns the file handle if successful or generates a fatal error with a
@@ -1350,18 +1352,18 @@ C<use_sysopen> option, the following modes and only these modes are valid.
 
 =over
 
-=item C<< 'mode' => 'read' >>
+=item C<< mode => 'read' >>
 
 [file name] is opened in read-only mode.  If the file does not yet exist then
 a fatal error will occur with a diagnostic help message to help you troubleshoot
 the problem.
 
-=item C<< 'mode' => 'write' >> (this is the default mode)
+=item C<< mode => 'write' >> (this is the default mode)
 
 [file name] is created if it does not yet exist.  If [file name] already exists
 then its contents are overwritten with the new content provided.
 
-=item C<< 'mode' => 'append' >>
+=item C<< mode => 'append' >>
 
 [file name] is created if it does not yet exist.  If [file name] already exists
 its contents will be preserved and the new content you provide will be appended
@@ -1402,18 +1404,18 @@ to you by default.  These are the extended modes:
 
 =over
 
-=item C<< 'mode' => 'rwcreate' >>
+=item C<< mode => 'rwcreate' >>
 
 [file name] is opened in read-write mode, and will be created for you if it
 does not already exist.
 
-=item C<< 'mode' => 'rwupdate' >>
+=item C<< mode => 'rwupdate' >>
 
 [file name] is opened for you in read-write mode, but must already exist.  If
 it does not exist, a fatal error will result and a diagnostic help message will
 be printed out to help you troubleshoot the problem.
 
-=item C<< 'mode' => 'rwclobber' >>
+=item C<< mode => 'rwclobber' >>
 
 [file name] is opened for you in read-write mode.  If the file already exists
 it's contents will be "clobbered" or wiped out.  The file will then be empty
@@ -1421,7 +1423,7 @@ and you will be working with the then-truncated file.  This can not be undone.
 Once you call C<open_handle()> using this option, your file WILL be wiped out.
 If the file does not exist yet, it will be created for you.
 
-=item C<< 'mode' => 'rwappend' >>
+=item C<< mode => 'rwappend' >>
 
 [file name] will be opened for you in read-write mode ready for appending.  The
 file's contents will not be wiped out; they will be preserved and you will be
