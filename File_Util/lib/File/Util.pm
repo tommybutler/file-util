@@ -2530,12 +2530,6 @@ File::Util on Perl version 5.8 and above.
    print 'My file was last modified on ' .
       scalar localtime $f->last_modified( 'my.file' );
 
-=begin workaround
-
-Test::Synopsis breaks without this; please disregard this text.
-
-=end workaround
-
 ...and B<_lots_> more, See the L<File::Util::Manual> for details.
 
 =head1 INSTALLATION
