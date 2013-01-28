@@ -227,6 +227,21 @@ Example:
 
    my $content = File::Util->load_file( ... { onfail => 'zero' } );
 
+=item keyword: B<C<undefined>>
+
+When you use the predefined B<C<undefined>> behavior as the C<onfail> handler,
+if File::Util runs into a fatal error it will return C<undef>.  Execution will
+not be aborted, and no warnings will be issued.  A value of undef will just
+get sent back to the caller instead of what you would have gotten otherwise.
+Execution will then continue on as if no error happened.
+
+Note: This option usually makes more practical sense than
+C<< onfail => 'zero' >>
+
+Example:
+
+   my $handle = File::Util->open_handle( ... { onfail => 'undefined' } );
+
 =item keyword: B<C<warn>>
 
 When you use the predefined B<C<warn>> behavior as the C<onfail> handler,

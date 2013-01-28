@@ -2453,7 +2453,7 @@ File::Util on Perl version 5.8 and above.
    close $fh or die $!; # don't forget to close ;-)
 
    # get an open file handle for writing
-   my $fh = $f->open_handle(
+   $fh = $f->open_handle(
       file => 'John prefers dachshunds.txt',
       mode => 'write'
    );
