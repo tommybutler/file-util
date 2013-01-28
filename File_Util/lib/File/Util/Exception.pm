@@ -64,6 +64,8 @@ sub _throw {
 
    return 0 if $fatal_rules{fatals_as_status} || $opts->{onfail} eq 'zero';
 
+   return if $opts->{onfail} eq 'undefined';
+
    $this->{expt} ||= { };
 
    unless ( UNIVERSAL::isa( $this->{expt}, 'Exception::Handler' ) ) {
@@ -77,7 +79,7 @@ sub _throw {
 
    if ( scalar @in == 1 && !scalar keys %$opts ) {
 
-      $opts->{_pak} = __PACKAGE__;
+      $opts->{_pak} = 'File::Util';
 
       $error = $in[0] ? 'plain error' : 'empty error';
 
@@ -87,7 +89,7 @@ sub _throw {
    }
    else {
 
-      $opts->{_pak} = __PACKAGE__;
+      $opts->{_pak} = 'File::Util';
 
       $error = shift @_ || 'empty error';
 
@@ -135,7 +137,10 @@ sub _throw {
    die $this->{expt}->trace( $@ || $bad_news )
       unless ref $opts->{onfail} eq 'CODE';
 
-   @_ = ( $bad_news, $this->{expt}->trace() );
+   # the substr trick below just gets rid of the informational header on
+   # the stack trace, automatically placed there by Exception::Handler
+
+   @_ = ( $bad_news, substr $this->{expt}->trace('_'), 3 );
 
    goto $opts->{onfail};
 }
