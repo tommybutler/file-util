@@ -1136,7 +1136,7 @@ files opened by this method as well.  Adjust the readlimit as necessary.
 
 Attempts to create (recursively) a directory as [new directory name] with
 the [bitmask] provided.  The bitmask is an optional argument and defaults to
-oct 777, B<combined with the user's current umask>.  If specified, the bitmask
+oct 777, B<combined with the current user's umask>.  If specified, the bitmask
 must be supplied in the form required by the native perl umask function (as
 an octal number).  I<see L<perlfunc/"umask">> for more information about the
 format of the bitmask argument.
@@ -1151,7 +1151,7 @@ Simply put, if [new directory] is "/path/to/directory" and the directory
 "/path/to" does not exist, the directory "/path/to" will be created and the
 "/path/to/directory" directory will be created thereafter.  All directories
 created will be created with the [bitmask] you specify, or with the default
-of 0777, B<combined with the user's current umask>.
+of 0777, B<combined with the current user's umask>.
 
 Upon successful creation of the [new directory name], the [new directory name]
 is returned to the caller.
@@ -1318,7 +1318,7 @@ you ever opt to not use file locking unless you really know what you are doing.
 If the file does not yet exist it will be created, and it will be created
 with a bitmask of [bitmask] if you specify a file creation bitmask using
 the C<'bitmask'> option, otherwise the file will be created with the default
-bitmask of 0777.  The bitmask is combined with the user's current umask,
+bitmask of 0777.  The bitmask is combined with the current user's umask,
 whether you specify a value or not.  This is a function of Perl,
 not File::Util.
 
@@ -1669,7 +1669,7 @@ Attempts to write [string] to [file name] in mode [mode].  If the file does
 not yet exist it will be created, and it will be created with a bitmask of
 [bitmask] if you specify a file creation bitmask using the C<'bitmask'> option,
 otherwise the file will be created with the default bitmask of 0777.
-The bitmask is combined with the user's current umask, whether you specify a
+The bitmask is combined with the current user's umask, whether you specify a
 value or not.  This is a function of Perl, not File::Util.
 
 [string] should be a string or a scalar variable containing a string.  The
