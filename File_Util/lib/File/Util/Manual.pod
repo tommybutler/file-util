@@ -1364,7 +1364,7 @@ the behavior of the new File::Util object.
 
 =over
 
-=item C<use_flock>
+=item C<< use_flock => boolean >>
 
 Optionally specify this option to the C<File::Util::new> method instruct the
 new object that it should never attempt to use C<flock()> in it's I/O
@@ -1372,7 +1372,7 @@ operations.  The default is to use C<flock()> when available on your system.
 Specify this option with a true or false value ( 1 or 0 ), true to use
 C<flock()>, false to not use it.
 
-=item C<readlimit>
+=item C<< readlimit => positive integer >>
 
 Optionally specify this option to the File::Util::new method to instruct the
 new object that it should never attempt to open and read in a file greater
@@ -1380,7 +1380,7 @@ than the number of bytes you specify.  Obviously this argument can only be
 a numeric integer value, otherwise it will be silently ignored.  The default
 readlimit for File::Util objects is 52428800 bytes (50 megabytes).
 
-=item C<max_dives>
+=item C<< max_dives => positive integer >>
 
 Optionally specify this option to the File::Util::new method to instruct the
 new object to set the maximum number of times it will recurse into
@@ -1390,7 +1390,7 @@ otherwise it will be silently ignored.
 
 I<(see also: L<max_dives()|/max_dives>)>
 
-=item B<C<onfail>>
+=item B<C<< onfail => designated handler >>>
 
 Set the I<default> policy for how File::Util handles fatal errors.  This option
 takes any one of a list of predefined keywords, or a reference to a named or
@@ -1399,7 +1399,7 @@ anonymous error handling subroutine of your own.
 You can supply an C<onfail> handler to any function in File::Util, but when
 you do so for the C<new()> constructor, you are setting the I<default>.
 
-Acceptable values are all covered in the L<ERROR HANDLING|/ERROR HANDLING>
+Acceptable values are all covered in the B<L<ERROR HANDLING|/ERROR HANDLING>>
 section (above), along with proper syntax and example usage.
 
 =back
