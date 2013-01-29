@@ -1608,7 +1608,7 @@ can't mix native Perl I/O with system I/O.
 
 =over
 
-=item I<Syntax:> C<readlimit( [integer] )>
+=item I<Syntax:> C<readlimit( [positive integer] )>
 
 By default, the largest size file that File::Util will read into memory and
 return via the L<load_file|/load_file> is 52428800 byptes (50 megabytes).
