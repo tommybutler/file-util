@@ -56,6 +56,12 @@ something more obvious instead, such as C<$ftl> or C<$futil>
       mode => 'read'
    );
 
+      -OR-
+
+   # ... you can also use the shorter syntax:
+   my $fh = $f->open_handle( '/some/existing/file' => 'read' );
+
+   # then use the filehandle like you would use any other file handle:
    while ( my $line = <$fh> ) {
 
       # ... do stuff with $line
@@ -74,6 +80,11 @@ if your system supports it.
       mode => 'write'
    );
 
+      -OR-
+
+   # ... you can also use the shorter syntax:
+   my $fh = $f->open_handle( '/some/file' => 'write' );
+
    print $fh 'Hello world!';
 
    close $fh or die $!;
@@ -83,6 +94,11 @@ if your system supports it.
    my $content = 'Pathelogically Eclectic Rubbish Lister';
 
    $f->write_file( file => 'a new file.txt', content => $content );
+
+      -OR-
+
+   # you can use the shorter syntax:
+   $f->write_file( 'a new file.txt' => $content );
 
 You can optionally specify a bitmask for a file if it doesn't exist yet.
 The bitmask is combined with the user's current umask for the creation
@@ -94,6 +110,50 @@ mode of the file.  (You should usually omit this.)
       bitmask => oct 777,
    );
 
+      -OR-
+
+   $f->write_file( 'file.txt' => $content => { bitmask => oct 777 } );
+
+=head2 Warn if the file couldn't be written, instead of dying by default
+
+   $f->write_file(
+      'file.txt' => $content,
+      {
+         onfail  => 'warn',
+         bitmask => oct 777
+      }
+   );
+
+=head2 Conceal the error if the file couldn't be written (secure), but log it too
+
+   # define a custom (secure) error handler
+
+   $f->write_file(
+      'file.txt' => $content =>
+      {
+         bitmask => oct 777
+         onfail  => sub {
+            my ( $err, $stack ) = @_;
+
+            # send the error message and stack trace to a logger of some kind...
+            $logger->log( $err . $stack );
+
+            # or send an email alert?
+            send_email_alert_to_admin( $err ); #<< you'll have to write that sub
+
+            # return undef to indicate a problem (or you could die/exit too)
+            return;
+         }
+      }
+   );
+
+=head2 Why not first check if the file is writeable/can be created
+
+   if ( $f->can_write( '/root/some/file.txt' ) ) {
+
+      # ... now create/write to the file
+   }
+
 =head2 Append to a new or existing file
 
    my $content = 'The fastest hunk of junk in the galaxy';
@@ -103,6 +163,10 @@ mode of the file.  (You should usually omit this.)
       mode    => 'append',
       content => $content
    );
+
+      -OR-
+
+   $f->write_file( 'mfalcon.spec' => $content => { mode => 'append' } );
 
 =head2 Get the names of all files and subdirectories in a directory
 
@@ -136,6 +200,19 @@ mode of the file.  (You should usually omit this.)
    my( $dirs, $files ) = $f->list_dir(
       '/foo' => { dirs_as_ref => 1, files_as_ref => 1 }
    );
+
+=head2 Load all the files in a directory into a hashref
+
+   my $templates = $f->load_dir( '/var/www/mysite/templates' );
+
+   # $templates now contains something like:
+   # {
+   #    'header.html' => '...file contents...',
+   #    'body.html'   => '...file contents...',
+   #    'footer.html' => '...file contents...',
+   # }
+
+   print $templates->{'header.html'};
 
 =head2 Recursively Get the names of all files that end in '.pl'
 
@@ -551,6 +628,29 @@ examples using *nix-style paths:
       -OR-
 
    print $f->NL;
+
+=head2 Choose what to do if there's a problem (die, warn, zero, undefined, subref)
+
+   # when doing things that are prone to failure, set up a good error handler...
+
+   # If this call fails, die with an error message (*default*)
+   $f->write_file( 'bobafett.txt' => $content => { onfail => 'die' } );
+
+   # If this call fails, issue a warning to STDERR, but don't die/exit
+   $f->list_dir( '/home/greivous' => { onfail => 'warn' } );
+
+   # If this call fails, return a zero value (0), and don't die/exit
+   $f->open_handle( '/home/ventress/.emacs' => { onfail => 'zero' } );
+
+   # If this call fails, return undef, and don't die/exit
+   $f->load_file( '/home/vader/darkside.manual' => { onfail => 'undefined' } );
+
+   # If this call fails, execute the subroutine code and do whatever it says
+   # This code tries to load one directory, and failing that, loads another
+   $f->load_dir( '/home/palpatine/lofty_plans/' => {
+         onfail => sub { return $f->load_dir( '/home/sidious/evil_plots/' ) }
+      }
+   );
 
 =head1 AUTHORS
 
