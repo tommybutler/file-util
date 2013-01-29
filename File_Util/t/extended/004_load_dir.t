@@ -13,6 +13,8 @@ use File::Util qw( SL );
 # one recognized instantiation setting
 my $ftl = File::Util->new( );
 
+$ftl->use_flock( 0 ) if $^O =~ /solaris|sunos/i;
+
 my $tempdir = tempdir( CLEANUP => 1 );
 
 my $testbed = setup_test_tree();

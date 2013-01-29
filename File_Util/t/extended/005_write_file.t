@@ -8,10 +8,12 @@ use Test::NoWarnings;
 use File::Temp qw( tempdir );
 
 use lib './lib';
-use File::Util qw( SL );
+use File::Util qw( SL OS );
 
 # one recognized instantiation setting
 my $ftl = File::Util->new( );
+
+$ftl->use_flock( 0 ) if $^O =~ /solaris|sunos/i;
 
 my $tempdir = tempdir( CLEANUP => 1 );
 
