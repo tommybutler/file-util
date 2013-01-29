@@ -820,6 +820,14 @@ return only directory contents which are files
 
 do not include "." and ".." in the list of directory contents
 
+=item C<max_dives>
+
+Override the global limit on L<max_dives()|/max_dives> recursions for directory
+listings, on a per-listing basis with this option.  Just like the main
+C<max_dives()> object method, this option takes a positive integer.  The default
+is 1000.  Sometimes it is useful to increase this number by quite a lot when
+walking directories with callbacks.
+
 =item C<with_paths>
 
 Include file paths with the contents of the directory list, relative
