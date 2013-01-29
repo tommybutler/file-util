@@ -176,8 +176,8 @@ A couple of real examples would look like this:
    $ftl->write_file( '/some/file.txt', 'Hello World!', { mode => 'append' } );
                                                        # ^^^^^^^^^^^^^^^^ #
 
-   $ftl->list_dir( '/home/ian' => { recurse => 'append', files_only => 1 } );
-                                  # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ #
+   $ftl->list_dir( '/home/dangerian' => { recurse => 1, files_only => 1 } );
+                                        # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ #
 
 =head1 ERROR HANDLING
 
