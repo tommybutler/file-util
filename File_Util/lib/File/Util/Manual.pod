@@ -1316,7 +1316,7 @@ result as it is impossible to create a directory that already exists.
 
 =over
 
-=item I<Syntax:> C<max_dives( [integer] )>
+=item I<Syntax:> C<max_dives( [positive integer] )>
 
 When called without any arguments, this method returns an integer reflecting
 the current number of times the File::Util object will dive into the
