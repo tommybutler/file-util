@@ -631,7 +631,9 @@ examples using *nix-style paths:
 
 =head2 Choose what to do if there's a problem (die, warn, zero, undefined, subref)
 
-   # when doing things that are prone to failure, set up a good error handler...
+   # When doing things with IO that might fail, set up good error handlers
+
+   # "Fail, these examples will..."
 
    # If this call fails, die with an error message (*default*)
    $f->write_file( 'bobafett.txt' => $content => { onfail => 'die' } );
