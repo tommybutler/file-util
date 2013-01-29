@@ -33,19 +33,13 @@ is_deeply $dir_ref => {
 $dir_ref = $ftl->load_dir( $testbed => { as_listref => 1 } );
 
 is_deeply $dir_ref => [
-  'JAPH', 'JAPH',
-  'JAPH', 'JAPH',
-  'JAPH', 'JAPH',
-  'JAPH', 'JAPH'
+  ( 'JAPH' ) x 8
 ] => 'load_dir() loads directory into listref';
 
 $dir_ref = [ $ftl->load_dir( $testbed => { as_list => 1 } ) ];
 
 is_deeply $dir_ref => [
-  'JAPH', 'JAPH',
-  'JAPH', 'JAPH',
-  'JAPH', 'JAPH',
-  'JAPH', 'JAPH'
+  ( 'JAPH' ) x 8
 ] => 'load_dir() loads directory into list';
 
 exit;
