@@ -757,6 +757,8 @@ sub load_file {
    my ( $file, $root, $path, $clean_name, $content, $mode  ) =
       ( '',    '',    '',    '',          '',       'read' );
 
+   my $readlimit = $opts->{readlimit} || $this->{opts}{readlimit} || $READLIMIT;
+
    # support old-school "FH" option, *and* the new, more sensible "file_handle"
    $opts->{FH} = $opts->{file_handle}
       if defined $opts->{file_handle} &&
@@ -825,9 +827,9 @@ sub load_file {
 
       while ( <$fh> ) {
 
-         if ( $buffer < $READLIMIT ) {
+         if ( $buffer < $readlimit ) {
 
-            $bytes_read = read( $opts->{FH}, $content, $blocksize );
+            $bytes_read = read( $fh, $content, $blocksize );
 
             $buffer += $bytes_read;
          }
@@ -836,7 +838,7 @@ sub load_file {
             return $this->_throw(
                'readlimit exceeded',
                {
-                  filename => '<FH>',
+                  filename => '<filehandle>',
                   size     => qq{[truncated at $bytes_read]},
                   opts     => $opts,
                }
