@@ -2,12 +2,11 @@
 
 use warnings;
 use strict;
-use 5.10.0;
 
 use lib './lib';
 use File::Util;
 
-my $ftl = File::Util->new( { fatals_as_status => 1 } );
+my $ftl = File::Util->new( { onfail => 'zero' } );
 
 $ftl->list_dir(
    '.' => {
@@ -20,18 +19,18 @@ $ftl->list_dir(
 
 exit;
 
-sub sayindent {
+sub print_indent {
    my ( $indent, $text ) = @_;
-   say( ( ' ' x ( $indent * 3 ) ) . $text );
+   print( ( ' ' x ( $indent * 3 ) ) . $text . "\n" );
 }
 
 sub dirs_callback
 {
    my ( $dir, $subdirs, $depth ) = @_;
 
-   sayindent( $depth, qq(  SUBDIRS IN $dir) );
-   sayindent( $depth, "    - none" ) and return unless @$subdirs;
-   sayindent( $depth, "    - $_" ) for @$subdirs;
+   print_indent( $depth, qq(  SUBDIRS IN $dir) );
+   print_indent( $depth, "    - none" ) and return unless @$subdirs;
+   print_indent( $depth, "    - $_" ) for @$subdirs;
 
    return;
 }
@@ -40,9 +39,9 @@ sub files_callback
 {
    my ( $dir, $files, $depth ) = @_;
 
-   sayindent( $depth, qq(  FILES in $dir) );
-   sayindent( $depth, "    - none\n" ) and return unless @$files;
-   sayindent( $depth, "    - $_" ) for @$files;
+   print_indent( $depth, qq(  FILES in $dir) );
+   print_indent( $depth, "    - none\n" ) and return unless @$files;
+   print_indent( $depth, "    - $_" ) for @$files;
    print "\n";
 
    return;
@@ -55,7 +54,7 @@ sub callback
    $subdirs = scalar @$subdirs;
    $files   = scalar @$files;
 
-   sayindent( $depth, '+' . ( '-' x 70 ) );
-   sayindent( $depth, qq(| IN $dir - $subdirs sub-directories | $files files | $depth DEEP) );
-   sayindent( $depth, '+' . ( '-' x 70 ) );
+   print_indent( $depth, '+' . ( '-' x 70 ) );
+   print_indent( $depth, qq(| IN $dir - $subdirs sub-directories | $files files | $depth DEEP) );
+   print_indent( $depth, '+' . ( '-' x 70 ) );
 }
