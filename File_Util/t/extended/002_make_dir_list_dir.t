@@ -8,7 +8,7 @@ use warnings;
 # this led to the combining of the make_dir and list_dir testing routines
 
 use Test::More tests => 24;
-use Test::NoWarnings;
+use Test::NoWarnings ':early';
 
 use File::Temp qw( tempdir );
 
@@ -106,7 +106,7 @@ my @cbstack;
 
 sub callback
 {
-   my ( $currdir, $subdirs, $files ) = @_;
+   my ( $currdir, $subdirs, $files, $depth ) = @_;
 
    push @cbstack, @$subdirs;
    push @cbstack, @$files;

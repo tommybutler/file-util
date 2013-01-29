@@ -8,60 +8,77 @@ use Test::NoWarnings;
 use File::Temp qw( tempdir );
 
 use lib './lib';
-use File::Util qw( SL NL strip_path );
+use File::Util qw( SL );
 
 # one recognized instantiation setting
 my $ftl = File::Util->new( );
 
 my $tempdir = tempdir( CLEANUP => 1 );
 
-my $testbed = setup_test_tree();
+my @test_files = qw(
+   i.jpg   j.xls
+   k.ppt   l.scr
+   m.html  n.js
+   o.css   p.avi
+);
 
-my $dir_ref = $ftl->load_dir( $testbed );
+write_ref_args();
 
-is_deeply $dir_ref => {
-  'o.css'  => 'JAPH',
-  'l.scr'  => 'JAPH',
-  'i.jpg'  => 'JAPH',
-  'm.html' => 'JAPH',
-  'k.ppt'  => 'JAPH',
-  'j.xls'  => 'JAPH',
-  'p.avi'  => 'JAPH',
-  'n.js'   => 'JAPH'
-} => 'load_dir() loads directory into hashref';
+my $dir_ref = $ftl->load_dir( $tempdir => { as_listref => 1 } );
 
-$dir_ref = $ftl->load_dir( $testbed => { as_listref => 1 } );
+is_deeply $dir_ref => [
+  ( 'PeRl' ) x 8
+] => 'write_file writes right w/ ref args';
+
+write_two_args();
+
+$dir_ref = $ftl->load_dir( $tempdir => { as_listref => 1 } );
 
 is_deeply $dir_ref => [
   ( 'JAPH' ) x 8
-] => 'load_dir() loads directory into listref';
+] => 'write_file writes right w/ 2 args';
 
-$dir_ref = [ $ftl->load_dir( $testbed => { as_list => 1 } ) ];
+write_hybrid();
+
+$dir_ref = $ftl->load_dir( $tempdir => { as_listref => 1 } );
 
 is_deeply $dir_ref => [
-  ( 'JAPH' ) x 8
-] => 'load_dir() loads directory into list';
+  ( 'JAPHRaptor' ) x 8
+] => 'write_file appends right w/ 2 args + opts hashref';
 
 exit;
 
-sub setup_test_tree {
-
-   my $deeper = $tempdir . SL . 'xfoo' . SL . 'zbar';
-
-   $ftl->make_dir( $deeper );
-
-   my @test_files = qw(
-      i.jpg   j.xls
-      k.ppt   l.scr
-      m.html  n.js
-      o.css   p.avi
-   );
+sub write_ref_args {
 
    for my $tfile ( @test_files )
    {
-      $ftl->write_file( { file => $deeper . SL . $tfile, content => 'JAPH' } );
+      $ftl->write_file(
+         { file => $tempdir . SL . $tfile, content => 'PeRl' }
+      );
    }
 
-   return $deeper;
+   return;
+}
+
+sub write_two_args {
+
+   for my $tfile ( @test_files )
+   {
+      $ftl->write_file( $tempdir . SL . $tfile => 'JAPH' );
+   }
+
+   return;
+}
+
+sub write_hybrid {
+
+   for my $tfile ( @test_files )
+   {
+      $ftl->write_file(
+         $tempdir . SL . $tfile => 'Raptor' => { mode => 'append' }
+      );
+   }
+
+   return;
 }
 
