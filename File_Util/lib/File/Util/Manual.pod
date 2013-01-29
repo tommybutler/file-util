@@ -716,7 +716,7 @@ directory "dir_name":
 
 =over
 
-=item C<callback>
+=item C<< callback => subroutine reference >>
 
 C<list_dir()> can be a higher order function (it can take and execute other
 functions.  If you pass it a code reference (a reference to a subroutine)
@@ -785,12 +785,13 @@ quick and simple demonstration is found below:
 
                $size_total += -s $_ for grep { -B $_ } @$files;
             }
-      } );
+         }
+      );
 
       print "There's $size_total bytes of binary files in my projects dir.";
    }
 
-=item C<d_callback>
+=item C<< d_callback => subroutine reference >>
 
 A C<d_callback> is just like a C<callback>, except it is only ever executed
 on directories encountered in the parent file tree, not files, and its input
@@ -799,7 +800,7 @@ current directory, a reference to a list of all subdirectories in that
 directory, and the depth (positive integer) relative to the B<top level>
 directory in the path you provided as your first argument to C<list_dir>.
 
-=item C<f_callback>
+=item C<< f_callback => subroutine reference >>
 
 A C<f_callback> is just like a C<callback>, except it is only ever executed
 on files encountered in the parent file tree, not directories, and it's input
@@ -808,19 +809,19 @@ current directory, a reference to a list of all files present in that
 directory, and the depth (positive integer) relative to the B<top level>
 directory in the path you provided as your first argument to C<list_dir>.
 
-=item C<dirs_only>
+=item C<< dirs_only => boolean >>
 
 return only directory contents which are directories
 
-=item C<files_only>
+=item C<< files_only => boolean >>
 
 return only directory contents which are files
 
-=item C<no_fsdots>
+=item C<< no_fsdots => boolean >>
 
 do not include "." and ".." in the list of directory contents
 
-=item C<max_dives>
+=item C<< max_dives => positive integer >>
 
 Override the global limit on L<max_dives()|/max_dives> recursions for directory
 listings, on a per-listing basis with this option.  Just like the main
@@ -828,40 +829,40 @@ C<max_dives()> object method, this option takes a positive integer.  The default
 is 1000.  Sometimes it is useful to increase this number by quite a lot when
 walking directories with callbacks.
 
-=item C<with_paths>
+=item C<< with_paths => boolean >>
 
 Include file paths with the contents of the directory list, relative
 to the directory named in the call.
 
-=item C<recurse>
+=item C<< recurse => boolean >>
 
 Recurse into subdirectories.  (Open up subdirectories and continue to
 descend into the directory tree either as far as it goes, or until the
 C<max_dives> limit is reached. I<See L<max_dives()|/max_dives>>)
 
-=item C<dirs_as_ref>
+=item C<< dirs_as_ref => boolean >>
 
 When returning directory listing, include first a reference to the list
 of subdirectories found, followed by anything else returned by the call.
 
-=item C<files_as_ref>
+=item C<< files_as_ref => boolean >>
 
 When returning directory listing, include last a reference to the list
 of files found, preceded by a list of subdirectories found (or preceded
 by a list reference to subdirectories found if C<dirs_as_ref> was also used).
 
-=item C<as_ref>
+=item C<< as_ref => boolean >>
 
 Return a pair list references: the first is a reference to any subdirectories
 found by the call, the second is a reference to any files found by the call.
 
-=item C<sl_after_dirs>
+=item C<< sl_after_dirs => boolean >>
 
 Append a directory separator ("/, "\", or ":" depending on your system)
 to all directories found by the call.  Useful in visual displays for quick
 differentiation between subdirectories and files.
 
-=item C<ignore_case>
+=item C<< ignore_case => boolean >>
 
 Items returned by the call to this method are sorted alphabetically by
 default, so "Zoo.txt" comes before "alligator.txt" because the alphabetical
@@ -871,14 +872,14 @@ system level on most operating systems.
 If you'd like the directory contents returned by this method to be
 sorted without regard to case , use this option.
 
-=item C<count_only>
+=item C<< count_only => boolean >>
 
 Returns a single value: an integer reflecting the number of items
 found in the directory after applying the filter criteria specified by any
 other options (i.e.- "dirs_only", "recurse", etc) that may have been passed
 in as well.
 
-=item C<as_tree>
+=item C<< as_tree => boolean >>
 
 B<Very powerful.>  I<PLEASE> See L<The "Examples" section of the manual|File::Util::Manual::Examples/Get a directory tree in a hierarchal hashref>
 for the details you need to know when using this option.
@@ -931,11 +932,19 @@ specifically crafted hashref designating a list of patterns to match against
 in either an "or" manner, or an "and"ed cumulative manner.
 
 Some short examples of proper syntax will be provided after the list of
-matching options below
+matching options below.
+
+I<**If you experience a big slowdown in directory listings while>
+I<using regular expressions, check to make sure your regular expressions are>
+I<properly written and optimized.  In general, directory listings should>
+I<not be slow or resource-intensive.  Badly-written regular expressions will>
+I<result in considerable slowdowns and bottlenecks in any application.>
 
 =over
 
-=item C<files_match>
+=item C<< files_match => qr/regexp/ >>
+
+=item I<OR:> C<< files_match => { and/or => [ qr/listref of/, qr/regexps/ ] } >>
 
 Return only file names matching the regex(es).  Preceeding directories are
 included in the results; for technical reasons they are not excluded (if they
@@ -945,7 +954,9 @@ subdirectories in search of matching files.
 Use the C<files_only> option in combination with this matching parameter to
 exclude the preceeding directory names.
 
-=item C<dirs_match>
+=item C<< dirs_match => qr/regexp/ >>
+
+=item I<OR:> C<< dirs_match => { and/or => [ qr/listref of/, qr/regexps/ ] } >>
 
 Return only files and subdirectory names in directories that match the
 regex(es) you specify.  B<BE CAREFUL> with this one!!  It doesn't "cascade"
@@ -962,12 +973,16 @@ telling it to only show directories in its results.  You will get file names
 in matching directories included in the results as well, unless you combine
 this with the C<dirs_only> option.
 
-=item C<path_matches>
+=item C<< path_matches => qr/regexp/ >>
+
+=item I<OR:> C<< path_matches => { and/or => [ qr/listref of/, qr/regexps/ ] } >>
 
 Return only files and subdirectory names with preceeding paths that match the
 regex(es) you specify.
 
-=item C<parent_matches>
+=item C<< parent_matches => qr/regexp reference/ >>
+
+=item I<OR:> C<< parent_matches => { and/or => [ qr/listref of/, qr/regexps/ ] } >>
 
 Return only files and subdirectory names whose parent directory matches the
 regex(es) you specify.
@@ -1102,14 +1117,14 @@ Recognized options are listed below.
 
 =over
 
-=item C<as_hashref> *(default)
+=item C<< as_hashref => boolean >> *(default)
 
 Implicit.  If no option is passed in, the default behavior is to return a
 reference to an anonymous hash whose keys are the names of each file in the
 specified directory; the hash values for contain the contents of the file
 represented by its corresponding key.
 
-=item C<as_list>
+=item C<< as_list => boolean >>
 
 Causes the method to return a list comprised of the contents loaded from
 each file (in case-sensitive order) located in the named directory.
@@ -1117,7 +1132,7 @@ each file (in case-sensitive order) located in the named directory.
 This is useful in situations where you don't care what the filenames were
 and you just want a list of file contents.
 
-=item C<as_listref>
+=item C<< as_listref => boolean >>
 
 Same as above, except an array reference to the list of items is returned
 rather than the list itself.  This is more efficient than the above,
@@ -1189,7 +1204,7 @@ of the C<as_lines> option (see below).
 
 =over
 
-=item C<as_lines>
+=item C<< as_lines => boolean >>
 
 If this option is enabled then your call to C<load_file> will return a list of
 strings, each one of which is a line as it was read from the file [file name].
@@ -1200,7 +1215,7 @@ This is not the default behavior.  The default behavior is for C<load_file> to
 return a single string containing the entire contents of the file, including
 line break characters.
 
-=item C<no_lock>
+=item C<< no_lock => boolean >>
 
 By default this method will attempt to get a lock on the file while it is
 being read, following whatever rules are in place for the flock policy
@@ -1218,12 +1233,24 @@ check performed for you.  In such a case, you'll have to call binmode() on
 the filehandle yourself.  Once you pass a filehandle to this method it has no
 way of telling if the file opened to that filehandle is binary or not.
 
+=item C<< readlimit => positive integer >>
+
+Override the global readlimit setting for the File::Util object you are working
+with, on a one time basis.  By specifying a this option with a positive integer
+value (representing the maximum number of bytes to allow for your C<load_file()>
+call), you are telling C<load_file()> to ignore the global/default setting for
+I<just that call>, and to apply your one-time limit of [ positive integer ]
+bytes on the file while it is read into memory.
+
 B<Notes:> This method does not distinguish between plain files and other file
 types such as binaries, FIFOs, sockets, etc.
 
-Restrictions imposed by the current "read limit"
+Restrictions imposed by the current "readlimit"
 I<(see the L<readlimit()|/readlimit>) entry below> will be applied to the
-files opened by this method as well.  Adjust the readlimit as necessary.
+files opened by this method.  Adjust the readlimit as necessary either
+by overriding (using the C<'readlimit'> option above), or by adjusting the
+global value for your File::Util object with the provided
+L<readlimit() object method|/readlimit>.
 
 =back
 
@@ -1265,7 +1292,7 @@ is returned to the caller.
 
 =over
 
-=item C<if_not_exists>
+=item C<< if_not_exists => boolean >>
 
 Example:
 
@@ -1546,13 +1573,13 @@ C<sysopen()>'d filehandles!
 
 =over
 
-=item C<binmode>
+=item C<< binmode => boolean >>
 
 Makes sure that CORE::binmode() is called on the filehandle when your content
 is written.  This is useful for times when the content you are writing to file
 is a binary stream. I<(see L<perlfunc/binmode>)>.
 
-=item C<no_lock>
+=item C<< no_lock => boolean >>
 
 By default this method will attempt to get a lock on the file while it is
 being read, following whatever rules are in place for the flock policy
@@ -1564,7 +1591,7 @@ This method will not try to get a lock on the file if the File::Util object was
 created with the option C<no_lock> or if this method is called with the
 option C<no_lock>.
 
-=item C<use_sysopen>
+=item C<< use_sysopen => boolean >>
 
 Instead of opening the file using Perl's native C<open()> command, C<File::Util>
 will open the file with the C<sysopen()> command.  You will have to remember
@@ -1821,20 +1848,20 @@ to the end of the file.
 
 =over
 
-=item C<binmode>
+=item C<< binmode => boolean >>
 
 Makes sure that CORE::binmode() is called on the filehandle when your content
 is written.  This is useful for times when the content you are writing to file
 is a binary stream.
 
-=item C<empty_writes_OK>
+=item C<< empty_writes_OK => boolean >>
 
 Allows you to call this method without providing a content argument (it lets
 you create an empty file without warning you or failing.  Be advised that
 if you enable this option, it will have the same effect as truncating a file
 that already has content in it (i.e.- it will "clobber" non-empty files)
 
-=item C<no_lock>
+=item C<< no_lock => boolean >>
 
 By default this method will attempt to get a lock on the file while it is
 being read, following whatever rules are in place for the flock policy
