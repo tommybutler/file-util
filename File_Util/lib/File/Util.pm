@@ -210,7 +210,7 @@ sub list_dir {
       $this->throw( qq(callback "$cb" not a coderef) )
          unless ref $cb eq 'CODE';
 
-      $cb->( $dir, \@dirs, \@items, scalar split_path( $dir ) );
+      $cb->( $dir, \@dirs, \@items, scalar split_path( $dir ) - 1 );
    }
 
    if ( my $cb = $opts->{d_callback} ) {
@@ -218,7 +218,7 @@ sub list_dir {
       $this->throw( qq(d_callback "$cb" not a coderef) )
          unless ref $cb eq 'CODE';
 
-      $cb->( $dir, \@dirs, scalar split_path( $dir ) );
+      $cb->( $dir, \@dirs, scalar split_path( $dir ) - 1 );
    }
 
    if ( my $cb = $opts->{f_callback} ) {
@@ -226,7 +226,7 @@ sub list_dir {
       $this->throw( qq(f_callback "$cb" not a coderef) )
          unless ref $cb eq 'CODE';
 
-      $cb->( $dir, \@items, scalar split_path( $dir ) );
+      $cb->( $dir, \@items, scalar split_path( $dir ) - 1 );
    }
 
 # RECURSION
