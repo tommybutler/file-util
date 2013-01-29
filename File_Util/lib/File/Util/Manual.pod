@@ -716,6 +716,73 @@ directory "dir_name":
 
 =over
 
+=item C<callback>
+
+C<list_dir()> can be a higher order function (it can take and execute other
+functions.  If you pass it a code reference (a reference to a subroutine)
+using this option, File::Util will execute your code every time list_dir()
+enters a directory.  This is particularly useful when combined with the
+C<recurse> option which is explained below.
+
+When you create a callback function, the File::Util will always pass it four
+arguments in this order: The name of the current directory, a reference to a
+list of subdirectories in the current directory, a reference to a list of files
+in the current directory, and the depth (positive integer) relative to the
+B<top-level> directory in the path you provided as your first argument to
+C<list_dir()>.  I<This means that if you pass in a path such as C</var/tmp/>>
+I<that "/" is depth of 1, "/var" is 2 deep, "/var/tmp" is 3 deep, and so on
+down through the "/var/tmp" directory.
+
+   # Define a subroutine to print the byte size and depth of all files in a
+   # directory, designed to be used as a callback function to list_dir()
+
+   sub filesize {
+      my ( $selfdir, $subdirs, $files, $depth ) = @_;
+
+      print( "$_ | " . ( -s $_ ) . " | $depth levels deep\n" for @$files;
+   }
+
+   # List the directory recursively, which fires the callback on each recursion
+
+   $f->list_dir( './droids' => { recurse => 1, callback => \&filesize } );
+
+   # Output would look something like
+   #
+   #   ./droids/by-owner/luke/R2.spec | 1024 | 4 deep
+   #   ./droids/by-owner/luke/C2P0.spec | 2048 | 4 deep
+   #   ./droids/by-boss/dooku/Grievous.spec | 4096 | 4 deep
+   #   ./droids/by-series/imperial/sentries/R5.spec | 1024 | 5 deep
+   #
+   # Depth breakdown
+   #
+   #    level 1 => ./
+   #    level 2 => ./droids/
+   #    level 3 => ./droids/by-owner/
+   #    level 3 => ./droids/by-boss/
+   #    level 3 => ./droids/by-series/
+   #    level 4 => ./droids/by-owner/luke/
+   #    level 4 => ./droids/by-boss/dooku/
+   #    level 4 => ./droids/by-series/imperial/
+   #    level 5 => ./droids/by-series/imperial/sentries/
+
+=item C<d_callback>
+
+A C<d_callback> is just like a C<callback>, except it is only ever executed
+on directories encountered in the parent file tree, not files, and its input
+is slightly different.  C<@_> is comprised of (in order) the name of the
+current directory, a reference to a list of all subdirectories in that
+directory, and the depth (positive integer) relative to the B<top level>
+directory in the path you provided as your first argument to C<list_dir>.
+
+=item C<f_callback>
+
+A C<f_callback> is just like a C<callback>, except it is only ever executed
+on files encountered in the parent file tree, not directories, and it's input
+is slightly different.  C<@_> is comprised of (in order) the name of the
+current directory, a reference to a list of all files present in that
+directory, and the depth (positive integer) relative to the B<top level>
+directory in the path you provided as your first argument to C<list_dir>.
+
 =item C<dirs_only>
 
 return only directory contents which are directories
@@ -812,6 +879,9 @@ C<dirmeta> option and set it to a zero (false) value as shown below:
          dirmeta  => 0,
       }
    );
+
+**Remember: the C<as_tree> doesn't recurse into subdirectories unless you tell
+it to with C<< recurse => 1 >>
 
 =back
 
