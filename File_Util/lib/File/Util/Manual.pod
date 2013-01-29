@@ -729,9 +729,12 @@ arguments in this order: The name of the current directory, a reference to a
 list of subdirectories in the current directory, a reference to a list of files
 in the current directory, and the depth (positive integer) relative to the
 B<top-level> directory in the path you provided as your first argument to
-C<list_dir()>.  I<This means that if you pass in a path such as C</var/tmp/>>
-I<that "/" is depth of 1, "/var" is 2 deep, "/var/tmp" is 3 deep, and so on
-down through the "/var/tmp" directory.
+C<list_dir()>.  I<This means that if you pass in a path such as> C</var/tmp>
+I<that "/" is depth of 0, "/var" is 1 deep, "/var/tmp" is 2 deep, and so on>
+I<down through the "/var/tmp" directory.>
+
+Remember that the code in your callback gets executed in real time,
+I<as list_dir() is walking the directory tree>.
 
    # Define a subroutine to print the byte size and depth of all files in a
    # directory, designed to be used as a callback function to list_dir()
@@ -748,22 +751,44 @@ down through the "/var/tmp" directory.
 
    # Output would look something like
    #
-   #   ./droids/by-owner/luke/R2.spec | 1024 | 4 deep
-   #   ./droids/by-owner/luke/C2P0.spec | 2048 | 4 deep
-   #   ./droids/by-boss/dooku/Grievous.spec | 4096 | 4 deep
-   #   ./droids/by-series/imperial/sentries/R5.spec | 1024 | 5 deep
+   #   ./droids/by-owner/luke/R2.spec | 1024 | 3 deep
+   #   ./droids/by-owner/luke/C2P0.spec | 2048 | 3 deep
+   #   ./droids/by-boss/dooku/Grievous.spec | 4096 | 3 deep
+   #   ./droids/by-series/imperial/sentries/R5.spec | 1024 | 4 deep
    #
    # Depth breakdown
    #
-   #    level 1 => ./
-   #    level 2 => ./droids/
-   #    level 3 => ./droids/by-owner/
-   #    level 3 => ./droids/by-boss/
-   #    level 3 => ./droids/by-series/
-   #    level 4 => ./droids/by-owner/luke/
-   #    level 4 => ./droids/by-boss/dooku/
-   #    level 4 => ./droids/by-series/imperial/
-   #    level 5 => ./droids/by-series/imperial/sentries/
+   #    level 0 => ./
+   #    level 1 => ./droids/
+   #    level 2 => ./droids/by-owner/
+   #    level 2 => ./droids/by-boss/
+   #    level 2 => ./droids/by-series/
+   #    level 3 => ./droids/by-owner/luke/
+   #    level 3 => ./droids/by-boss/dooku/
+   #    level 3 => ./droids/by-series/imperial/
+   #    level 4 => ./droids/by-series/imperial/sentries/
+
+Another way to use callbacks is in combination with closures, to "close around"
+a variable or variables defined in the same scope as the callback.  A very
+quick and simple demonstration is found below:
+
+   {
+      my $size_total;
+      my $dir = 'C:\Users\superman\projects\scripts_and_binaries';
+
+      # how many total bytes are in all of the executable files in $dir
+
+      $f->list_dir(
+         $dir => {
+            callback => sub {
+               my ( $selfdir, $subdirs, $files, $depth ) = @_;
+
+               $size_total += -s $_ for grep { -B $_ } @$files;
+            }
+      } );
+
+      print "There's $size_total bytes of binary files in my projects dir.";
+   }
 
 =item C<d_callback>
 
