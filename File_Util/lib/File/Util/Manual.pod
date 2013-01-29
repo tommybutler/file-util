@@ -1352,13 +1352,13 @@ C<use_sysopen> option, the following modes and only these modes are valid.
 
 =over
 
-=item C<< mode => 'read' >>
+=item C<< mode => 'read' >> (this is the default mode)
 
 [file name] is opened in read-only mode.  If the file does not yet exist then
 a fatal error will occur with a diagnostic help message to help you troubleshoot
 the problem.
 
-=item C<< mode => 'write' >> (this is the default mode)
+=item C<< mode => 'write' >>
 
 [file name] is created if it does not yet exist.  If [file name] already exists
 then its contents are overwritten with the new content provided.

@@ -1967,7 +1967,7 @@ sub open_handle {
          ? $maybe_mode
          : $in->{mode};
 
-   $mode ||= 'write';
+   $mode ||= 'read';
 
    $raw_name = $file; # preserve original filename input before line below:
 
