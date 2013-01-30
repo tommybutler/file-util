@@ -1,5 +1,10 @@
 # ABSTRACT: pretty print a directory, recursively, using callbacks, fancy
 
+# Subject to the limitations of alphabetical sorting.  For the fool-proof
+# method, see pretty_print_a_directory_using_as_tree.pl (which also uses
+# callbacks behind the scenes)  Hint: that callback is tucked away within the
+# guts of File::Util and externally exposed as the listdir "as_tree" option
+
 # set this to the name of the directory to pretty-print
 my $treetrunk = '.';
 
