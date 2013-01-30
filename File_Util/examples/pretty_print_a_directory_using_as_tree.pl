@@ -1,6 +1,6 @@
 # ABSTRACT: pretty print a directory, recursively, using list_dir( "as_tree" )
 
-# The fool-proof, dead-simple way to pretty-print a directory tree.   Caveat:
+# The fool-proof, dead-simple way to pretty-print a directory tree.  Caveat:
 # This isn't a method for massive directory traversal, and is subject to the
 # limitations inherent in stuffing an entire directory tree into RAM.  Go
 # back and use bare callbacks (see other examples) if you need a more efficient,
@@ -37,10 +37,10 @@ sub walk
 
 sub talk
 {
-   my ( $indent, $text ) = @_;
+   my ( $indent, $item ) = @_;
 
-   return walk( $text, $indent + 1 ) if ref $text;
+   return walk( $item, $indent + 1 ) if ref $item;
 
-   print(  ( ' ' x ( $indent * 3 ) ) . ( $text || '' ) . NL );
+   print(  ( ' ' x ( $indent * 3 ) ) . ( $item || '' ) . NL );
 }
 

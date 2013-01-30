@@ -200,79 +200,49 @@ These are included in the standalone scripts that come in the
 
 =head2 Pretty-Print A Directory Recursively
 
+This is the fool-proof, dead-simple way to pretty-print a directory tree.
+Caveat: This isn't a method for massive directory traversal, and is subject to
+the limitations inherent in stuffing an entire directory tree into RAM.  Go
+back and use bare callbacks (see the other example scripts that came in the
+"examples" subdirectory of this distribution) if you need a more efficient,
+streaming (real-time) pretty-printer where top-level sorting is less important
+than resource constraints and speed of execution.
+
    # set this to the name of the directory to pretty-print
-   my $treetrunk = '/tmp';
+   my $treetrunk = '.';
 
-   use strict;
    use warnings;
+   use strict;
 
-   use File::Util qw( NL );
+   use lib './lib';
+   use File::Util qw( NL SL );
 
-   my $indent = '';
-   my $ftl    = File::Util->new();
-   my $opts   = {
-      with_paths    => 1,
-      sl_after_dirs => 1,
-      no_fsdots     => 1,
-      as_ref        => 1,
-   };
+   my $ftl = File::Util->new( { onfail => 'zero' } );
 
-   my $filetree  = { };
-   my( $subdirs, $sfiles ) = $ftl->list_dir( $treetrunk => $opts );
-
-   $filetree = [{
-      $treetrunk => [ sort { uc $a cmp uc $b } @$subdirs, @$sfiles ]
-   }];
-
-   descend( $filetree->[0]{ $treetrunk }, scalar @$subdirs );
-
-   walk( @$filetree );
+   walk( $ftl->list_dir( $treetrunk => { as_tree => 1, recurse => 1 } ) );
 
    exit;
 
-   sub descend {
+   sub walk
+   {
+      my ( $branch, $depth ) = @_;
 
-      my( $parent, $dirnum ) = @_;
+      $depth ||= 0;
 
-      for ( my $i = 0; $i < $dirnum; ++$i ) {
+      talk( $depth - 1, $branch->{_DIR_SELF_} . SL ) if $branch->{_DIR_SELF_};
 
-         my $current = $parent->[ $i ];
+      delete @$branch{ qw( _DIR_SELF_  _DIR_PARENT_ ) };
 
-         next unless -d $current;
-
-         my( $subdirs, $sfiles ) = $ftl->list_dir( $current => $opts );
-
-         map { $_ = $ftl->strip_path( $_ ) } @$sfiles;
-
-         splice @$parent, $i, 1,
-         { $current => [ sort { uc $a cmp uc $b } @$subdirs, @$sfiles ] };
-
-         descend( $parent->[$i]{ $current }, scalar @$subdirs );
-      }
-
-      return $parent;
+      talk( $depth, $branch->{ $_ } ) for sort { uc $a cmp uc $b } keys %$branch;
    }
 
-   sub walk {
+   sub talk
+   {
+      my ( $indent, $item ) = @_;
 
-      my $dir = shift @_;
+      return walk( $item, $indent + 1 ) if ref $item;
 
-      foreach ( @{ [ %$dir ]->[1] } ) {
-
-         my $mem = $_;
-
-         if ( ref $mem eq 'HASH' ) {
-
-            print $indent . $ftl->strip_path([ %$mem ]->[0]) . '/', NL;
-
-            $indent .= ' ' x 3; # increase indent
-
-            walk( $mem );
-
-            $indent = substr( $indent, 3 ); # decrease indent
-
-         } else { print $indent . $mem, NL }
-      }
+      print(  ( ' ' x ( $indent * 3 ) ) . ( $item || '' ) . NL );
    }
 
 =head1 AUTHORS
