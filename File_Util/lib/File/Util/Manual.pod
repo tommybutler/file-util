@@ -1396,8 +1396,8 @@ Set the I<default> policy for how File::Util handles fatal errors.  This option
 takes any one of a list of predefined keywords, or a reference to a named or
 anonymous error handling subroutine of your own.
 
-You can supply an C<onfail> handler to any function in File::Util, but when
-you do so for the C<new()> constructor, you are setting the I<default>.
+You can supply an C<onfail> handler to nearly any function in File::Util, but
+when you do so for the C<new()> constructor, you are setting the I<default>.
 
 Acceptable values are all covered in the B<L<ERROR HANDLING|/ERROR HANDLING>>
 section (above), along with proper syntax and example usage.
