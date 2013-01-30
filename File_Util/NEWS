@@ -1,11 +1,24 @@
 NEWS for File::Util
 
+Tue Jan 29 18:59:25 CST 2013
+   Most of the goals in the TODO list have been finished, or well on course
+   for completion.  Stability of new features and design are sufficient
+   enough that I feel like we're ready for the first CPAN release of the 4.x
+   series in the next few days probably.
+
+   Remaining tasks will be the ongoing improvement of the test suite and the
+   documentation.  Those are the kind of tasks that are seemingly "never done".
+
+   Everything is testing well, performing well, running well on all platforms
+   I have available for testing (which are many).  Overall the state of
+   the File::Util distribution and code is better than ever.
+
 Tue Jan 22 00:28:30 CST 2013
-   4.0 has (and never will be) released to the CPAN, as it was still in
-   active development at the time it hit that mark.  Development continues,
-   and the first formal release of the 4.x version distributions is soon
-   approaching.  Documentation seems all that is left.  There's a whole
-   slew of new features to document (higher order functions and the new
+   Version 4.000000 has (and never will be) released to the CPAN, as it was
+   still in active development at the time it hit that mark.  Development
+   continues, and the first formal release of the 4.x version distributions
+   is soon approaching.  Documentation seems all that is left.  There's a
+   whole slew of new features to document (higher order functions and the new
    method invocation syntax are just two examples).
 
    Much more has been done in the way of improving the test suite, and
@@ -54,6 +67,7 @@ Thu Jan 10 22:44:45 CST 2013
    kinds of problems.  The documentation for File::Util will be updated
    in order to advise Solaris users of opening the same file more than
    once during the lifetime of a process.
+
 
 Mon Dec 31 23:25:00 CST 2012
    This latest release (v 3.33) is not a feature release.  It's a

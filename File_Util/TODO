@@ -12,14 +12,14 @@ Not necessarily listed in order of priority:
 4)  Support for Perl IO "layers", which just hasn't been requested but
     should be there for completeness
 
-5)  [MOSTLY DONE] Transform (where useful) various methods to accept callbacks.
+5)  [DONE] Transform (where useful) various methods to accept callbacks.
     File::Util::list_dir() is the primary target
 
 6)  [DONE] Set up File::Util::list_dir() to take a listref of regexes
 
-7)  [IN PROGRESS] Continue improving the distribution so as to make
-    it compliant with Fedora packaging standards; it is already a
-    maintained package for Ubuntu and ActiveState
+7)  [DONE] Continue improving the distribution so as to make it compliant
+    with Fedora packaging standards; it is already a maintained package for
+    Ubuntu and ActiveState.
 
 8)  [DONE] Code clean up in POD documentation examples.
 
@@ -29,14 +29,17 @@ Not necessarily listed in order of priority:
     scores are something to be proud of.  We're doing much better
     than we used to only less than 1 month ago
 
-11) [IN PROGRESS] Remove all traces of old invocation syntax from the POD
+11) [DONE] Remove all traces of old invocation syntax from the POD
 
-12) Now that documentation has been divided into the ::Manual and the
-    ::Cookbook, I want to add more content to them.  More examples,
+12) [IN PROGRESS] Now that documentation has been divided into the ::Manual and
+    the ::Cookbook, I want to add more content to them.  More examples,
     More fully-functional programs (recipes).
 
-13) Create a less-verbose Exception class (right now we only have
-    Exception::Diagnostic, which is overkill for power users and
-    "experts" who just want a quick, clean error message instead of a full-page
-    printout of what went wrong, how to fix it, and whose fault it was --
-    followed by a callstack.  We need the less verbose alternative now.
+13) [IN PROGRESS] Create a less-verbose Exception class (right now we only have
+    Exception::Diagnostic, which is overkill for power users and "experts" who
+    just want a quick, clean error message instead of a full-page printout of
+    what went wrong, how to fix it, and whose fault it was -- followed by a
+    callstack.  We need the less verbose alternative now.
+
+14) Create a benchmark suite, plot and publish metrics as part of the
+    documentation.
