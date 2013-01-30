@@ -1902,8 +1902,8 @@ external use.)
 
 =item I<Syntax:> C<NL>
 
-Returns the correct new line character (or character sequence) for the system
-on which your program runs.
+Short for "B<N>ew B<L>ine".  Returns the correct new line character (or character
+sequence) for the system on which your program runs.
 
 =back
 
@@ -1913,8 +1913,8 @@ on which your program runs.
 
 =item I<Syntax:> C<SL>
 
-Returns the correct directory path separator for the system on which your
-program runs.
+Short for "B<SL>ash" Returns the correct directory path separator for the system on
+which your program runs.
 
 =back
 
@@ -1924,11 +1924,11 @@ program runs.
 
 =item I<Syntax:> C<OS>
 
-Returns the File::Util keyword for the operating system FAMILY it detected.  The
-keyword for the detected operating system will be one of the following, derived
-from the conents of C<$^O>, or if C<$^O> can not be found, from the contents of
-C<$Config::Config{osname}> (see native L<Config> library), or if that
-doesn't contain a recognizable value, finally falls back to C<UNIX>.
+Returns the File::Util keyword for the operating system B<FAMILY> it detected.
+The keyword for the detected operating system will be one of the following,
+derived from the conents of C<$^O>, or if C<$^O> can not be found, from the
+contents of C<$Config::Config{osname}> (see native L<Config> library), or if
+that doesn't contain a recognizable value, finally falls back to C<UNIX>.
 
 Generally speaking, Linux operating systems are going to be detected as C<UNIX>.
 This isn't a bug.  The OS FAMILY to which it belongs uses C<UNIX> style
