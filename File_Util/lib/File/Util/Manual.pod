@@ -130,7 +130,7 @@ from its favorite modules, like Moose or DBIx::Class.
    # this legacy syntax looks clunky and kind of smells like shell scripting
    $f->list_dir( '/some/dir', '--recurse', '--as-ref', '--pattern=[^\d]' );
 
-=head2 NEW Syntax Example
+=head2 NEW Syntax Example (Does Much More)
 
    # This syntax is much more robust, and supports new features
    $f->list_dir(
