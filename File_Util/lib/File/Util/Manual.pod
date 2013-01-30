@@ -1913,7 +1913,7 @@ sequence) for the system on which your program runs.
 
 =item I<Syntax:> C<SL>
 
-Short for "B<SL>ash" Returns the correct directory path separator for the system on
+Short for "B<Sl>ash". Returns the correct directory path separator for the system on
 which your program runs.
 
 =back
