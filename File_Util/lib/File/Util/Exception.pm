@@ -1,12 +1,11 @@
 use strict;
 use warnings;
 
-package File::Util::Exception;
-
 use lib 'lib';
 
+package File::Util::Exception;
+
 use File::Util::Definitions qw( :all );
-use File::Util::Exception::Diagnostic qw( :all );
 
 use vars qw(
    @ISA    $AUTHORITY
@@ -15,10 +14,9 @@ use vars qw(
 
 use Exporter;
 
-$AUTHORITY  = 'cpan:TOMMY';
-@ISA        = qw( Exporter );
-@EXPORT_OK  = qw( _throw );
-
+$AUTHORITY   = 'cpan:TOMMY';
+@ISA         = qw( Exporter );
+@EXPORT_OK   = qw( _throw );
 %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
 
 
@@ -110,13 +108,10 @@ sub _throw {
 
    PLAIN_ERRORS:
 
-   my $bad_news =
-      CORE::eval
-         (
-            q{<<__ERRORBLOCK__}
-            . &NL . &_errors( $error )
-            . &NL . q{__ERRORBLOCK__}
-         );
+   my $bad_news = CORE::eval # this HAS to be re-written
+   (
+      '<<__ERRBLOCK__' . NL . $this->_errors( $error ) . NL . '__ERRBLOCK__'
+   );
 
    if (
       $opts->{onfail} eq 'warn' ||
@@ -144,12 +139,6 @@ sub _throw {
 
    goto $opts->{onfail};
 }
-
-
-# --------------------------------------------------------
-# File::Util::Exception::DESTROY()
-# --------------------------------------------------------
-sub DESTROY { }
 
 1;
 

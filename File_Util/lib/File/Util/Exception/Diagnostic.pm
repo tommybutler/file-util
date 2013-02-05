@@ -1,11 +1,12 @@
 use strict;
 use warnings;
 
-package File::Util::Exception::Diagnostic;
-
 use lib 'lib';
 
+package File::Util::Exception::Diagnostic;
+
 use File::Util::Definitions qw( :all );
+use File::Util::Exception qw( :all );
 
 use vars qw(
    @ISA    $AUTHORITY
@@ -14,10 +15,9 @@ use vars qw(
 
 use Exporter;
 
-$AUTHORITY  = 'cpan:TOMMY';
-@ISA        = qw( Exporter );
-@EXPORT_OK  = qw( _errors );
-
+$AUTHORITY   = 'cpan:TOMMY';
+@ISA         = qw( Exporter File::Util::Exception );
+@EXPORT_OK   = ( '_errors', @File::Util::Exception::EXPORT_OK );
 %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
 
 
@@ -25,7 +25,9 @@ $AUTHORITY  = 'cpan:TOMMY';
 # DIAGNOSTIC (VERBOSE) ERROR MESSAGES
 #%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#
 sub _errors {
-   my $error_thrown = shift @_;
+   my ( $this, $error_thrown ) = @_;
+
+   $error_thrown ||= $this;
 
    # begin long table of helpful diag error messages
    my %error_msg_table = (
@@ -537,11 +539,10 @@ Origin:     This is most likely a human error, although it is remotely possible
             that this message is the result of an internal error in the
             $opts->{_pak} module, but this is not likely if you called
             $opts->{_pak}'s internal ::_release() method directly on your own.
-Solution:   A human must fix the programming flaw.  Alternatively, in the
-            second listed scenario, the package maintainer must investigate the
-            problem.  Please send a usenet post with this error message in its
-            entirety to Tommy Butler <tommy\@atrixnet.com>, or to usenet group:
-            $EBL news://comp.lang.perl.modules $EBR
+Solution:   A human must fix the programming flaw.  Alternatively, in the second
+            listed scenario the package maintainer must investigate the problem.
+            Please submit a bug report with this error message in its entirety
+            at https://rt.cpan.org/Dist/Display.html?Name=File%3A%3AUtil
 __bad_handle__
 
 
@@ -567,7 +568,8 @@ __plain_error__
 'unknown error message' => <<'__foobar_input__',
 $opts->{_pak} failed with an invalid error-type designation.
 
-Origin:     This is a bug!  Please inform Tommy Butler <tommy\@atrixnet.com>
+Origin:     This is a bug!  Please file a bug report at
+            https://rt.cpan.org/Dist/Display.html?Name=File%3A%3AUtil
 Solution:   A human must fix the programming flaw.
 __foobar_input__
 
@@ -586,12 +588,6 @@ __no_input__
    ? $error_msg_table{ $error_thrown }
    : $error_msg_table{'unknown error message'}
 }
-
-
-# --------------------------------------------------------
-# File::Util::Exception::Diagnostic::DESTROY()
-# --------------------------------------------------------
-sub DESTROY { }
 
 1;
 
