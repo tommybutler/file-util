@@ -2,13 +2,12 @@ use 5.006;
 use strict;
 use warnings;
 
-package File::Util;
-
 use lib 'lib';
+
+package File::Util;
 
 use File::Util::Definitions qw( :all );
 use File::Util::Interface::Modern qw( :all );
-use File::Util::Exception qw( :all );
 
 use vars qw( @ISA  @EXPORT_OK  %EXPORT_TAGS );
 
@@ -28,6 +27,8 @@ $AUTHORITY  = 'cpan:TOMMY';
 
 %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
 
+our $WANT_DIAGNOSTICS = 1; # default setting for now
+
 # --------------------------------------------------------
 # Constructor
 # --------------------------------------------------------
@@ -44,6 +45,10 @@ sub new {
       if exists  $in->{use_flock}
       && defined $in->{use_flock};
 
+   $WANT_DIAGNOSTICS = $in->{diag}
+      if exists  $in->{diag}
+      && defined $in->{diag};
+
    $READLIMIT  = $in->{readlimit}
       if exists  $in->{readlimit}
       && defined $in->{readlimit}
@@ -55,6 +60,19 @@ sub new {
       && $in->{max_dives} !~ /\D/;
 
    return $this;
+}
+
+
+# --------------------------------------------------------
+# File::Util::import()
+# --------------------------------------------------------
+sub import {
+
+   my ( $class, @wanted_symbols ) = @_;
+
+   ++$WANT_DIAGNOSTICS if grep { /(?<!!):diag/ } @wanted_symbols;
+
+   $class->export_to_level( 1, @_ );
 }
 
 
@@ -2375,6 +2393,31 @@ sub use_flock {
    $USE_FLOCK = !!$arg if defined $arg;
 
    return $USE_FLOCK;
+}
+
+
+# --------------------------------------------------------
+# File::Util::_throw()
+# --------------------------------------------------------
+sub _throw {
+   my $this = $_[0];
+
+   no warnings 'redefine';
+
+   if ( $this->{diag} || $WANT_DIAGNOSTICS ) {
+
+      require File::Util::Exception::Diagnostic;
+
+      File::Util::Exception::Diagnostic->import( qw( _throw _errors ) );
+   }
+   else {
+
+      require File::Util::Exception::Standard;
+
+      File::Util::Exception::Standard->import( qw( _throw _errors ) );
+   }
+
+   goto \&_throw;
 }
 
 
