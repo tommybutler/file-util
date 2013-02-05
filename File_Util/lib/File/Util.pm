@@ -2760,9 +2760,18 @@ valid_filename
 
 =over
 
-=item L<Exception::Handler> for graceful error handling
+=item L<Exception::Handler>
 
-=item L<Perl|perl> 5.006 or better
+For graceful and helpful error handling
+
+=item L<Scalar::Util>
+
+For tools that support the better call interface in C<File::Util> versions
+4.x and higher
+
+=item L<Perl|perl> 5.006 or better ...
+
+This requirement will increase soon with the advent of unicode support
 
 =back
 
