@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 37;
+use Test::More tests => 36;
 use Test::NoWarnings;
 
 # load your module...
@@ -17,7 +17,6 @@ map { ok( ref( UNIVERSAL::can( $ftl, $_ ) ) eq 'CODE', "can $_" ) } qw
       _dropdots
       _release
       _seize
-      _throw
       atomize_path
       bitmask
       can_flock

@@ -27,7 +27,8 @@ $AUTHORITY  = 'cpan:TOMMY';
 
 %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
 
-our $WANT_DIAGNOSTICS = 1; # default setting for now
+# default setting is "1" for now, until test suite updated and documentation as well
+our $WANT_DIAGNOSTICS = 1;
 
 # --------------------------------------------------------
 # Constructor
@@ -41,23 +42,35 @@ sub new {
 
    $this->{opts} = $in || { };
 
+   # let constructor argument override globals, but set
+   # constructor opts to global values if they have not
+   # overridden them...
+
    $USE_FLOCK  = $in->{use_flock}
       if exists  $in->{use_flock}
       && defined $in->{use_flock};
 
+      $this->{opts}->{use_flock} = $USE_FLOCK;
+
    $WANT_DIAGNOSTICS = $in->{diag}
       if exists  $in->{diag}
       && defined $in->{diag};
+
+      $this->{opts}->{diag} = $WANT_DIAGNOSTICS;
 
    $READLIMIT  = $in->{readlimit}
       if exists  $in->{readlimit}
       && defined $in->{readlimit}
       && $in->{readlimit} !~ /\D/;
 
+      $this->{opts}->{readlimit} = $READLIMIT;
+
    $MAXDIVES   = $in->{max_dives}
       if exists  $in->{max_dives}
       && defined $in->{max_dives}
       && $in->{max_dives} !~ /\D/;
+
+      $this->{opts}->{max_dives} = $MAXDIVES;
 
    return $this;
 }
@@ -2397,27 +2410,29 @@ sub use_flock {
 
 
 # --------------------------------------------------------
-# File::Util::_throw()
+# File::Util::AUTOLOAD() # only load error libs for errors
 # --------------------------------------------------------
-sub _throw {
-   my $this = $_[0];
+sub AUTOLOAD {
 
-   no warnings 'redefine';
+   ( my $name = our $AUTOLOAD ) =~ s/.*:://;
 
-   if ( $this->{diag} || $WANT_DIAGNOSTICS ) {
+   if ( $name eq '_throw' )
+   {
+      if ( $_[0]->{opts}->{diag} )
+      {
+         require File::Util::Exception::Diagnostic;
 
-      require File::Util::Exception::Diagnostic;
+         File::Util::Exception::Diagnostic->import( qw( _throw _errors ) );
+      }
+      else
+      {
+         require File::Util::Exception::Standard;
 
-      File::Util::Exception::Diagnostic->import( qw( _throw _errors ) );
+         File::Util::Exception::Standard->import( qw( _throw _errors ) );
+      }
+
+      goto \&_throw;
    }
-   else {
-
-      require File::Util::Exception::Standard;
-
-      File::Util::Exception::Standard->import( qw( _throw _errors ) );
-   }
-
-   goto \&_throw;
 }
 
 
