@@ -9,15 +9,13 @@ package File::Util;
 use File::Util::Definitions qw( :all );
 use File::Util::Interface::Modern qw( :all );
 
-use vars qw( @ISA  @EXPORT_OK  %EXPORT_TAGS );
-
 use Exporter;
 
-$AUTHORITY  = 'cpan:TOMMY';
-@ISA        = qw( Exporter );
+our $AUTHORITY  = 'cpan:TOMMY';
+our @ISA        = qw( Exporter );
 
 # some of the symbols below come from File::Util::Definitions
-@EXPORT_OK  = qw(
+our @EXPORT_OK  = qw(
    NL     can_flock   ebcdic       existent      needs_binmode
    SL     strip_path  can_read     can_write     valid_filename
    OS     bitmask     return_path  file_type     escape_filename
@@ -25,10 +23,10 @@ $AUTHORITY  = 'cpan:TOMMY';
    size   split_path  atomize_path
 );
 
-%EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
+our %EXPORT_TAGS = ( all => [ @EXPORT_OK ], diag => [] );
 
 # default setting is "1" for now, until test suite updated and documentation as well
-our $WANT_DIAGNOSTICS = 1;
+our $WANT_DIAGNOSTICS = 0;
 
 # --------------------------------------------------------
 # Constructor
@@ -2419,43 +2417,58 @@ sub AUTOLOAD {
    # have already been debugged and the error handling mechanism will
    # end up getting invoked seldom if ever.
 
-   my @copy = @_;
-   my $this = shift @copy;
-   my $in   = $this->_parse_in( @copy ) || { };
-
    ( my $name = our $AUTOLOAD ) =~ s/.*:://;
-
-   # direct input can override object-global diag default, otherwise
-   # the object's "want diagnostics" setting is inherited
-
-   $in->{diag} = defined $in->{diag} && !$in->{diag}
-      ? 0
-      : $this->{opts}->{diag};
 
    if ( $name eq '_throw' )
    {
-      if
-      (
-         $in->{diag} ||
-         (      $in->{opts}           &&
-            ref $in->{opts}           &&
-            ref $in->{opts} eq 'HASH' &&
-            $in->{opts}->{diag}
+      my $thrower = sub
+      {
+         my $this = shift @_;
+         my $in   = $this->_parse_in( @_ ) || { };
+
+         # direct input can override object-global diag default, otherwise
+         # the object's "want diagnostics" setting is inherited
+
+         $in->{diag} = defined $in->{diag} && !$in->{diag}
+            ? 0
+            : $in->{diag}
+               ? $in->{diag}
+               : $this->{opts}->{diag};
+
+         if
+         (
+            $in->{diag} ||
+            (      $in->{opts}           &&
+               ref $in->{opts}           &&
+               ref $in->{opts} eq 'HASH' &&
+               $in->{opts}->{diag}
+            )
          )
-      )
+         {
+            require File::Util::Exception::Diagnostic;
+
+            unshift @_, $this, \&File::Util::Exception::Diagnostic::_errors;
+
+            goto \&File::Util::Exception::Diagnostic::_throw;
+         }
+         else
+         {
+            require File::Util::Exception::Standard;
+
+            unshift @_, $this, \&File::Util::Exception::Standard::_errors;
+
+            goto \&File::Util::Exception::Standard::_throw;
+
+         }
+      };
+
       {
-         require File::Util::Exception::Diagnostic;
+         no strict 'refs'; ## no critic
 
-         File::Util::Exception::Diagnostic->import( qw( _throw _errors ) );
+         *{ '_throw' } = $thrower;
+
+         goto \&_throw;    ## use critic
       }
-      else
-      {
-         require File::Util::Exception::Standard;
-
-         File::Util::Exception::Standard->import( qw( _throw _errors ) );
-      }
-
-      goto \&_throw;
    }
 }
 

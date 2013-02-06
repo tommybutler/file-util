@@ -22,7 +22,7 @@ $AUTHORITY   = 'cpan:TOMMY';
 
 
 #%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#
-# STANDARD (VERBOSE) ERROR MESSAGES
+# STANDARD (NON-VERBOSE) ERROR MESSAGES
 #%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#
 sub _errors {
    my ( $this, $error_thrown ) = @_;
@@ -33,7 +33,7 @@ sub _errors {
    my %error_msg_table = (
 # NO SUCH FILE
 'no such file' => <<'__bad_open__',
-File inaccessable or does not exist: $EBL$opts->{filename}$EBR
+File inaccessible or does not exist: $EBL$opts->{filename}$EBR
 __bad_open__
 
 
@@ -210,8 +210,9 @@ __bad_handle__
 
 # BAD CALL TO METHOD FOO
 'no input' => <<'__no_input__',
-$opts->{_pak} can't honor your call to $EBL$opts->{_pak}::$opts->{meth}()$EBR
-because you didn't provide $EBL@{[$opts->{missing}||'the required input']}$EBR
+Call to $EBL$opts->{meth}()$EBR failed: @{[
+   $opts->{missing} ? $EBL . $opts->{missing} . $EBR : undef || 'Required input'
+]} missing
 __no_input__
 
 

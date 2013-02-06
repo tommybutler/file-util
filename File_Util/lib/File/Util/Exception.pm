@@ -21,12 +21,13 @@ $AUTHORITY   = 'cpan:TOMMY';
 
 
 # --------------------------------------------------------
-# File::Util::_throw
+# File::Util::Exception::_throw
 # --------------------------------------------------------
 sub _throw {
-   my $this = shift @_;
-   my @in   = @_;
-   my $opts = $this->_remove_opts( \@_ );
+   my $this        = shift @_;
+   my $err_coderef = shift @_;
+   my @in          = @_;
+   my $opts        = $this->_remove_opts( \@_ );
    my %fatal_rules = ();
 
    # here we handle support for the legacy error handling policy syntax,
@@ -73,7 +74,7 @@ sub _throw {
       $this->{expt} = Exception::Handler->new();
    }
 
-   my $error = '';
+   my ( $error, $is_plain );
 
    if ( scalar @in == 1 && !scalar keys %$opts ) {
 
@@ -83,7 +84,7 @@ sub _throw {
 
       $opts->{error} = $in[0] || 'error undefined';
 
-      goto PLAIN_ERRORS;
+      $is_plain++;
    }
    else {
 
@@ -98,19 +99,21 @@ sub _throw {
          $opts->{error} = 'error undefined'
             unless defined $opts->{error} && length $opts->{error};
 
-         goto PLAIN_ERRORS;
+         $is_plain++;
       }
    }
 
    ## no critic
-   map { $_ = defined $_ ? $_ : 'undefined value' } keys %$opts;
+   map { $_ = defined $_ ? $_ : 'undefined value' }
+   keys %$opts
+   unless $is_plain;
    ## use critic
 
-   PLAIN_ERRORS:
-
-   my $bad_news = CORE::eval # this HAS to be re-written
+   my $bad_news = CORE::eval # this needs to be re-written
    (
-      '<<__ERRBLOCK__' . NL . $this->_errors( $error ) . NL . '__ERRBLOCK__'
+      '<<__ERRBLOCK__' . NL .
+         $err_coderef->( $this, $error ) . NL .
+      '__ERRBLOCK__'
    );
 
    if (
