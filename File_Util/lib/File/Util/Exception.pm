@@ -24,10 +24,9 @@ $AUTHORITY   = 'cpan:TOMMY';
 # File::Util::Exception::_throw
 # --------------------------------------------------------
 sub _throw {
-   my $this        = shift @_;
-   my $err_coderef = shift @_;
-   my @in          = @_;
-   my $opts        = $this->_remove_opts( \@_ );
+   my @in = @_;
+   my ( $this, $error_class, $error ) = splice @_, 0 , 3;
+   my $opts = $this->_remove_opts( \@_ );
    my %fatal_rules = ();
 
    # here we handle support for the legacy error handling policy syntax,
@@ -74,15 +73,15 @@ sub _throw {
       $this->{expt} = Exception::Handler->new();
    }
 
-   my ( $error, $is_plain );
+   my $is_plain;
 
-   if ( scalar @in == 1 && !scalar keys %$opts ) {
+   if ( !scalar keys %$opts ) {
 
       $opts->{_pak} = 'File::Util';
 
-      $error = $in[0] ? 'plain error' : 'empty error';
+      $opts->{error} = $error;
 
-      $opts->{error} = $in[0] || 'error undefined';
+      $error = $error ? 'plain error' : 'empty error';
 
       $is_plain++;
    }
@@ -90,14 +89,11 @@ sub _throw {
 
       $opts->{_pak} = 'File::Util';
 
-      $error = shift @_ || 'empty error';
+      $error ||= 'empty error';
 
       if ( $error eq 'plain error' ) {
 
          $opts->{error} = shift @_;
-
-         $opts->{error} = 'error undefined'
-            unless defined $opts->{error} && length $opts->{error};
 
          $is_plain++;
       }
@@ -109,10 +105,10 @@ sub _throw {
    unless $is_plain;
    ## use critic
 
-   my $bad_news = CORE::eval # this needs to be re-written
+   my $bad_news = CORE::eval # tokenizing via stringy eval (is NOT evil)
    (
       '<<__ERRBLOCK__' . NL .
-         $err_coderef->( $this, $error ) . NL .
+         $error_class->_errors( $error ) . NL .
       '__ERRBLOCK__'
    );
 

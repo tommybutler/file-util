@@ -2425,6 +2425,7 @@ sub AUTOLOAD {
       {
          my $this = shift @_;
          my $in   = $this->_parse_in( @_ ) || { };
+         my $error_class;
 
          # direct input can override object-global diag default, otherwise
          # the object's "want diagnostics" setting is inherited
@@ -2447,7 +2448,9 @@ sub AUTOLOAD {
          {
             require File::Util::Exception::Diagnostic;
 
-            unshift @_, $this, \&File::Util::Exception::Diagnostic::_errors;
+            $error_class = 'File::Util::Exception::Diagnostic';
+
+            unshift @_, $this, $error_class;
 
             goto \&File::Util::Exception::Diagnostic::_throw;
          }
@@ -2455,7 +2458,9 @@ sub AUTOLOAD {
          {
             require File::Util::Exception::Standard;
 
-            unshift @_, $this, \&File::Util::Exception::Standard::_errors;
+            $error_class = 'File::Util::Exception::Standard';
+
+            unshift @_, $this, $error_class;
 
             goto \&File::Util::Exception::Standard::_throw;
 

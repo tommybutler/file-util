@@ -25,9 +25,9 @@ $AUTHORITY   = 'cpan:TOMMY';
 # DIAGNOSTIC (VERBOSE) ERROR MESSAGES
 #%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#
 sub _errors {
-   my ( $this, $error_thrown ) = @_;
+   my ( $class, $error_thrown ) = @_;
 
-   $error_thrown ||= $this;
+   $error_thrown ||= $class;
 
    # begin long table of helpful diag error messages
    my %error_msg_table = (
