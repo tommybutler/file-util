@@ -945,7 +945,6 @@ sub load_file {
 
    # open the file for reading (note the '<' syntax there) or fail with a
    # error message if our attempt to open the file was unsuccessful
-   my $cmd = '<' . $clean_name;
 
    # lock file before I/O on platforms that support it
    if (
@@ -955,27 +954,27 @@ sub load_file {
    ) {
 
       # if you use the 'no_lock' option you are probably inefficient
-      open $fh, $cmd or                            ## no critic
-         return $this->_throw(                     ## use critic
+      open $fh, '<', $clean_name or
+         return $this->_throw(
             'bad open',
             {
                filename  => $clean_name,
                mode      => $mode,
                exception => $!,
-               cmd       => $cmd,
+               cmd       => qq(< $clean_name),
                opts      => $opts,
             }
          );
    }
    else {
-      open $fh, $cmd or                            ## no critic
-         return $this->_throw(                     ## use critic
+      open $fh, '<', $clean_name or
+         return $this->_throw(
             'bad open',
             {
                filename  => $clean_name,
                mode      => $mode,
                exception => $!,
-               cmd       => $cmd,
+               cmd       => qq(< $clean_name),
                opts      => $opts,
             }
          );
@@ -2410,15 +2409,40 @@ sub use_flock {
 
 
 # --------------------------------------------------------
-# File::Util::AUTOLOAD() # only load error libs for errors
+# File::Util::AUTOLOAD()
 # --------------------------------------------------------
 sub AUTOLOAD {
 
+   # the sole purpose of using autoload here is to avoid compiling in
+   # copious amounts of error handling code at compile time, when in
+   # the majority of cases and in production code-- such errors should
+   # have already been debugged and the error handling mechanism will
+   # end up getting invoked seldom if ever.
+
+   my @copy = @_;
+   my $this = shift @copy;
+   my $in   = $this->_parse_in( @copy ) || { };
+
    ( my $name = our $AUTOLOAD ) =~ s/.*:://;
+
+   # direct input can override object-global diag default, otherwise
+   # the object's "want diagnostics" setting is inherited
+
+   $in->{diag} = defined $in->{diag} && !$in->{diag}
+      ? 0
+      : $this->{opts}->{diag};
 
    if ( $name eq '_throw' )
    {
-      if ( $_[0]->{opts}->{diag} )
+      if
+      (
+         $in->{diag} ||
+         (      $in->{opts}           &&
+            ref $in->{opts}           &&
+            ref $in->{opts} eq 'HASH' &&
+            $in->{opts}->{diag}
+         )
+      )
       {
          require File::Util::Exception::Diagnostic;
 
