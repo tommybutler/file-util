@@ -93,7 +93,8 @@ operation.  The error messages are diagnostic in nature and provide not only
 information about what went wrong, but also hints on how to fix it.
 
 These error messages can be turned off in production code, by customizing your
-call to the constructor.  See L<DIAGNOSTICS|/DIAGNOSTICS> for the details.
+call to the constructor.  See L<DIAGNOSTICS|/DIAGNOSTICS> for
+the details.
 
 =item B<Be Pure>
 
@@ -331,17 +332,31 @@ When things go wrong, sometimes it's nice to get as much information as
 possible about the error.  In C<File::Util>, you incurr no performance penalties
 by enabling more verbose error messages.  In fact, you're encouraged to do so.
 
-You can enable diagnostics globally (for every C<File::Util> object you
+You can globally enable diagnostic messages (for every C<File::Util> object you
 create), or on a per-object basis, or even on a per-call basis when you just
 want to diagnose a problem with a single method invocation.  Here's how:
 
 =over 8
 
-=item Enable Diagnostics globally: C<use File::Util qw( :diag )>
+=item Enable Diagnostics Globally
 
-=item Enable Diagnostics per-object: C<< File::Util->new( diag => 1 ) >>
+   use File::Util qw( :diag );
 
-=item Enable Diagnostics per-call: C<< $ftl->load_file( 'abc.txt' => { diag => 1 } ) >>
+=item Enable Diagnostics Per-Object
+
+   my $ftl = File::Util->new( diag => 1 );
+
+=item Enable Diagnostics Temporarily
+
+   $ftl->diagnostic( 1 ); # turn diagnostic mode on
+
+   # ... do some troubleshooting ...
+
+   $ftl->diagnostic( 0 ); # turn diagnostic mode off
+
+=item Enable Diagnostics per-call
+
+   $ftl->load_file( 'abc.txt' => { diag => 1 } );
 
 =back
 
@@ -462,6 +477,27 @@ whatever your system considers to be the epoch.  Suitable for feeding to
 Perl's built-in functions "gmtime" and "localtime".  I<(see L<perlfunc/time>.)>
 
 =back
+
+=head2 C<diagnostic>
+
+=over
+
+=item I<Syntax:> C<diagnostic( [true / false value] )>
+
+When called without any arguments, this method returns a true or false value
+to reflect the current setting for the use of diagnostic (verbose) error
+messages when a File::Util object encounters errors.
+
+When called with a true or false value as its single argument, this method
+will tell the File::Util object whether or not it should enable diagnostic
+error messages in the event of a failure.  A true value indicates that the
+File::Util object will enable diagnostic mode, and a false value indicates
+that it will not.  The default setting for C<diagnostic()> is NOT enabled.
+
+I<see also L<DIAGNOSTICS|/DIAGNOSTICS>>
+
+=back
+
 
 =head2 C<ebcdic>
 

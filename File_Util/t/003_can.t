@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 36;
+use Test::More tests => 37;
 use Test::NoWarnings;
 
 # load your module...
@@ -23,6 +23,7 @@ map { ok( ref( UNIVERSAL::can( $ftl, $_ ) ) eq 'CODE', "can $_" ) } qw
       can_read
       can_write
       created
+      diagnostic
       ebcdic
       escape_filename
       existent

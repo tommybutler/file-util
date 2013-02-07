@@ -9,6 +9,7 @@ package File::Util;
 use File::Util::Definitions qw( :all );
 use File::Util::Interface::Modern qw( :all );
 
+use Scalar::Util qw( blessed );
 use Exporter;
 
 our $AUTHORITY  = 'cpan:TOMMY';
@@ -16,11 +17,11 @@ our @ISA        = qw( Exporter );
 
 # some of the symbols below come from File::Util::Definitions
 our @EXPORT_OK  = qw(
-   NL     can_flock   ebcdic       existent      needs_binmode
-   SL     strip_path  can_read     can_write     valid_filename
-   OS     bitmask     return_path  file_type     escape_filename
-   isbin  created     last_access  last_changed  last_modified
-   size   split_path  atomize_path
+   NL     can_flock   ebcdic        existent      needs_binmode
+   SL     strip_path  can_read      can_write     valid_filename
+   OS     bitmask     return_path   file_type     escape_filename
+   isbin  created     last_access   last_changed  last_modified
+   size   split_path  atomize_path  diagnostic
 );
 
 our %EXPORT_TAGS = ( all => [ @EXPORT_OK ], diag => [] );
@@ -1918,13 +1919,17 @@ sub make_dir {
 # File::Util::max_dives()
 # --------------------------------------------------------
 sub max_dives {
-   my $arg = _myargs( @_ );
+   my $arg  = _myargs( @_ );
+   my $this = shift @_;
 
    if ( defined $arg ) {
 
       return File::Util->new()->_throw('bad maxdives') if $arg !~ /\D/o;
 
       $MAXDIVES = $arg;
+
+      $this->{opts}->{max_dives} = $arg
+         if blessed $this && $this->{opts};
    }
 
    return $MAXDIVES;
@@ -1935,7 +1940,8 @@ sub max_dives {
 # File::Util::readlimt()
 # --------------------------------------------------------
 sub readlimit {
-   my $arg = _myargs( @_ );
+   my $arg  = _myargs( @_ );
+   my $this = shift @_;
 
    if ( defined $arg ) {
 
@@ -1945,9 +1951,31 @@ sub readlimit {
          ) if $arg !~ /\D/o;
 
       $READLIMIT = $arg;
+
+      $this->{opts}->{readlimit} = $arg
+         if blessed $this && $this->{opts};
    }
 
    return $READLIMIT;
+}
+
+
+# --------------------------------------------------------
+# File::Util::diagnostic()
+# --------------------------------------------------------
+sub diagnostic {
+   my $arg  = _myargs( @_ );
+   my $this = shift @_;
+
+   if ( defined $arg ) {
+
+      $WANT_DIAGNOSTICS = !!$arg;
+
+      $this->{opts}->{diag} = !!$arg
+         if blessed $this && $this->{opts};
+   }
+
+   return $WANT_DIAGNOSTICS;
 }
 
 
@@ -2685,6 +2713,8 @@ This is just an itemized table of contents.
 
 =item created              I<(see L<created|File::Util::Manual/created>)>
 
+=item diagnostic           I<(see L<diagnostic|File::Util::Manual/diagnostic>)>
+
 =item ebcdic               I<(see L<ebcdic|File::Util::Manual/ebcdic>)>
 
 =item escape_filename      I<(see L<escape_filename|File::Util::Manual/escape_filename>)>
@@ -2770,6 +2800,8 @@ can_read
 can_write
 
 created
+
+diagnostic
 
 ebcdic
 
