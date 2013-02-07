@@ -2449,7 +2449,7 @@ sub AUTOLOAD {
 
    if ( $name eq '_throw' )
    {
-      my $thrower = sub
+      *_throw = sub
       {
          my $this = shift @_;
          my $in   = $this->_parse_in( @_ ) || { };
@@ -2495,13 +2495,7 @@ sub AUTOLOAD {
          }
       };
 
-      {
-         no strict 'refs'; ## no critic
-
-         *{ '_throw' } = $thrower;
-
-         goto \&_throw;    ## use critic
-      }
+      goto \&_throw;
    }
 }
 
