@@ -24,8 +24,9 @@ L<File::Util::Cookbook>.
 
 Now we'll start out with some brief notes about what File::Util is (and isn't),
 then we'll talk about the syntax used in File::Util.  After that we discuss
-custom error handling in File::Util, and then the rest of this document will
-cover File::Util's object methods, one by one, with brief usage examples.
+custom error handling and diagnostics in File::Util.  Finally, the rest of this
+document will cover File::Util's object methods, one by one, with brief usage
+examples.
 
 =head2 What File::Util Is
 
@@ -86,13 +87,13 @@ syntaxes, and interfaces with full backward-compatibility.
 
 =item B<Be helpful>
 
-By default, File::Util outputs extremely detailed error messages when something
-goes wrong in your program using File::Util for a given file operation.  The
-error messages are diagnostic in nature and provide not only information about
-what went wrong, but also hints on how to fix it.
+If requested, File::Util outputs extremely detailed error messages when
+something goes wrong in your program using File::Util for a given file
+operation.  The error messages are diagnostic in nature and provide not only
+information about what went wrong, but also hints on how to fix it.
 
 These error messages can be turned off in production code, by customizing your
-call to the constructor.  See L<< File::Util->new()|/new >> for the details.
+call to the constructor.  See L<DIAGNOSTICS|/DIAGNOSTICS> for the details.
 
 =item B<Be Pure>
 
@@ -116,6 +117,7 @@ trees, B<I<NOT just filtering results>>, take a look at L<File::Find>.  There
 are many up-and-comers in the Perl file searching utilities niche that you can
 also try, however they are still hard pressed to meet with the raw performance
 and speed of File::Find in very large file trees.
+
 
 =head1 SYNTAX
 
@@ -178,6 +180,7 @@ A couple of real examples would look like this:
 
    $ftl->list_dir( '/home/dangerian' => { recurse => 1, files_only => 1 } );
                                         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ #
+
 
 =head1 ERROR HANDLING
 
@@ -321,6 +324,26 @@ Examples:
 
 =back
 
+
+=head1 DIAGNOSTICS
+
+When things go wrong, sometimes it's nice to get as much information as
+possible about the error.  In C<File::Util>, you incurr no performance penalties
+by enabling more verbose error messages.  In fact, you're encouraged to do so.
+
+You can enable diagnostics globally (for every C<File::Util> object you
+create), or on a per-object basis, or even on a per-call basis when you just
+want to diagnose a problem with a single method invocation.  Here's how:
+
+=over 8
+
+=item Enable Diagnostics globally: C<use File::Util qw( :diag )>
+
+=item Enable Diagnostics per-object: C<< File::Util->new( diag => 1 ) >>
+
+=item Enable Diagnostics per-call: C<< $ftl->load_file( 'abc.txt' => { diag => 1 } ) >>
+
+=back
 
 
 =head1 METHODS

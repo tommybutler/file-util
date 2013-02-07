@@ -2511,13 +2511,23 @@ File::Util on Perl version 5.8 and above.
 
 =head1 SYNOPSIS
 
+   # use File::Util in your program
    use File::Util;
+
+   # ...you can optionally enable File::Util's diagnostic error messages:
+   use File::Util qw( :diag );
 
    # create a new File::Util object
    my $f = File::Util->new();
 
+   # ...or if you want to enable diagnostics on a per-object basis instead:
+   $f = File::Util->new( diag => 1 );
+
    # load content into a variable, be it text, or binary, either works
    my $content = $f->load_file( 'Meeting Notes.txt' );
+
+   # ...or if you only want diagnostic error messages on a per-call basis:
+   $content = $f->load_file( 'Meeting Notes.txt' => { diag => 1 } );
 
    # wrangle text
    $content =~ s/this/that/g;
@@ -2632,7 +2642,8 @@ File::Util on Perl version 5.8 and above.
    print 'My file was last modified on ' .
       scalar localtime $f->last_modified( 'my.file' );
 
-...and B<_lots_> more, See the L<File::Util::Manual> for details.
+...and B<_lots_> more, See the L<File::Util::Manual> for more details and
+more features
 
 =head1 INSTALLATION
 
