@@ -1990,8 +1990,8 @@ sub needs_binmode { $NEEDS_BINMODE }
 # --------------------------------------------------------
 sub open_handle {
    my $this     = shift @_;
-   my $opts     = $this->_remove_opts( \@_ );
    my $in       = $this->_names_values( @_ );
+   my $opts     = $this->_remove_opts( \@_ );
    my $file     = '';
    my $mode     = '';
    my $bitmask  = $in->{bitmask} || oct 777;
