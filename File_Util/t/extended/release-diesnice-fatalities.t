@@ -103,7 +103,7 @@ $exception = exception
 };
 
 like $exception,
-     qr/(?m)^Permissions conflict.  Can't create:/,
+     qr/(?m)^Permissions conflict.  Can't (?:create|write)/, # cygwin differs
      'attempt to create a file in a restricted directory';
 
 # try to open a directory as a file for reading
@@ -274,6 +274,7 @@ sub make_inaccessible_dir
 
    $ftl->touch( $dirname . SL . 'dummyfile' );
 
+   chmod oct 0, $dirname . SL . 'dummyfile' or die $!;
    chmod oct 0, $dirname or die $!;
 
    return $dirname;
@@ -286,6 +287,7 @@ sub remove_inaccessible_dir
    $dirname = $tempdir . SL . $dirname;
 
    chmod oct 777, $dirname or die $!;
+   chmod oct 777, $dirname . SL . 'dummyfile' or die $!;
 
    unlink $dirname . SL . 'dummyfile' or die $!;
 
