@@ -93,7 +93,7 @@ like $exception,
 $exception = exception { $ftl->load_file( $noaccess_dir . SL . 'dummyfile' ) };
 
 like $exception,
-     qr/(?m)^File inaccessible or does not exist:/,
+     qr/(?m)^File inaccessible|^Permissions conflict/,
      'attempt to read a file in a restricted directory';
 
 # try to create a file in the inaccessible directory
