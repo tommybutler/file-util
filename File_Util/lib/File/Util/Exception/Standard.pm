@@ -156,14 +156,14 @@ __bad_open__
 
 
 # BAD CALL TO File::Util::readlimit
-'bad readlimit' => <<'__maxdives__',
+'bad readlimit' => <<'__readlimit__',
 Bad input provided to readlimit().
-__maxdives__
+__readlimit__
 
 
 # EXCEEDED READLIMIT
 'readlimit exceeded' => <<'__readlimit__',
-Stopped reading: $EBL$opts->{filename}$EBR  Readlimit exceeded: $READLIMIT bytes
+Stopped reading: $EBL$opts->{filename}$EBR  Readlimit exceeded: $opts->{readlimit} bytes
 __readlimit__
 
 

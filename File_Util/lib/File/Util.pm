@@ -777,8 +777,8 @@ sub _dropdots {
 # --------------------------------------------------------
 sub load_file {
    my $this       = shift @_;
-   my $opts       = $this->_remove_opts( \@_ );
    my $in         = $this->_names_values( @_ );
+   my $opts       = $this->_remove_opts( \@_ );
    my @dirs       = ();
    my $blocksize  = 1024; # 1.24 kb
    my $fh_passed  = 0;
@@ -787,14 +787,50 @@ sub load_file {
    my ( $file, $root, $path, $clean_name, $content, $mode  ) =
       ( '',    '',    '',    '',          '',       'read' );
 
-   my $readlimit = $opts->{readlimit} || $this->{opts}{readlimit} || $READLIMIT;
+   # all of this logic branching is to cover the possibilities in the way
+   # this method could have been called.  we try to support as many methods
+   # as make at least some amount of sense
+
+   $in->{readlimit} =
+      defined $in->{readlimit}
+         ? $in->{readlimit}
+         : defined $opts->{readlimit}
+            ? $opts->{readlimit}
+            : undef;
+
+   $in->{FH} =
+      defined $in->{FH}
+         ? $in->{FH}
+         : defined $opts->{FH}
+            ? $opts->{FH}
+            : undef;
+
+   $in->{file_handle} =
+      defined $in->{file_handle}
+         ? $in->{file_handle}
+         : defined $opts->{file_handle}
+            ? $opts->{file_handle}
+            : undef;
+
+   $opts->{readlimit}   = $in->{readlimit};
+   $opts->{file_handle} = $in->{file_handle};
+
+   my $readlimit =
+      defined $in->{readlimit}
+         ? $in->{readlimit}
+         : defined $this->{opts}->{readlimit}
+            ? $this->{opts}->{readlimit}
+            : defined $READLIMIT
+               ? $READLIMIT
+               : 0;
+
+   return $this->_throw ( 'bad readlimit' => { bad => $readlimit } )
+      if $readlimit =~ /\D/;
 
    # support old-school "FH" option, *and* the new, more sensible "file_handle"
-   $opts->{FH} = $opts->{file_handle}
-      if defined $opts->{file_handle} &&
-         ref $opts->{file_handle} eq 'GLOB';
+   $in->{FH} = $in->{file_handle} if defined $in->{file_handle};
 
-   if ( scalar @_ == 1 ) {
+   if ( !defined $in->{FH} ) { # unless we were passed a file handle...
 
       $file = shift @_ || '';
 
@@ -834,7 +870,7 @@ sub load_file {
       # did we get a filehandle?
       if ( ref $in->{FH} eq 'GLOB' ) {
 
-         $fh_passed = 1;
+         $fh_passed++;
       }
       else {
 
@@ -842,7 +878,7 @@ sub load_file {
             'no input',
             {
                meth    => 'load_file',
-               missing => 'a file name or file handle reference',
+               missing => 'a true file handle reference (not a string)',
                opts    => $opts,
             }
          );
@@ -868,9 +904,10 @@ sub load_file {
             return $this->_throw(
                'readlimit exceeded',
                {
-                  filename => '<filehandle>',
-                  size     => qq{[truncated at $bytes_read]},
-                  opts     => $opts,
+                  filename  => '<filehandle>',
+                  size      => qq{[truncated at $bytes_read]},
+                  readlimit => $readlimit,
+                  opts      => $opts,
                }
             );
          }
@@ -932,11 +969,12 @@ sub load_file {
    return $this->_throw(
       'readlimit exceeded',
       {
-         filename => $clean_name,
-         size     => $fsize,
-         opts     => $opts,
+         filename  => $clean_name,
+         size      => $fsize,
+         opts      => $opts,
+         readlimit => $readlimit,
       }
-   ) if $fsize > $READLIMIT;
+   ) if $fsize > $readlimit;
 
    # localize the global output record separator so we can slurp it all
    # in one quick read.  We fail if the filesize exceeds our limit.
@@ -947,8 +985,8 @@ sub load_file {
 
    # lock file before I/O on platforms that support it
    if (
-      $$opts{no_lock}        ||
-      $$this{opts}{no_lock}  ||
+      $opts->{no_lock}         ||
+      $this->{opts}->{no_lock} ||
       !$this->use_flock()
    ) {
 
@@ -1924,7 +1962,7 @@ sub max_dives {
 
    if ( defined $arg ) {
 
-      return File::Util->new()->_throw('bad maxdives') if $arg !~ /\D/o;
+      return File::Util->new->_throw('bad maxdives') if $arg =~ /\D/;
 
       $MAXDIVES = $arg;
 
@@ -1945,10 +1983,8 @@ sub readlimit {
 
    if ( defined $arg ) {
 
-      return File::Util->new()->_throw
-         (
-            'bad readlimit' => { bad => $arg }
-         ) if $arg !~ /\D/o;
+      return File::Util->new->_throw ( 'bad readlimit' => { bad => $arg } )
+         if $arg =~ /\D/;
 
       $READLIMIT = $arg;
 

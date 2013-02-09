@@ -417,7 +417,7 @@ __bad_open__
 
 
 # BAD CALL TO File::Util::readlimit
-'bad readlimit' => <<'__maxdives__',
+'bad readlimit' => <<'__readlimit__',
 Bad call to $opts->{_pak}::readlimit().  This method can only be called with
 a numeric value (bytes).  Non-integer numbers will be converted to integer
 format if specified (numbers like 5.2), but don't do that, it's inefficient.
@@ -426,7 +426,7 @@ This operation aborted.
 
 Origin:     This is a human error.
 Solution:   A human must fix the programming flaw.
-__maxdives__
+__readlimit__
 
 
 # EXCEEDED READLIMIT
@@ -437,7 +437,7 @@ for a read.
 
 The size of this file is $EBL$opts->{size}$EBR bytes.
 
-Currently the read limit is set at $EBL$READLIMIT$EBR bytes.
+Currently the read limit is set at $EBL$opts->{readlimit}$EBR bytes.
 
 Origin:     This is a human error.
 Solution:   Consider setting the limit to a higher number of bytes.

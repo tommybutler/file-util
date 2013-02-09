@@ -434,13 +434,13 @@ like( $f->_throw( 'called mkdir on a file' => { filename => __FILE__ } ),
 );
 
 # 20
-like( $f->_throw( 'bad readlimit' => { diag => 1 } ),
+like( $f->_throw( 'bad readlimit' => { readlimit => 42, diag => 1 } ),
    qr/Bad call to .+?\:\:readlimit\(\)\.  This method can only be/,
    'bad readlimit (diagnostic mode)'
 );
 
 # 20.5
-like( $f->_throw( 'bad readlimit' => {  } ),
+like( $f->_throw( 'bad readlimit' => { readlimit => 42 } ),
    qr/(?sm)^Bad input provided to readlimit\(\)/,
    'bad readlimit'
 );
@@ -449,9 +449,10 @@ like( $f->_throw( 'bad readlimit' => {  } ),
 like(
    $f->_throw(
       'readlimit exceeded' => {
-         filename => __FILE__,
-         size     => 'testtesttest',
-         diag     => 1,
+         filename  => __FILE__,
+         size      => 'testtesttest',
+         readlimit => 42,
+         diag      => 1,
       }
    ),
    qr/(?sm)can't load file.+?into memory because its size exceeds/,
@@ -462,8 +463,9 @@ like(
 like(
    $f->_throw(
       'readlimit exceeded' => {
-         filename => __FILE__,
-         size     => 'testtesttest',
+         filename  => __FILE__,
+         size      => 'testtesttest',
+         readlimit => 42,
       }
    ),
    qr/(?sm)^Stopped reading:.+?Readlimit exceeded:/,
