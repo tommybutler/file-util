@@ -5,11 +5,20 @@ use warnings;
 use Test::More;
 use File::Temp qw( tempdir );
 
+use lib './lib';
+
+use File::Util qw( OS SL NL existent );
+
+
 BEGIN {
 
+   if ( $^O !~ /bsd|linux|cygwin/i )
+   {
+      plan skip_all => 'this OS doesn\'t fail reliably - chmod() issues';
+   }
    # the tests in this file have a higher probability of failing in the
    # wild, and so are reserved for the author/maintainers as release tests
-   if ( $ENV{RELEASE_TESTING} || $ENV{AUTHOR_TESTING} || $ENV{AUTHOR_TESTS} )
+   elsif ( $ENV{RELEASE_TESTING} || $ENV{AUTHOR_TESTING} || $ENV{AUTHOR_TESTS} )
    {
       {
          local $@;
@@ -41,10 +50,6 @@ __TEST_NOWARNINGS__
       plan skip_all => 'these tests are for testing by the author';
    }
 }
-
-use lib './lib';
-
-use File::Util qw( SL NL existent );
 
 my $ftl     = File::Util->new();
 my $tempdir = tempdir( CLEANUP => 1 );
