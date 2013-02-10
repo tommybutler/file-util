@@ -138,6 +138,12 @@ use Fcntl qw( SEEK_SET SEEK_CUR SEEK_END );
 # System IO (sysread)
 # ------------------------------------
 
+$fh = $ftl->open_handle(  # make sure old-school still works
+   file => $tempfile,     # otherwise, this "null" test would
+   mode => 'read',        # make everything else fail when it die()d
+   { use_sysopen => 1 }
+);
+
 $fh = $ftl->open_handle( $tempfile => 'read' => { use_sysopen => 1 } );
 
 is ref $fh, 'GLOB', 'got file handle for sysread';
