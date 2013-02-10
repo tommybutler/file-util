@@ -94,10 +94,18 @@ sub import {
 sub list_dir {
    my $this = shift @_;
    my $opts = $this->_remove_opts( \@_ );
-   my $dir  = shift @_ || '.';
+   my $dir  = shift @_;
    my $path = $dir;
    my $maxd = $opts->{max_dives} || $MAXDIVES;
    my ( @dirs, @files, @items );
+
+   return $this->_throw(
+      'no input' => {
+         meth    => 'list_dir',
+         missing => 'a directory name',
+         opts    => $opts,
+      }
+   ) unless defined $dir && length $dir;
 
    # "." and ".." make no sense (and cause infinite loops) when recursing...
    $opts->{no_fsdots} = 1 if $opts->{recurse}; # ...so skip them
@@ -109,14 +117,6 @@ sub list_dir {
                       # method is being used recursively for this call
 
 # INPUT VALIDATION
-
-   return $this->_throw(
-      'no input' => {
-         meth    => 'list_dir',
-         missing => 'a directory name',
-         opts    => $opts,
-      }
-   ) unless length $dir;
 
    return $this->_throw( 'no such file' => { filename => $dir } )
       unless -e $dir;
@@ -1802,6 +1802,16 @@ sub make_dir {
    $bitmask = defined $bitmask ? $bitmask : $opts->{bitmask};
    $bitmask ||= oct 777;
 
+   # if the call to this method didn't include a directory name to create,
+   # then complain about it
+   return $this->_throw(
+      'no input',
+      {
+         meth    => 'make_dir',
+         missing => 'a directory name',
+      }
+   ) unless defined $dir && length $dir;
+
    if ( $opts->{if_not_exists} ) {
 
       if ( -e $dir ) {
@@ -1838,16 +1848,6 @@ sub make_dir {
          );
       }
    }
-
-   # if the call to this method didn't include a directory name to create,
-   # then complain about it
-   return $this->_throw(
-      'no input',
-      {
-         meth    => 'make_dir',
-         missing => 'a directory name',
-      }
-   ) unless defined $dir && length $dir;
 
    # if prospective directory name contains 2+ dir separators in sequence then
    # this is a syntax error we need to whine about
