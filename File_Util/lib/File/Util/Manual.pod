@@ -114,9 +114,7 @@ If you are looking for a tool that allows you to search rapidly through
 directory trees, B<I<NOT just filtering results>>, take a look at L<File::Find>.
 There are many up-and-comers in the Perl file searching utilities niche that you
 can also try, however they are still hard pressed to meet with the raw
-performance and speed of File::Find in very large file trees.  L<Path::Tiny> is
-one such newer utility, but it claims to not suffer from a lack of performance
-like the others.
+performance and speed of File::Find in very large file trees.
 
 
 =head1 SYNTAX
