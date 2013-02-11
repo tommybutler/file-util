@@ -29,7 +29,7 @@ my $have_flock = sub {
    return $@ ? 0 : 1;
 }->();
 
-my $have_perms = $f->can_write( $f->return_path( $tmpf ) );
+my $have_perms = $f->is_writable( $f->return_path( $tmpf ) );
 
 SKIP: {
 

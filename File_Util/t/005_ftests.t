@@ -23,8 +23,8 @@ is_deeply
    'bin file detected as PLAIN BINARY OK';
 
 # file is/isn't binary
-ok $f->isbin( $fls[1], 1 ), 'detects binary file is binary';
-ok !$f->isbin( __FILE__ ), 'detects source file is NOT binary';
+ok $f->is_bin( $fls[1], 1 ), 'detects binary file is binary';
+ok !$f->is_bin( __FILE__ ), 'detects source file is NOT binary';
 
 for my $file ( @fls ) {
 

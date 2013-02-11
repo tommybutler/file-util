@@ -97,7 +97,7 @@ exit; # it should just compile, not run
    # using an auto-flock'd filehandle (for operating systems that support flock)
    # ...you can also use the write_file() method in append mode as well...
 
-   if ( $f->can_write( 'captains.log' ) ) {
+   if ( $f->is_writable( 'captains.log' ) ) {
 
       my $fh = $f->open_handle(
          file => 'captains.log',
@@ -122,7 +122,7 @@ exit; # it should just compile, not run
 
    print "My file is a " . join(', ', $f->file_type( 'my.file' )) . " file.";
 
-   warn 'This file is binary!' if $f->isbin( 'my.file' );
+   warn 'This file is binary!' if $f->is_bin( 'my.file' );
 
    print 'My file was last modified on ' .
       scalar localtime $f->last_modified( 'my.file' );

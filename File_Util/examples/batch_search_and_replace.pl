@@ -30,7 +30,7 @@ my @files = $ftl->list_dir( INDIR, @opts );
 
 for (my $i = 0; $i < @files; ++$i) {
 
-   next if $ftl->isbin( $files[$i] );
+   next if $ftl->is_bin( $files[$i] );
 
    my $sbt = 0; my $file = $ftl->load_file( $files[$i] );
 

@@ -13,7 +13,7 @@ my $f = File::Util->new();
 
 my $fn = tmpnam(); # get absolute filename
 
-my $have_perms  = $f->can_write( $f->return_path( $fn ) );
+my $have_perms  = $f->is_writable( $f->return_path( $fn ) );
 
 SKIP: {
 

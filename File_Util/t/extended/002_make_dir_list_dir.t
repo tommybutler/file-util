@@ -21,7 +21,7 @@ my $ftl = File::Util->new( );
 my $tempdir     = tempdir( CLEANUP => 1 );
 my $testbed     = $tempdir . SL . $$ . SL . time;
 my $tmpf        = $testbed . SL . 'tmptest';
-my $have_perms  = $ftl->can_write( $tempdir );
+my $have_perms  = $ftl->is_writable( $tempdir );
 my @test_files  = qw/
    a.txt   b.log
    c.ini   d.bat

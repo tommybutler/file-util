@@ -446,36 +446,6 @@ available system calls, namely C<flock>; C<lockf>; or with C<fcntl>.
 
 =back
 
-=head2 C<can_read>
-
-=over
-
-=item I<Syntax:> C<can_read( [file name] )>
-
-Returns 1 if the named file (or directory) is B<readable> by your program
-according to the applied permissions of the file system on which the file
-resides.  Otherwise a value of undef is returned.
-
-This works the same as Perl's built-in C<-r> file test operator,
-I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.
-
-=back
-
-=head2 C<can_write>
-
-=over
-
-=item I<Syntax:> C<can_write( [file name] )>
-
-Returns 1 if the named file (or directory) is B<writable> by your program
-according to the applied permissions of the file system on which the file
-resides.  Otherwise a value of undef is returned.
-
-This works the same as Perl's built-in C<-w> file test operator,
-I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.
-
-=back
-
 =head2 C<created>
 
 =over
@@ -689,17 +659,47 @@ the file anyway and no failures or warnings will occur.
 
 =back
 
-=head2 C<isbin>
+=head2 C<is_bin>
 
 =over
 
-=item I<Syntax:> C<isbin( [file name] )>
+=item I<Syntax:> C<is_bin( [file name] )>
 
 Returns 1 if the named file (or directory) exists.  Otherwise a value of undef
 is returned, indicating that the named file either does not exist or is of
 another file type.
 
 This works the same as Perl's built-in C<-B> file test operator,
+I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.
+
+=back
+
+=head2 C<is_readable>
+
+=over
+
+=item I<Syntax:> C<is_readable( [file name] )>
+
+Returns 1 if the named file (or directory) is B<readable> by your program
+according to the applied permissions of the file system on which the file
+resides.  Otherwise a value of undef is returned.
+
+This works the same as Perl's built-in C<-r> file test operator,
+I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.
+
+=back
+
+=head2 C<is_writable>
+
+=over
+
+=item I<Syntax:> C<is_writable( [file name] )>
+
+Returns 1 if the named file (or directory) is B<writable> by your program
+according to the applied permissions of the file system on which the file
+resides.  Otherwise a value of undef is returned.
+
+This works the same as Perl's built-in C<-w> file test operator,
 I<(see L<perlfunc/-X>)>, it's just easier for some people to remember.
 
 =back
@@ -1468,7 +1468,7 @@ Optionally specify this option to the File::Util::new method to instruct the
 new object that it should never attempt to open and read in a file greater
 than the number of bytes you specify.  This argument can only be
 a numeric integer value, otherwise it will be I<silently ignored.>  The default
-readlimit for File::Util objects is 52428800 bytes (50 megabytes).
+read limit for File::Util objects is 52428800 bytes (50 megabytes).
 
 =item C<< max_dives => positive integer >>
 

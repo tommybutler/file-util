@@ -1,5 +1,26 @@
 Revision history for Perl extension File::Util.pm
 
+4.130420 Mon Feb 11 15:37:47 CST 2013
+
+ - TRIAL version.  Released to CPAN after taking int account some changes
+   recommended by a few of the good folks at perlmonks, namely some method
+   name changes.  The old method names still work fine and are completely
+   supported.  The changes are shown below:
+     +-----------+-------------+
+     | OLD NAME  | NEW NAME    |
+     +-----------+-------------+
+     | can_read  | is_readable |
+     | can_write | is_writable |
+     | readlimit | read_limit  |
+     | isbin     | is_bin      |
+     +-----------+-------------+
+
+ - Some changes to the POD documentation have been made as well, both to
+   reflect the name changes as well as to clean things up even more in
+   terms of clarity and better formatting.
+
+ - Some test updates were needed to reflect the use of the new method names
+
 4.130420 Sun Feb 10 21:45:05 CST 2013
 
  - TRIAL version. Released to CPAN for those who may want to test drive

@@ -13,7 +13,7 @@ my $f          = File::Util->new();
 my $tempdir    = tempdir( CLEANUP => 1 );
 my $testbed    = $tempdir . SL . $$ . SL . time;
 my $tmpf       = $testbed . SL . 'tmptest';
-my $have_perms = $f->can_write( $tempdir );
+my $have_perms = $f->is_writable( $tempdir );
 my $testfh;
 
 SKIP: {
