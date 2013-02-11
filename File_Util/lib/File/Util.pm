@@ -95,8 +95,11 @@ sub list_dir {
    my $opts = $this->_remove_opts( \@_ );
    my $dir  = shift @_;
    my $path = $dir;
-   my $maxd = $opts->{max_dives} || $MAXDIVES;
    my ( @dirs, @files, @items );
+   my $maxd =
+      defined $opts->{max_dives}
+         ? $opts->{max_dives}
+         : $MAXDIVES;
 
    return $this->_throw(
       'no input' => {
@@ -790,16 +793,6 @@ sub load_file {
    # this method could have been called.  we try to support as many methods
    # as make at least some amount of sense
 
-   $in->{readlimit} =
-      defined $in->{readlimit}
-         ? $in->{readlimit}
-         : undef;
-
-   $in->{FH} =
-      defined $in->{FH}
-         ? $in->{FH}
-         : undef;
-
    $in->{file_handle} =
       defined $in->{file_handle}
          ? $in->{file_handle}
@@ -808,9 +801,11 @@ sub load_file {
    my $readlimit =
       defined $in->{readlimit}
          ? $in->{readlimit}
-         : defined $READLIMIT
-            ? $READLIMIT
-            : 0;
+         : defined $this->{opts}->{readlimit}
+            ? $this->{opts}->{readlimit}
+            : defined $READLIMIT
+               ? $READLIMIT
+               : 0;
 
    return $this->_throw ( 'bad readlimit' => { bad => $readlimit } )
       if $readlimit =~ /\D/;
