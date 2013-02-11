@@ -1,5 +1,13 @@
 NEWS for File::Util
 
+Sun Feb 10 21:32:36 CST 2013
+   More added to the TODO list since the last news update.  We have now a
+   4.x build that is CPAN ready (as a TRIAL).  The manual has been combed
+   through and polished off, the test suite has been greatly improved thanks
+   to newer/better "diesnice" tests made possible by Test::Fatal.  Several
+   bugs have been caught and put to rest due to the expanded testing,
+   because the improved tests revealed them where they had been hiding.
+
 Tue Jan 29 18:59:25 CST 2013
    Most of the goals in the TODO list have been finished, or well on course
    for completion.  Stability of new features and design are sufficient

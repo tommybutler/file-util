@@ -1,5 +1,30 @@
 Revision history for Perl extension File::Util.pm
 
+4.130420 Sun Feb 10 21:45:05 CST 2013
+
+ - TRIAL version. Released to CPAN for those who may want to test drive
+   it.  The enhancements, improvements, feature additions, and bug fixes
+   in this release are far to great to be enumerated here in the changes
+   file.  A git repository was set up for File::Util last December, and
+   the commit logs will tell the full story of all changes.
+
+ - The commit log can be read here:
+   https://github.com/tommybutler/file-util/commits/master
+
+ - A summary of new things would include the newer, more modern-style
+   call syntax, user-definable custom error handlers, list_dir()
+   callbacks plus advanced regular expression filtering features, much
+   more comprehensive documentation including a manual and a cookbook,
+   performance optimizations, the ability to enable/disable the
+   verbose diagnostics that have hitherto been the default error
+   mechanism, and much more.  The quality of the distribution has also
+   been greatly improved.
+
+ - All new features are covered at length in the documentation, so
+   anything you don't see here will be mentioned and throughly covered
+   there.  Full backward-compatibility with the 3.x series feature-set
+   and syntax has been preserved
+
 3.39 Sun Jan  6 15:54:10 CST 2013
 
  - Significant improvements in test suite, but most importantly

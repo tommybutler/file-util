@@ -116,7 +116,7 @@ sub list_dir {
          ? $opts->{max_dives}
          : defined $this->{opts}->{max_dives}
             ? $this->{opts}->{max_dives}
-            : $MAXDIVES;
+            : $MAX_DIVES;
 
    return $this->_throw(
       'no input' => {
