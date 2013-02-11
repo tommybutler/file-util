@@ -1,22 +1,31 @@
 
 use lib '../lib';
-use File::Util;
+use File::Util qw( NL );
 use Exception::Handler;
 
 my $ftl = File::Util->new();
+my $for_sure_file = '/tmp/file.txt';
 
 my $file_handle = $ftl->open_handle(
    '/this/might/not/work' => {
-      diag   => 1,
+      mode   => 'append',
       onfail => sub {
          my ( $err, $trace ) = @_;
 
-         warn "Couldn't open first choice, trying a backup plan... at:\n" .
-            $err . $trace;
+         #warn "Couldn't open first choice, trying a backup plan...";
 
-         return $ftl->open_handle( '/tmp/file.txt' );
+         #warn $err . $trace;
+
+         return $ftl->open_handle( $for_sure_file => { mode => 'append' } );
       },
    }
 );
 
-print while <$file_handle>;
+print $file_handle scalar localtime;
+print $file_handle NL;
+
+close $file_handle;
+
+print $ftl->load_file( $for_sure_file );
+
+
