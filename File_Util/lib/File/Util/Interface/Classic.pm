@@ -3,6 +3,8 @@ use warnings;
 
 package File::Util::Interface::Classic;
 
+# ABSTRACT: Legacy call interface to File::Util
+
 use Scalar::Util qw( blessed );
 
 use lib 'lib';
@@ -123,7 +125,7 @@ __END__
 
 =head1 NAME
 
-File::Util::Interface::Classic
+File::Util::Interface::Classic - Legacy call interface to File::Util
 
 =head1 DESCRIPTION
 

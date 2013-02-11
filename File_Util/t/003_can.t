@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 37;
+use Test::More tests => 41;
 use Test::NoWarnings;
 
 # load your module...
@@ -12,7 +12,7 @@ use File::Util;
 my $ftl = File::Util->new();
 
 # check to see if non-autoloaded File::Util methods are can-able ;O)
-map { ok( ref( UNIVERSAL::can( $ftl, $_ ) ) eq 'CODE', "can $_" ) } qw
+map { ok( ref( $ftl->can( $_ ) ) eq 'CODE', "can $_" ) } qw
    (
       _dropdots
       _release
@@ -29,6 +29,9 @@ map { ok( ref( UNIVERSAL::can( $ftl, $_ ) ) eq 'CODE', "can $_" ) } qw
       existent
       file_type
       isbin
+      is_bin
+      is_readable
+      is_writable
       last_access
       last_modified
       line_count
@@ -42,6 +45,7 @@ map { ok( ref( UNIVERSAL::can( $ftl, $_ ) ) eq 'CODE', "can $_" ) } qw
       new
       open_handle
       readlimit
+      read_limit
       size
       strip_path
       trunc

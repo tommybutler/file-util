@@ -434,66 +434,66 @@ like( $f->_throw( 'called mkdir on a file' => { filename => __FILE__ } ),
 );
 
 # 20
-like( $f->_throw( 'bad readlimit' => { readlimit => 42, diag => 1 } ),
-   qr/Bad call to .+?\:\:readlimit\(\)\.  This method can only be/,
-   'bad readlimit (diagnostic mode)'
+like( $f->_throw( 'bad read_limit' => { read_limit => 42, diag => 1 } ),
+   qr/Bad call to .+?\:\:read_limit\(\)\.  This method can only be/,
+   'bad read_limit (diagnostic mode)'
 );
 
 # 20.5
-like( $f->_throw( 'bad readlimit' => { readlimit => 42 } ),
-   qr/(?sm)^Bad input provided to readlimit\(\)/,
-   'bad readlimit'
+like( $f->_throw( 'bad read_limit' => { read_limit => 42 } ),
+   qr/(?sm)^Bad input provided to read_limit\(\)/,
+   'bad read_limit'
 );
 
 # 21
 like(
    $f->_throw(
-      'readlimit exceeded' => {
-         filename  => __FILE__,
-         size      => 'testtesttest',
-         readlimit => 42,
-         diag      => 1,
+      'read_limit exceeded' => {
+         filename   => __FILE__,
+         size       => 'testtesttest',
+         read_limit => 42,
+         diag       => 1,
       }
    ),
    qr/(?sm)can't load file.+?into memory because its size exceeds/,
-   'readlimit exceeded (diagnostic mode)'
+   'read_limit exceeded (diagnostic mode)'
 );
 
 # 21.5
 like(
    $f->_throw(
-      'readlimit exceeded' => {
-         filename  => __FILE__,
-         size      => 'testtesttest',
-         readlimit => 42,
+      'read_limit exceeded' => {
+         filename   => __FILE__,
+         size       => 'testtesttest',
+         read_limit => 42,
       }
    ),
-   qr/(?sm)^Stopped reading:.+?Readlimit exceeded:/,
-   'readlimit exceeded'
+   qr/(?sm)^Stopped reading:.+?Read limit exceeded:/,
+   'read_limit exceeded'
 );
 
 # 22
-like( $f->_throw( 'bad maxdives' => { diag => 1 } ),
+like( $f->_throw( 'bad max_dives' => { diag => 1 } ),
    qr/Bad call to .+?\:\:max_dives\(\)\.  This method can only be/,
-   'bad maxdives (diagnostic mode)'
+   'bad max_dives (diagnostic mode)'
 );
 
 # 22.5
-like( $f->_throw( 'bad maxdives' => { } ),
+like( $f->_throw( 'bad max_dives' => { } ),
    qr/(?sm)^Bad input provided to max_dives\(\)/,
-   'bad maxdives'
+   'bad max_dives'
 );
 
 # 23
-like( $f->_throw( 'maxdives exceeded' => { diag => 1 } ),
+like( $f->_throw( 'max_dives exceeded' => { diag => 1 } ),
    qr/Recursion limit reached at .+?dives\.  Maximum number of/,
-   'maxdives exceeded (diagnostic mode)'
+   'max_dives exceeded (diagnostic mode)'
 );
 
 # 23.5
-like( $f->_throw( 'maxdives exceeded' => { } ),
+like( $f->_throw( 'max_dives exceeded' => { } ),
    qr/(?sm)^Recursion limit exceeded at/,
-   'maxdives exceeded'
+   'max_dives exceeded'
 );
 
 # 24

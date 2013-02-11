@@ -31,8 +31,6 @@ BEGIN {
             CORE::eval <<'__TEST_NOWARNINGS__';
 use Test::NoWarnings qw( :early );
 __TEST_NOWARNINGS__
-
-            diag 'All of these tests should die in order to pass';
          }
       }
    }
@@ -184,29 +182,29 @@ like $exception,
      qr/(?m)^Can't opendir\(\) on non-directory:/,
      'attempt to list_dir() on a file';
 
-# try to read more data from a file than the enforced readlimit amount
-# ...we set the readlimit purposely low to induce the error
-$exception = exception { $ftl->load_file( __FILE__, { readlimit => 0 } ) };
+# try to read more data from a file than the enforced read_limit amount
+# ...we set the read_limit purposely low to induce the error
+$exception = exception { $ftl->load_file( __FILE__, { read_limit => 0 } ) };
 
 like $exception,
      qr/(?m)^Stopped reading:/,
-     'attempt to read a file that\'s bigger than the set readlimit';
+     'attempt to read a file that\'s bigger than the set read_limit';
 
-# send bad input to maxdives()
+# send bad input to max_dives()
 $exception = exception { $ftl->max_dives( 'cheezburger' ) };
 
 like $exception,
      qr/(?m)^Bad input provided to max_dives/,
      'make a call to max_dives() with improper input';
 
-# send bad input to readlimit()
-$exception = exception { $ftl->readlimit( 'woof!' ) };
+# send bad input to read_limit()
+$exception = exception { $ftl->read_limit( 'woof!' ) };
 
 like $exception,
-     qr/(?m)^Bad input provided to readlimit/,
-     'make a call to readlimit() with improper input';
+     qr/(?m)^Bad input provided to read_limit/,
+     'make a call to read_limit() with improper input';
 
-# send bad input to readlimit()
+# send bad input (illegal characters) to write_file()
 $exception = exception
 {
    $ftl->write_file( $tempdir . SL . 'foo\\\\bar' => 'dummycontent' )

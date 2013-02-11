@@ -5,6 +5,8 @@ use lib 'lib';
 
 package File::Util::Exception::Diagnostic;
 
+# ABSTRACT: Diagnostic (verbose) error messages
+
 use File::Util::Definitions qw( :all );
 use File::Util::Exception qw( :all );
 
@@ -416,9 +418,9 @@ Solution:   Resolve naming issue between the existent file and the directory
 __bad_open__
 
 
-# BAD CALL TO File::Util::readlimit
-'bad readlimit' => <<'__readlimit__',
-Bad call to $opts->{_pak}::readlimit().  This method can only be called with
+# BAD CALL TO File::Util::read_limit
+'bad read_limit' => <<'__read_limit__',
+Bad call to $opts->{_pak}::read_limit().  This method can only be called with
 a numeric value (bytes).  Non-integer numbers will be converted to integer
 format if specified (numbers like 5.2), but don't do that, it's inefficient.
 
@@ -426,26 +428,26 @@ This operation aborted.
 
 Origin:     This is a human error.
 Solution:   A human must fix the programming flaw.
-__readlimit__
+__read_limit__
 
 
-# EXCEEDED READLIMIT
-'readlimit exceeded' => <<'__readlimit__',
+# EXCEEDED READ_LIMIT
+'read_limit exceeded' => <<'__read_limit__',
 $opts->{_pak} can't load file: $EBL$opts->{filename}$EBR
 into memory because its size exceeds the maximum file size allowed
 for a read.
 
 The size of this file is $EBL$opts->{size}$EBR bytes.
 
-Currently the read limit is set at $EBL$opts->{readlimit}$EBR bytes.
+Currently the read limit is set at $EBL$opts->{read_limit}$EBR bytes.
 
 Origin:     This is a human error.
 Solution:   Consider setting the limit to a higher number of bytes.
-__readlimit__
+__read_limit__
 
 
 # BAD CALL TO File::Util::max_dives
-'bad maxdives' => <<'__maxdives__',
+'bad max_dives' => <<'__max_dives__',
 Bad call to $opts->{_pak}::max_dives().  This method can only be called with
 a numeric value (bytes).  Non-integer numbers will be converted to integer
 format if specified (numbers like 5.2), but don't do that, it's inefficient.
@@ -454,14 +456,14 @@ This operation aborted.
 
 Origin:     This is a human error.
 Solution:   A human must fix the programming flaw.
-__maxdives__
+__max_dives__
 
 
-# EXCEEDED MAXDIVES
-'maxdives exceeded' => <<'__maxdives__',
+# EXCEEDED MAX_DIVES
+'max_dives exceeded' => <<'__max_dives__',
 Recursion limit reached at $EBL${\ scalar(
-   (exists $opts->{maxdives} && defined $opts->{maxdives}) ?
-   $opts->{maxdives} : $MAXDIVES)
+   (exists $opts->{max_dives} && defined $opts->{max_dives}) ?
+   $opts->{max_dives} : $MAX_DIVES)
 }$EBR dives.  Maximum number of subdirectory dives is set to the value returned
 by $opts->{_pak}::max_dives().  Try manually setting the value to a higher
 number before calling list_dir() with option --follow or --recurse (synonymous).
@@ -473,7 +475,7 @@ This operation aborted.
 
 Origin:     This is a human error.
 Solution:   Consider setting the limit to a higher number.
-__maxdives__
+__max_dives__
 
 
 # BAD OPENDIR
@@ -598,7 +600,7 @@ __END__
 
 =head1 NAME
 
-File::Util::Exception::Diagnostic
+File::Util::Exception::Diagnostic - Diagnostic (verbose) error messages
 
 =head1 DESCRIPTION
 

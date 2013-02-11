@@ -5,6 +5,8 @@ use lib 'lib';
 
 package File::Util::Exception;
 
+# ABSTRACT: Base exception class for File::Util
+
 use File::Util::Definitions qw( :all );
 
 use vars qw(
@@ -148,7 +150,7 @@ __END__
 
 =head1 NAME
 
-File::Util::Exception
+File::Util::Exception - Base exception class for File::Util
 
 =head1 DESCRIPTION
 

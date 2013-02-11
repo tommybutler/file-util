@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 28;
+use Test::More tests => 30;
 use Test::NoWarnings ':early';
 
 use lib './lib';
@@ -24,7 +24,10 @@ is ref $ftl, 'File::Util',
    'new() is blessed correctly after readlimit-set invocation';
 
 cmp_ok $ftl->readlimit , '==', 1234567890,
-   'readlimit setting sticks after blessing';
+   'readlimit (legacy) setting sticks after blessing';
+
+cmp_ok $ftl->read_limit , '==', 1234567890,
+   'read_limit (new-style) setting sticks after blessing';
 
 # yet another recognized instantiation setting
 $ftl = File::Util->new( max_dives => 9876543210 );
@@ -37,9 +40,9 @@ cmp_ok $ftl->max_dives, '==', 9876543210,
 # all recognized per-instantiation settings
 $ftl = File::Util->new
 (
-   use_flock => 1,
-   readlimit => 1111111,
-   max_dives => 2222222
+   use_flock  => 1,
+   read_limit => 1111111,
+   max_dives  => 2222222
 );
 
 is ref $ftl, 'File::Util',
@@ -49,7 +52,10 @@ is $ftl->use_flock() , 1,
    'use_flock sticks after multi-toggle';
 
 cmp_ok $ftl->readlimit, '==', 1111111,
-   'readlimit sticks after multi-toggle blessing';
+   'readlimit (legacy) sticks after multi-toggle blessing';
+
+cmp_ok $ftl->read_limit, '==', 1111111,
+   'read_limit (new-style) sticks after multi-toggle blessing';
 
 cmp_ok $ftl->max_dives, '==', 2222222,
    'max_dives sticks after multi-toggle blessing';

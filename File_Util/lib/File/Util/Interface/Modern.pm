@@ -3,6 +3,8 @@ use warnings;
 
 package File::Util::Interface::Modern;
 
+# ABSTRACT: Modern call interface to File::Util
+
 use lib 'lib';
 
 use File::Util::Interface::Classic qw( _myargs );
@@ -140,7 +142,7 @@ __END__
 
 =head1 NAME
 
-File::Util::Interface::Modern
+File::Util::Interface::Modern - Modern call interface to File::Util
 
 =head1 DESCRIPTION
 

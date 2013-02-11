@@ -1219,8 +1219,8 @@ B<Note:> This method does not distinguish between plain files and other file
 types such as binaries, FIFOs, sockets, etc.
 
 Restrictions imposed by the current "read limit"
-I<(see the L<readlimit()|/readlimit>) entry below> will be applied to the
-individual files opened by this method as well.  Adjust the readlimit as
+I<(see the L<read_limit()|/read_limit>) entry below> will be applied to the
+individual files opened by this method as well.  Adjust the read limit as
 necessary.
 
    my $templates = $f->load_dir( 'templates/stock-ticker' );
@@ -1292,9 +1292,9 @@ check performed for you.  In such a case, you'll have to call binmode() on
 the filehandle yourself.  Once you pass a filehandle to this method it has no
 way of telling if the file opened to that filehandle is binary or not.
 
-=item C<< readlimit => positive integer >>
+=item C<< read_limit => positive integer >>
 
-Override the global readlimit setting for the File::Util object you are working
+Override the global read limit setting for the File::Util object you are working
 with, on a one time basis.  By specifying a this option with a positive integer
 value (representing the maximum number of bytes to allow for your C<load_file()>
 call), you are telling C<load_file()> to ignore the global/default setting for
@@ -1304,12 +1304,12 @@ bytes on the file while it is read into memory.
 B<Notes:> This method does not distinguish between plain files and other file
 types such as binaries, FIFOs, sockets, etc.
 
-Restrictions imposed by the current "readlimit"
-I<(see the L<readlimit()|/readlimit>) entry below> will be applied to the
-files opened by this method.  Adjust the readlimit as necessary either
-by overriding (using the C<'readlimit'> option above), or by adjusting the
+Restrictions imposed by the current "read limit"
+I<(see the L<read_limit()|/read_limit>) entry below> will be applied to the
+files opened by this method.  Adjust the read limit as necessary either
+by overriding (using the C<'read_limit'> option above), or by adjusting the
 global value for your File::Util object with the provided
-L<readlimit() object method|/readlimit>.
+L<read_limit() object method|/read_limit>.
 
 =back
 
@@ -1431,13 +1431,13 @@ operations.  The default is to use C<flock()> when available on your system.
 Specify this option with a true or false value ( 1 or 0 ), true to use
 C<flock()>, false to not use it.
 
-=item C<< readlimit => positive integer >>
+=item C<< read_limit => positive integer >>
 
 Optionally specify this option to the File::Util::new method to instruct the
 new object that it should never attempt to open and read in a file greater
 than the number of bytes you specify.  Obviously this argument can only be
 a numeric integer value, otherwise it will be silently ignored.  The default
-readlimit for File::Util objects is 52428800 bytes (50 megabytes).
+read limit for File::Util objects is 52428800 bytes (50 megabytes).
 
 =item C<< max_dives => positive integer >>
 
@@ -1663,11 +1663,11 @@ can't mix native Perl I/O with system I/O.
 
 =back
 
-=head2 C<readlimit>
+=head2 C<read_limit>
 
 =over
 
-=item I<Syntax:> C<readlimit( [positive integer] )>
+=item I<Syntax:> C<read_limit( [positive integer] )>
 
 By default, the largest size file that File::Util will read into memory and
 return via the L<load_file|/load_file> is 52428800 byptes (50 megabytes).
