@@ -26,7 +26,6 @@ our @EXPORT_OK  = qw(
 
 our %EXPORT_TAGS = ( all => [ @EXPORT_OK ], diag => [] );
 
-# default setting is "1" for now, until test suite updated and documentation as well
 our $WANT_DIAGNOSTICS = 0;
 
 # --------------------------------------------------------
@@ -287,6 +286,7 @@ sub list_dir {
             callback       => $opts->{callback},
             d_callback     => $opts->{d_callback},
             f_callback     => $opts->{f_callback},
+            onfail         => $opts->{onfail},
          };
 
          my ( $dirs_ref, $files_ref ) =
@@ -777,8 +777,7 @@ sub _dropdots {
 # --------------------------------------------------------
 sub load_file {
    my $this       = shift @_;
-   my $in         = $this->_names_values( @_ );
-   my $opts       = $this->_remove_opts( \@_ );
+   my $in         = $this->_parse_in( @_ );
    my @dirs       = ();
    my $blocksize  = 1024; # 1.24 kb
    my $fh_passed  = 0;
@@ -794,35 +793,24 @@ sub load_file {
    $in->{readlimit} =
       defined $in->{readlimit}
          ? $in->{readlimit}
-         : defined $opts->{readlimit}
-            ? $opts->{readlimit}
-            : undef;
+         : undef;
 
    $in->{FH} =
       defined $in->{FH}
          ? $in->{FH}
-         : defined $opts->{FH}
-            ? $opts->{FH}
-            : undef;
+         : undef;
 
    $in->{file_handle} =
       defined $in->{file_handle}
          ? $in->{file_handle}
-         : defined $opts->{file_handle}
-            ? $opts->{file_handle}
-            : undef;
-
-   $opts->{readlimit}   = $in->{readlimit};
-   $opts->{file_handle} = $in->{file_handle};
+         : undef;
 
    my $readlimit =
       defined $in->{readlimit}
          ? $in->{readlimit}
-         : defined $this->{opts}->{readlimit}
-            ? $this->{opts}->{readlimit}
-            : defined $READLIMIT
-               ? $READLIMIT
-               : 0;
+         : defined $READLIMIT
+            ? $READLIMIT
+            : 0;
 
    return $this->_throw ( 'bad readlimit' => { bad => $readlimit } )
       if $readlimit =~ /\D/;
@@ -839,7 +827,7 @@ sub load_file {
          {
             meth    => 'load_file',
             missing => 'a file name or file handle reference',
-            opts    => $opts,
+            opts    => $in,
          }
       ) unless length $file;
 
@@ -879,7 +867,7 @@ sub load_file {
             {
                meth    => 'load_file',
                missing => 'a true file handle reference (not a string)',
-               opts    => $opts,
+               opts    => $in,
             }
          );
       }
@@ -889,7 +877,7 @@ sub load_file {
 
       my $buffer     = 0;
       my $bytes_read = 0;
-      $fh = $opts->{FH};
+      $fh = $in->{FH};
 
       while ( <$fh> ) {
 
@@ -907,7 +895,7 @@ sub load_file {
                   filename  => '<filehandle>',
                   size      => qq{[truncated at $bytes_read]},
                   readlimit => $readlimit,
-                  opts      => $opts,
+                  opts      => $in,
                }
             );
          }
@@ -917,7 +905,7 @@ sub load_file {
       # subroutine asked for an array eg- my @file = load_file('file');
       # otherwise, return a scalar value containing all of the file's content
       return split /$NL|\r|\n/o, $content
-         if $opts->{as_list};
+         if $in->{as_list};
 
       return $content;
    }
@@ -927,7 +915,7 @@ sub load_file {
       'no such file',
       {
          filename => $clean_name,
-         opts     => $opts,
+         opts     => $in,
       }
    ) unless -e $clean_name;
 
@@ -941,7 +929,7 @@ sub load_file {
       {
          filename => $clean_name,
          dirname  => $root . $path,
-         opts     => $opts,
+         opts     => $in,
       }
    ) unless -r $root . $path;
 
@@ -951,7 +939,7 @@ sub load_file {
       {
          filename => $clean_name,
          dirname  => $root . $path,
-         opts     => $opts,
+         opts     => $in,
       }
    ) unless -r $clean_name;
 
@@ -960,7 +948,7 @@ sub load_file {
       'called open on a dir',
       {
          filename => $clean_name,
-         opts     => $opts,
+         opts     => $in,
       }
    ) if -d $clean_name;
 
@@ -971,7 +959,7 @@ sub load_file {
       {
          filename  => $clean_name,
          size      => $fsize,
-         opts      => $opts,
+         opts      => $in,
          readlimit => $readlimit,
       }
    ) if $fsize > $readlimit;
@@ -985,7 +973,7 @@ sub load_file {
 
    # lock file before I/O on platforms that support it
    if (
-      $opts->{no_lock}         ||
+      $in->{no_lock}           ||
       $this->{opts}->{no_lock} ||
       !$this->use_flock()
    ) {
@@ -999,7 +987,7 @@ sub load_file {
                mode      => $mode,
                exception => $!,
                cmd       => qq(< $clean_name),
-               opts      => $opts,
+               opts      => $in,
             }
          );
    }
@@ -1012,7 +1000,7 @@ sub load_file {
                mode      => $mode,
                exception => $!,
                cmd       => qq(< $clean_name),
-               opts      => $opts,
+               opts      => $in,
             }
          );
 
@@ -1030,7 +1018,7 @@ sub load_file {
 
    $content = <$fh>;
 
-   if ( $$opts{no_lock} || $$this{opts}{no_lock} ) {
+   if ( $in->{no_lock} || $this->{opts}->{no_lock} ) {
 
       # if execution gets here, you used the 'no_lock' option, and you
       # are probably inefficient
@@ -1041,7 +1029,7 @@ sub load_file {
             filename  => $clean_name,
             mode      => $mode,
             exception => $!,
-            opts      => $opts,
+            opts      => $in,
          }
       );
    }
@@ -1055,7 +1043,7 @@ sub load_file {
             filename  => $clean_name,
             mode      => $mode,
             exception => $!,
-            opts      => $opts,
+            opts      => $in,
          }
       );
    }
@@ -1064,7 +1052,7 @@ sub load_file {
    # subroutine asked for an array eg- my @file = load_file('file');
    # otherwise, return a scalar value containing all of the file's content
    return split /$NL|\r|\n/o, $content
-      if $opts->{as_lines};
+      if $in->{as_lines};
 
    return $content;
 }
@@ -1220,13 +1208,34 @@ sub write_file {
    $clean_name = $root . $path . $file;
 
    # create path preceding file if path doesn't exist
+   if ( !-e $root . $path ) {
 
-   $this->make_dir(
-      $root . $path,
-      exists $in->{dbitmask} && defined $in->{dbitmask}
-         ? $in->{dbitmask}
-         : oct 777
-   ) unless -e $root . $path;
+      my $make_dir_ok = 1;
+
+      my $make_dir_return = $this->make_dir(
+         $root . $path,
+         exists $in->{dbitmask} &&
+         defined $in->{dbitmask}
+            ? $in->{dbitmask}
+            : oct 777,
+            {
+               diag   => $in->{diag},
+               onfail => sub {
+                  my ( $err, $trace ) = @_;
+
+                  return $in->{onfail}
+                     if ref $in->{onfail} &&
+                        ref $in->{onfail} eq 'CODE';
+
+                  $make_dir_ok = 0;
+
+                  return $err . $trace;
+               }
+            }
+      );
+
+      die $make_dir_return unless $make_dir_ok;
+   }
 
    # if file already exists, check if we can write to it
    if ( -e $clean_name ) {
@@ -1253,7 +1262,7 @@ sub write_file {
 
    # if you use the no_lock option, please consider the risks
 
-   if ( $$in{no_lock} || !$USE_FLOCK ) {
+   if ( $in->{no_lock} || !$USE_FLOCK ) {
 
       # only non-existent files get bitmask arguments
       if ( -e $clean_name ) {
@@ -1809,6 +1818,7 @@ sub make_dir {
       {
          meth    => 'make_dir',
          missing => 'a directory name',
+         opts    => $opts,
       }
    ) unless defined $dir && length $dir;
 
@@ -1822,7 +1832,8 @@ sub make_dir {
             'called mkdir on a file',
             {
                filename => $dir,
-               dirname  => join( SL, split /$DIRSPLIT/, $dir ) . SL
+               dirname  => join( SL, split /$DIRSPLIT/, $dir ) . SL,
+               opts     => $opts,
             }
          );
       }
@@ -1835,7 +1846,8 @@ sub make_dir {
             'called mkdir on a file',
             {
                filename => $dir,
-               dirname  => join( SL, split /$DIRSPLIT/, $dir ) . SL
+               dirname  => join( SL, split /$DIRSPLIT/, $dir ) . SL,
+               opts     => $opts,
             }
          ) unless -d $dir;
 
@@ -1844,6 +1856,7 @@ sub make_dir {
             {
                dirname  => $dir,
                filetype => [ $this->file_type( $dir ) ],
+               opts     => $opts,
             }
          );
       }
@@ -1861,6 +1874,7 @@ sub make_dir {
          {
             string  => $dir,
             purpose => 'the name of a directory',
+            opts    => $opts,
          }
       ) if $try_dir =~ /(?:$DIRSPLIT){2,}/;
    }
@@ -1919,8 +1933,9 @@ sub make_dir {
          return $this->_throw(
             'called mkdir on a file',
             {
-               'filename'  => $dir,
-               'dirname'   => $up . SL,
+               filename => $dir,
+               dirname  => $up . SL,
+               opts     => $opts,
             }
          );
       }
@@ -1935,6 +1950,7 @@ sub make_dir {
          {
             dirname  => $dir,
             parentd  => $up,
+            opts     => $opts,
          }
       ) unless -w $up;
 
@@ -1945,6 +1961,7 @@ sub make_dir {
                exception => $!,
                dirname   => $dir,
                bitmask   => $bitmask,
+               opts     => $opts,
             }
          );
    }
@@ -2026,8 +2043,7 @@ sub needs_binmode { $NEEDS_BINMODE }
 # --------------------------------------------------------
 sub open_handle {
    my $this     = shift @_;
-   my $in       = $this->_names_values( @_ );
-   my $opts     = $this->_remove_opts( \@_ );
+   my $in       = $this->_parse_in( @_ );
    my $file     = '';
    my $mode     = '';
    my $bitmask  = $in->{bitmask} || oct 777;
@@ -2076,9 +2092,21 @@ sub open_handle {
       {
          meth    => 'open_handle',
          missing => 'a file name to create, write, read/write, or append',
-         opts    => $opts,
+         opts    => $in,
       }
    ) unless length $file;
+
+   if ( $mode eq 'read' && !-e $raw_name ) {
+
+      # if the file doesn't exist, send back an error
+      return $this->_throw(
+         'no such file',
+         {
+            filename => $raw_name,
+            opts     => $in,
+         }
+      ) unless -e $clean_name;
+   }
 
    # if prospective filename contains 2+ dir separators in sequence then
    # this is a syntax error we need to whine about
@@ -2092,7 +2120,7 @@ sub open_handle {
          {
             string  => $raw_name,
             purpose => 'the name of a file or directory',
-            opts    => $opts,
+            opts    => $in,
          }
       ) if $try_filename =~ /(?:$DIRSPLIT){2,}/;
    }
@@ -2109,7 +2137,7 @@ sub open_handle {
          {
             string  => $_,
             purpose => 'the name of a file or directory',
-            opts    => $opts,
+            opts    => $in,
          }
       ) if !$this->valid_filename( $_ );
    }
@@ -2119,8 +2147,8 @@ sub open_handle {
 
    # make sure that open mode is a valid mode
    if (
-      !exists $opts->{use_sysopen} &&
-      !defined $opts->{use_sysopen}
+      !exists $in->{use_sysopen} &&
+      !defined $in->{use_sysopen}
    ) {
       # native Perl open modes
       unless (
@@ -2133,7 +2161,7 @@ sub open_handle {
                meth     => 'open_handle',
                filename => $raw_name,
                badmode  => $mode,
-               opts     => $opts,
+               opts     => $in,
             }
          )
       }
@@ -2150,7 +2178,7 @@ sub open_handle {
                meth     => 'open_handle',
                filename => $raw_name,
                badmode  => $mode,
-               opts     => $opts,
+               opts     => $in,
             }
          )
       }
@@ -2172,13 +2200,35 @@ sub open_handle {
    # final clean filename assembled
    $clean_name = $root . $path . $file;
 
-   # create path preceding file if path doesn't exist
-   $this->make_dir(
-      $root . $path,
-      exists $in->{dbitmask} && defined $in->{dbitmask}
-         ? $in->{dbitmask}
-         : oct 777
-   ) unless -e $root . $path;
+   # create path preceding file if path doesn't exist and not in read mode
+   if ( $mode ne 'read' && !-e $root . $path ) {
+
+      my $make_dir_ok = 1;
+
+      my $make_dir_return = $this->make_dir(
+         $root . $path,
+         exists $in->{dbitmask} &&
+         defined $in->{dbitmask}
+            ? $in->{dbitmask}
+            : oct 777,
+            {
+               diag   => $in->{diag},
+               onfail => sub {
+                  my ( $err, $trace ) = @_;
+
+                  return $in->{onfail}
+                     if ref $in->{onfail} &&
+                        ref $in->{onfail} eq 'CODE';
+
+                  $make_dir_ok = 0;
+
+                  return $err . $trace;
+               }
+            }
+      );
+
+      die $make_dir_return unless $make_dir_ok;
+   }
 
    # sanity checks based on requested mode
    if (
@@ -2198,7 +2248,7 @@ sub open_handle {
             {
                filename => $clean_name,
                dirname  => $root . $path,
-               opts     => $opts,
+               opts     => $in,
             }
          ) unless -w $clean_name;
       }
@@ -2210,7 +2260,7 @@ sub open_handle {
             {
                filename => $clean_name,
                dirname  => $root . $path,
-               opts     => $opts,
+               opts     => $in,
             }
          ) unless -w $root . $path;
       }
@@ -2223,7 +2273,7 @@ sub open_handle {
          {
             filename => $clean_name,
             dirname  => $root . $path,
-            opts     => $opts,
+            opts     => $in,
          }
       ) unless -r $root . $path;
 
@@ -2233,7 +2283,7 @@ sub open_handle {
          {
             filename => $clean_name,
             dirname  => $root . $path,
-            opts     => $opts,
+            opts     => $in,
          }
       ) unless -e $clean_name;
 
@@ -2243,7 +2293,7 @@ sub open_handle {
          {
             filename => $clean_name,
             dirname  => $root . $path,
-            opts     => $opts,
+            opts     => $in,
          }
       ) unless -r $clean_name;
    }
@@ -2253,16 +2303,16 @@ sub open_handle {
          {
             meth    => 'open_handle',
             missing => q{a valid IO mode. (eg- 'read', 'write'...)},
-            opts    => $opts,
+            opts    => $in,
          }
       );
    }
    # input validation sequence finished
 
-   if ( $$opts{no_lock} || !$USE_FLOCK ) {
+   if ( $$in{no_lock} || !$USE_FLOCK ) {
       if (
-         !exists $opts->{use_sysopen} &&
-         !defined $opts->{use_sysopen}
+         !exists $in->{use_sysopen} &&
+         !defined $in->{use_sysopen}
       ) { # perl open
          # get open mode
          $mode = $$MODES{popen}{ $mode };
@@ -2275,7 +2325,7 @@ sub open_handle {
                   mode      => $mode,
                   exception => $!,
                   cmd       => $mode . $clean_name,
-                  opts      => $opts,
+                  opts      => $in,
                }
             );
       }
@@ -2291,15 +2341,15 @@ sub open_handle {
                   mode      => $mode,
                   exception => $!,
                   cmd       => qq($clean_name, $$MODES{sysopen}{ $mode }),
-                  opts      => $opts,
+                  opts      => $in,
                }
             );
       }
    }
    else {
       if (
-         !exists $opts->{use_sysopen} &&
-         !defined $opts->{use_sysopen}
+         !exists $in->{use_sysopen} &&
+         !defined $in->{use_sysopen}
       ) { # perl open
          # open read-only first to safely check if we can get a lock.
          if ( -e $clean_name ) {
@@ -2312,7 +2362,7 @@ sub open_handle {
                      mode      => 'read',
                      exception => $!,
                      cmd       => $mode . $clean_name,
-                     opts      => $opts,
+                     opts      => $in,
                   }
                );
 
@@ -2330,7 +2380,7 @@ sub open_handle {
                         exception => $!,
                         filename  => $clean_name,
                         mode      => $mode,
-                        opts      => $opts,
+                        opts      => $in,
                         cmd       => $$MODES{popen}{ $mode } . $clean_name,
                      }
                   );
@@ -2344,7 +2394,7 @@ sub open_handle {
                      exception => $!,
                      filename  => $clean_name,
                      mode      => $mode,
-                     opts      => $opts,
+                     opts      => $in,
                      cmd       => $$MODES{popen}{ $mode } . $clean_name,
                   }
                );
@@ -2367,7 +2417,7 @@ sub open_handle {
                      mode      => 'read',
                      exception => $!,
                      cmd       => $mode . $clean_name,
-                     opts      => $opts,
+                     opts      => $in,
                   }
                );
 
@@ -2382,7 +2432,7 @@ sub open_handle {
                   {
                      filename  => $clean_name,
                      mode      => $mode,
-                     opts      => $opts,
+                     opts      => $in,
                      exception => $!,
                      cmd       => qq($clean_name, $$MODES{sysopen}{ $mode }),
                   }
@@ -2399,7 +2449,7 @@ sub open_handle {
                {
                   filename  => $clean_name,
                   mode      => $mode,
-                  opts      => $opts,
+                  opts      => $in,
                   exception => $!,
                   cmd       => qq($clean_name, $$MODES{sysopen}{$mode}, $bitmask),
                }
@@ -2414,7 +2464,7 @@ sub open_handle {
    }
 
    # call binmode on the filehandle if it was requested
-   CORE::binmode( $fh ) if $in->{binmode} || $opts->{binmode};
+   CORE::binmode( $fh ) if $in->{binmode};
 
    # return file handle reference to the caller
    return $fh;
