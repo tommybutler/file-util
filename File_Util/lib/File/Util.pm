@@ -99,7 +99,9 @@ sub list_dir {
    my $maxd =
       defined $opts->{max_dives}
          ? $opts->{max_dives}
-         : $MAXDIVES;
+         : defined $this->{opts}->{max_dives}
+            ? $this->{opts}->{max_dives}
+            : $MAXDIVES;
 
    return $this->_throw(
       'no input' => {
