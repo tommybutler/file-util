@@ -5,11 +5,24 @@ use warnings;
 use Test::More;
 use File::Temp qw( tempdir );
 
+use lib './lib';
+
+use File::Util qw( SL NL existent );
+
+# ----------------------------------------------------------------------
+# determine if we can run these fatal tests
+# ----------------------------------------------------------------------
 BEGIN {
 
+   if ( $^O !~ /bsd|linux|cygwin/i )
+   {
+      plan skip_all => 'this OS doesn\'t fail reliably - chmod() issues';
+   }
    # the tests in this file have a higher probability of failing in the
-   # wild, and so are reserved for the author/maintainers as release tests
-   if ( $ENV{RELEASE_TESTING} || $ENV{AUTHOR_TESTING} || $ENV{AUTHOR_TESTS} )
+   # wild, and so are reserved for the author/maintainers as release tests.
+   # these tests also won't reliably run on platforms that can't run or
+   # can't respect chmod()... e.g.- windows (and even cygwin to some extent)
+   elsif ( $ENV{RELEASE_TESTING} || $ENV{AUTHOR_TESTING} || $ENV{AUTHOR_TESTS} )
    {
       {
          local $@;
@@ -20,13 +33,13 @@ BEGIN {
          {
             plan skip_all => 'Need Test::Fatal to run these tests';
          }
-         else {
-
+         else
+         {
             require Test::Fatal;
 
             Test::Fatal->import( qw( exception dies_ok lives_ok ) );
 
-            plan tests => 21;
+            plan tests => 29;
 
             CORE::eval <<'__TEST_NOWARNINGS__';
 use Test::NoWarnings qw( :early );
@@ -40,19 +53,45 @@ __TEST_NOWARNINGS__
    }
 }
 
-use lib './lib';
-
-use File::Util qw( SL NL existent );
-
 my $ftl     = File::Util->new();
 my $tempdir = tempdir( CLEANUP => 1 );
 my $exception;
+
+# ----------------------------------------------------------------------
+# set ourselves up for failure
+# ----------------------------------------------------------------------
+
+# list of methods that will throw a special exception unless they get
+# the input that they require
+my @methods_that_need_input = qw(
+   list_dir       load_file      write_file     touch
+   load_dir       make_dir       open_handle
+);
 
 # make an inaccessible file
 my $noaccess_file = make_inaccessible_file( 'noaccess.txt' );
 
 # make a directory, inaccessible
 my $noaccess_dir = make_inaccessible_dir( 'noaccess/' );
+
+# make a somewhat-deep temp dir structure
+$ftl->make_dir( $tempdir . SL . 'a' . SL . 'b' . SL . 'c' );
+
+# ----------------------------------------------------------------------
+# let the fail begin
+# ----------------------------------------------------------------------
+
+# the first of our tests are  several simple failure scenarios wherein no
+# input is sent to a given method that requires it.
+for my $method ( @methods_that_need_input )
+{
+   # send no input to $method
+   $exception = exception { $ftl->$method() };
+
+   like $exception,
+        qr/(?m)^Call to \( $method\(\) \) failed:/,
+        sprintf 'send no input to %s()', $method;
+}
 
 # try to read-open a file that doesn't exist
 $exception = exception { $ftl->load_file( get_nonexistent_file() ) };
@@ -86,7 +125,7 @@ like $exception,
 $exception = exception { $ftl->load_file( $noaccess_dir . SL . 'dummyfile' ) };
 
 like $exception,
-     qr/(?m)^File inaccessible or does not exist:/,
+     qr/(?m)^File inaccessible|^Permissions conflict/,
      'attempt to read a file in a restricted directory';
 
 # try to create a file in the inaccessible directory
@@ -96,7 +135,7 @@ $exception = exception
 };
 
 like $exception,
-     qr/(?m)^Permissions conflict.  Can't create:/,
+     qr/(?m)^Permissions conflict.  Can't (?:create|write)/, # cygwin differs
      'attempt to create a file in a restricted directory';
 
 # try to open a directory as a file for reading
@@ -133,7 +172,8 @@ like $exception,
 # try to SYSopen a file with a bad "mode" argument
 $exception = exception
 {
-   $ftl->open_handle(
+   $ftl->open_handle
+   (
       {
          use_sysopen => 1,
          filename    => 'dummyfile',
@@ -204,6 +244,16 @@ like $exception,
      qr/(?m)^Bad input provided to read_limit/,
      'make a call to read_limit() with improper input';
 
+# intentionally exceed max_dives
+$exception = exception
+{
+   $ftl->list_dir( $tempdir => { recurse => 1, max_dives => 1 } )
+};
+
+like $exception,
+     qr/(?m)^Recursion limit exceeded/,
+     'attempt to list_dir recursively past max_dives limit';
+
 # send bad input (illegal characters) to write_file()
 $exception = exception
 {
@@ -226,12 +276,19 @@ like $exception,
 
 
 
+# ----------------------------------------------------------------------
+# clean up restricted-access files/dirs, and exit
+# ----------------------------------------------------------------------
 
-# ------ // clean up // ------------------------------
 remove_inaccessible_file( $noaccess_file );
 remove_inaccessible_dir( $noaccess_dir );
 
 exit;
+
+
+# ----------------------------------------------------------------------
+# supporting subroutines
+# ----------------------------------------------------------------------
 
 sub make_inaccessible_file
 {
@@ -267,6 +324,7 @@ sub make_inaccessible_dir
 
    $ftl->touch( $dirname . SL . 'dummyfile' );
 
+   chmod oct 0, $dirname . SL . 'dummyfile' or die $!;
    chmod oct 0, $dirname or die $!;
 
    return $dirname;
@@ -279,6 +337,7 @@ sub remove_inaccessible_dir
    $dirname = $tempdir . SL . $dirname;
 
    chmod oct 777, $dirname or die $!;
+   chmod oct 777, $dirname . SL . 'dummyfile' or die $!;
 
    unlink $dirname . SL . 'dummyfile' or die $!;
 
