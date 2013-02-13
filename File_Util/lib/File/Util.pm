@@ -293,20 +293,29 @@ sub list_dir {
          # options would otherwise break recursion and/or cause confusion
 
          my $recurse_opts = {
-            as_ref         => 1,
-            with_paths     => 1,
-            recursing      => 1,
-            no_fsdots      => 1,
-            max_dives      => $maxd,
-            rpattern       => $opts->{rpattern},
-            files_match    => $opts->{files_match},
-            dirs_match     => $opts->{dirs_match},
-            parent_matches => $opts->{parent_matches},
-            path_matches   => $opts->{path_matches},
-            callback       => $opts->{callback},
-            d_callback     => $opts->{d_callback},
-            f_callback     => $opts->{f_callback},
-            onfail         => $opts->{onfail},
+            as_ref               => 1,
+            with_paths           => 1,
+            recursing            => 1,
+            no_fsdots            => 1,
+            max_dives            => $maxd,
+            rpattern             => $opts->{rpattern},
+            files_match          => $opts->{files_match},
+            dirs_match           => $opts->{dirs_match},
+            parent_matches       => $opts->{parent_matches},
+            path_matches         => $opts->{path_matches},
+            callback             => $opts->{callback},
+            d_callback           => $opts->{d_callback},
+            f_callback           => $opts->{f_callback},
+            onfail               => $opts->{onfail},
+            _files_match_and     => $opts->{_files_match_and},
+            _files_match_or      => $opts->{_files_match_or},
+            _dirs_match_and      => $opts->{_dirs_match_and},
+            _dirs_match_or       => $opts->{_dirs_match_or},
+            _parent_matches_and  => $opts->{_parent_matches_and},
+            _parent_matches_or   => $opts->{_parent_matches_or},
+            _path_matches_and    => $opts->{_path_matches_and},
+            _path_matches_or     => $opts->{_path_matches_or},
+
          };
 
          my ( $dirs_ref, $files_ref ) =
@@ -399,68 +408,135 @@ sub _list_dir_matching {
 
 # COLLECT PATTERN(S) TO BE APPLIED
 
-   my @files_match_or;
-   my @files_match_and  = _gather_and_patterns( $opts->{files_match} );
-      @files_match_or   = _gather_or_patterns( $opts->{files_match} )
-         unless scalar @files_match_and;
+   {  # memo-ize these patterns
 
-   my @dirs_match_or;
-   my @dirs_match_and   = _gather_and_patterns( $opts->{dirs_match} );
-      @dirs_match_or    = _gather_or_patterns( $opts->{dirs_match} )
-         unless scalar @dirs_match_and;
+   # FILES AND
+      $opts->{_files_match_and} =
+         defined $opts->{_files_match_and}
+            ? $opts->{_files_match_and}
+            : [];
 
-   my @parent_matches_or;
-   my @parent_matches_and = _gather_and_patterns( $opts->{parent_matches} );
-      @parent_matches_or  = _gather_or_patterns( $opts->{parent_matches} )
-         unless scalar @parent_matches_and;
+      $opts->{_files_match_and} =
+         [ _gather_and_patterns( $opts->{files_match} ) ]
+            unless @{ $opts->{_files_match_and} };
 
-   my @path_matches_or;
-   my @path_matches_and   = _gather_and_patterns( $opts->{path_matches} );
-      @path_matches_or    = _gather_or_patterns( $opts->{path_matches} )
-         unless scalar @path_matches_and;
+   # FILES OR
+      $opts->{_files_match_or} =
+         defined $opts->{_files_match_or}
+            ? $opts->{_files_match_or}
+            : [];
+
+      $opts->{_files_match_or} =
+         [ _gather_or_patterns( $opts->{files_match} ) ]
+            unless @{ $opts->{_files_match_and} };
+
+   # DIRS AND
+      $opts->{_dirs_match_and} =
+         defined $opts->{_dirs_match_and}
+            ? $opts->{_dirs_match_and}
+            : [];
+
+      $opts->{_dirs_match_and} =
+         [ _gather_and_patterns( $opts->{dirs_match} ) ]
+            unless @{ $opts->{_dirs_match_and} };
+
+   # DIRS OR
+      $opts->{_dirs_match_or} =
+         defined $opts->{_dirs_match_or}
+            ? $opts->{_dirs_match_or}
+            : [];
+
+      $opts->{_dirs_match_or} =
+         [ _gather_or_patterns( $opts->{dirs_match} ) ]
+            unless @{ $opts->{_dirs_match_and} };
+
+   # PARENT AND
+      $opts->{_parent_matches_and} =
+         defined $opts->{_parent_matches_and}
+            ? $opts->{_parent_matches_and}
+            : [];
+
+      $opts->{_parent_matches_and} =
+         [ _gather_and_patterns( $opts->{parent_matches} ) ]
+            unless @{ $opts->{_parent_matches_and} };
+
+   # PARENT OR
+      $opts->{_parent_matches_or} =
+         defined $opts->{_parent_matches_or}
+            ? $opts->{_parent_matches_or}
+            : [];
+
+      $opts->{_parent_matches_or} =
+         [ _gather_or_patterns( $opts->{parent_matches} ) ]
+            unless @{ $opts->{_parent_matches_and} };
+
+   # PATH AND
+      $opts->{_path_matches_and} =
+         defined $opts->{_path_matches_and}
+            ? $opts->{_path_matches_and}
+            : [];
+
+      $opts->{_path_matches_and} =
+         [ _gather_and_patterns( $opts->{path_matches} ) ]
+            unless @{ $opts->{_path_matches_and} };
+
+   # PATH OR
+      $opts->{_path_matches_or} =
+         defined $opts->{_path_matches_or}
+            ? $opts->{_path_matches_or}
+            : [];
+
+      $opts->{_path_matches_or} =
+         [ _gather_or_patterns( $opts->{path_matches} ) ]
+            unless @{ $opts->{_path_matches_and} };
+   }
 
 # FILE MATCHING
 
-   for my $pattern ( @files_match_and ) {
+   for my $pattern ( @{ $opts->{_files_match_and} } ) {
 
       @files_match = grep { /$pattern/ } @files_match;
    }
 
-   @files_match = _match_and( \@files_match_and, \@files_match )
-      if scalar @files_match_and;
+   @files_match = _match_and( $opts->{_files_match_and}, \@files_match )
+      if @{ $opts->{_files_match_and} };
 
-   @files_match = _match_or( \@files_match_or, \@files_match )
-      if scalar @files_match_or;
+   @files_match = _match_or( $opts->{_files_match_or}, \@files_match )
+      if @{ $opts->{_files_match_or} };
 
 # DIRECTORY MATCHING
 
-   @dirs_match = _match_and( \@dirs_match_and, \@dirs_match )
-      if scalar @dirs_match_and;
+   @dirs_match = _match_and( $opts->{_dirs_match_and}, \@dirs_match )
+      if @{ $opts->{_dirs_match_and} };
 
-   @dirs_match = _match_or( \@dirs_match_or, \@dirs_match )
-      if scalar @dirs_match_or;
+   @dirs_match = _match_or( $opts->{_dirs_match_or}, \@dirs_match )
+      if @{ $opts->{_dirs_match_or} };
 
 # FILE &'ed DIRECTORY MATCHING
 
    if ( $opts->{files_match} && $opts->{dirs_match} ) {
 
       @files_match = ( )
-         unless _match_and( \@dirs_match_and, [ strip_path( $path ) ] );
+         unless _match_and( $opts->{_dirs_match_and}, [ strip_path( $path ) ] );
    }
 
 # MATCHING FILES BY PARENT DIR
 
    if ( $opts->{parent_matches} ) {
 
-      if ( @parent_matches_and ) {
+      if ( @{ $opts->{_parent_matches_and} } ) {
 
          @files_match = ( )
-            unless _match_and( \@parent_matches_and, [ strip_path( $path ) ] );
+            unless _match_and(
+               $opts->{_parent_matches_and}, [ strip_path( $path ) ]
+            );
       }
-      elsif ( @parent_matches_or ) {
+      elsif ( @{ $opts->{_parent_matches_or} } ) {
 
          @files_match = ( )
-            unless _match_or( \@parent_matches_or, [ strip_path( $path ) ] );
+            unless _match_or(
+               $opts->{_parent_matches_or}, [ strip_path( $path ) ]
+            );
       }
    }
 
@@ -468,15 +544,15 @@ sub _list_dir_matching {
 
    if ( $opts->{path_matches} ) {
 
-      if ( @path_matches_and ) {
+      if ( @{ $opts->{_path_matches_and} } ) {
 
          @files_match = ( )
-            unless _match_and( \@path_matches_and, [ $path ] );
+            unless _match_and( $opts->{_path_matches_and}, [ $path ] );
       }
-      elsif ( @path_matches_or ) {
+      elsif ( @{ $opts->{_path_matches_or} } ) {
 
          @files_match = ( )
-            unless _match_or( \@path_matches_or, [ $path ] );
+            unless _match_or( $opts->{_path_matches_or}, [ $path ] );
       }
    }
 
@@ -492,18 +568,43 @@ sub _list_dir_lastround_dirmatch {
 
    my @return_dirs;
 
-   my @qualified_dirs = splice @$dirs, 0;
-   # can't keep multiple ^^^^^ potentially huge lists of files in RAM
-
-   my @parent_matches_or;
-   my @parent_matches_and = _gather_and_patterns( $opts->{parent_matches} );
-      @parent_matches_or  = _gather_or_patterns( $opts->{parent_matches} )
-         unless scalar @parent_matches_and;
-
-   my @path_matches_or;
-   my @path_matches_and   = _gather_and_patterns( $opts->{path_matches} );
-      @path_matches_or    = _gather_or_patterns( $opts->{path_matches} )
-         unless scalar @path_matches_and;
+#   {
+#      $opts->{_parent_matches_and} =
+#         defined $opts->{_parent_matches_and}
+#            ? $opts->{_parent_matches_and}
+#            : [];
+#
+#      $opts->{_parent_matches_or} =
+#         defined $opts->{_parent_matches_or}
+#            ? $opts->{_parent_matches_or}
+#            : [];
+#
+#      $opts->{_path_matches_and} =
+#         defined $opts->{_path_matches_and}
+#            ? $opts->{_path_matches_and}
+#            : [];
+#
+#      $opts->{_path_matches_or} =
+#         defined $opts->{_path_matches_or}
+#            ? $opts->{_path_matches_or}
+#            : [];
+#
+#      $opts->{_parent_matches_and} =
+#         [ _gather_and_patterns( $opts->{parent_matches} ) ]
+#            unless @{ $opts->{_parent_matches_and} };
+#
+#      $opts->{_parent_matches_or} =
+#         [ _gather_or_patterns( $opts->{parent_matches} ) ]
+#            unless @{ $opts->{_parent_matches_and} };
+#
+#      $opts->{_path_matches_and} =
+#         [ _gather_and_patterns( $opts->{path_matches} ) ]
+#            unless @{ $opts->{_path_matches_and} };
+#
+#      $opts->{_path_matches_or} =
+#         [ _gather_or_patterns( $opts->{path_matches} ) ]
+#            unless @{ $opts->{_path_matches_and} };
+#   }
 
 # LAST ROUND MATCHING DIRS BY PARENT DIR
 
@@ -511,28 +612,28 @@ sub _list_dir_lastround_dirmatch {
 
       my %return_dirs;
 
-      if ( @parent_matches_and ) {
+      if ( @{ $opts->{_parent_matches_and} } ) {
 
-         for my $qfd_dir ( @qualified_dirs ) {
+         for my $qfd_dir ( @$dirs ) {
 
             my ( $root, $in_path ) = atomize_path( $qfd_dir );
 
             $in_path = $root . $in_path if $root;
 
             $return_dirs{ $in_path } = $in_path
-            if _match_and( \@parent_matches_and, [ strip_path( $in_path ) ] );
+            if _match_and( $opts->{_parent_matches_and}, [ strip_path( $in_path ) ] );
          }
       }
-      elsif ( @parent_matches_or ) {
+      elsif ( @{ $opts->{_parent_matches_or} } ) {
 
-         for my $qfd_dir ( @qualified_dirs ) {
+         for my $qfd_dir ( @$dirs ) {
 
             my ( $root, $in_path ) = atomize_path( $qfd_dir );
 
             $in_path = $root . $in_path if $root;
 
             $return_dirs{ $in_path } = $in_path
-            if _match_or( \@parent_matches_or, [ strip_path( $in_path ) ] );
+            if _match_or( $opts->{_parent_matches_or}, [ strip_path( $in_path ) ] );
          }
       }
 
@@ -545,34 +646,34 @@ sub _list_dir_lastround_dirmatch {
 
       my %return_dirs;
 
-      if ( @path_matches_and ) {
+      if ( @{ $opts->{_path_matches_and} } ) {
 
-         for my $qfd_dir ( @qualified_dirs ) {
+         for my $qfd_dir ( @$dirs ) {
 
             my ( $root, $in_path ) = atomize_path( $qfd_dir );
 
             $in_path = $root . $in_path if $root;
 
             $return_dirs{ $in_path } = $in_path
-               if _match_and( \@path_matches_and, [ $in_path ] );
+               if _match_and( $opts->{_path_matches_and}, [ $in_path ] );
 
             $return_dirs{ $qfd_dir } = $qfd_dir
-               if _match_and( \@path_matches_and, [ $qfd_dir ] );
+               if _match_and( $opts->{_path_matches_and}, [ $qfd_dir ] );
          }
       }
-      elsif ( @path_matches_or ) {
+      elsif ( @{ $opts->{_path_matches_or} } ) {
 
-         for my $qfd_dir ( @qualified_dirs ) {
+         for my $qfd_dir ( @$dirs ) {
 
             my ( $root, $in_path ) = atomize_path( $qfd_dir );
 
             $in_path = $root . $in_path if $root;
 
             $return_dirs{ $in_path } = $in_path
-               if _match_or( \@path_matches_or, [ $in_path ] );
+               if _match_or( $opts->{_path_matches_or}, [ $in_path ] );
 
             $return_dirs{ $qfd_dir } = $qfd_dir
-               if _match_or( \@path_matches_or, [ $qfd_dir ] );
+               if _match_or( $opts->{_path_matches_or}, [ $qfd_dir ] );
          }
       }
 

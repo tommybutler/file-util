@@ -44,9 +44,9 @@ Not necessarily listed in order of priority:
 14) Create a benchmark suite, plot and publish metrics as part of the
     documentation.
 
-15) Memo-ize pattern "gathering" for recursive list_dir() calls for greater
-    efficiency.  Right now there's a gather op for ever recursion, and that
-    just isn't necessary.  That can be optimized out.
+15) [DONE] Memo-ize pattern "gathering" for recursive list_dir() calls for
+    greater efficiency.  Right now there's a gather op for ever recursion, and
+    that just isn't necessary.  That can be optimized out.
 
 16) Provide an option to follow symlinks in list_dir(), and keep track of
     inodes seen while traversing directories to avoid filesystem loops
