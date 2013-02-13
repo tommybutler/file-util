@@ -42,7 +42,7 @@ BEGIN {
             plan tests => 29;
 
             CORE::eval <<'__TEST_NOWARNINGS__';
-use Test::NoWarnings qw( :early );
+use Test::NoWarnings;
 __TEST_NOWARNINGS__
          }
       }

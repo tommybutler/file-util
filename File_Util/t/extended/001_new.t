@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use Test::More tests => 30;
-use Test::NoWarnings ':early';
+use Test::NoWarnings;
 
 use lib './lib';
 use File::Util;

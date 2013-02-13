@@ -8,7 +8,7 @@ use warnings;
 # this led to the combining of the make_dir and list_dir testing routines
 
 use Test::More tests => 24;
-use Test::NoWarnings ':early';
+use Test::NoWarnings;
 
 use File::Temp qw( tempdir );
 

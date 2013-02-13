@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Test::More tests => 14;
-use Test::NoWarnings ':early';
+use Test::NoWarnings;
 
 use File::Temp qw( tempdir );
 

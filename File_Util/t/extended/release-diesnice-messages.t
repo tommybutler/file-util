@@ -10,7 +10,7 @@ if ( $ENV{RELEASE_TESTING} || $ENV{AUTHOR_TESTING} || $ENV{AUTHOR_TESTS} )
                              # the author/maintainers as release tests
    CORE::eval # hide the eval...
    '
-use Test::NoWarnings qw( :early );
+use Test::NoWarnings;
    '; # ...from dist parsers
 }
 else
