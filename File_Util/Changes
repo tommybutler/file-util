@@ -2,7 +2,7 @@ Revision history for Perl extension File::Util.pm
 
 4.130425 Mon Feb 11 15:37:47 CST 2013
 
- - TRIAL version.  Released to CPAN after taking int account some changes
+ - TRIAL version.  Released to CPAN after taking into account some changes
    recommended by a few of the good folks at perlmonks, namely some method
    name changes.  The old method names still work fine and are completely
    supported.  The changes are shown below:
