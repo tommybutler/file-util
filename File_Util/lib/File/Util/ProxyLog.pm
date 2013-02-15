@@ -43,7 +43,7 @@ __CALL__
    return $$self->$name( @_ );
 }
 
-sub DESTROY { close $LOGFH }
+sub DESTROY { if ( $LOGFH ) { close $LOGFH or die $! } return }
 
 1;
 

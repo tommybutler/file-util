@@ -244,6 +244,13 @@ __no_input__
    : $error_msg_table{'unknown error message'}
 }
 
+
+# --------------------------------------------------------
+# File::Util::Exception::Standard::DESTROY()
+# --------------------------------------------------------
+sub DESTROY { }
+
+
 1;
 
 
