@@ -2,22 +2,41 @@
 use strict;
 use warnings;
 use Test::NoWarnings;
-use Test::More tests => 14;
+use Test::More tests => 16;
 
 use lib './lib';
 use File::Util;
 use File::Util::Interface::Classic qw( _myargs _remove_opts _names_values );
 
 # testing _myargs()
-is_deeply( [ _myargs( qw/ a b c / ) ], [ qw/ a b c / ] );
-is_deeply( [ _myargs( File::Util->new(), qw/ a b c / ) ], [ qw/ a b c / ] );
-is( _myargs( 'a' ), 'a' );
-is( scalar _myargs( qw/ a b c / ), 'a' );
+is_deeply  [ _myargs( qw/ a b c / ) ],
+           [ qw/ a b c / ],
+           '_myargs() understands a flat list';
+
+is_deeply [ _myargs( File::Util->new(), qw/ a b c / ) ],
+          [ qw/ a b c / ],
+          '...and ignores a leading blessed object';
+
+is _myargs( 'a' ),
+   'a',
+   '...and knows what to do in list context' ;
+
+is scalar _myargs( qw/ a b c / ),
+   'a',
+   '...and knows what to do in scalar context';
 
 # testing _remove_opts()
-is( _remove_opts( 'a' ), undef );
-is( _remove_opts( qw/ a b c / ), undef );
-is_deeply(
+is _remove_opts( 'a' ),
+   undef,
+   '_remove_opts() ignores non-opts type single arg, and returns undef';
+
+is _remove_opts( undef ), undef, '...and returns undef if given undef';
+
+is _remove_opts( qw/ a b c / ),
+   undef,
+   '...and ignores non-opts type multi arg list, and returns undef';
+
+is_deeply
    _remove_opts( [ qw/ --name=Larry --lang=Perl --recurse --empty= / ] ),
    {
       '--name'    => 'Larry',
@@ -28,12 +47,13 @@ is_deeply(
       'recurse'   => 1,
       '--empty'   => '',
       'empty'     => '',
-   }
-);
-is_deeply(
+   },
+   '...and recognizes + returns --name=value pairs, --flags, and --empty=';
+
+is_deeply
    _remove_opts(
+      File::Util->new(),
       [
-         File::Util->new(),
          qw/ --verbose --8-ball=black --empty= /,
       ]
    ),
@@ -44,50 +64,37 @@ is_deeply(
       '8_ball'    => 'black',
       '--empty'   => '',
       'empty'     => '',
-   }
-);
-is_deeply(
+   },
+   '...and still does the same if args list preceeded by a blessed object';
+
+is_deeply
    _remove_opts( File::Util->new(), [ 0, '', undef, '--mcninja', undef ] ),
-   { qw/ mcninja 1 --mcninja 1 / }
-);
+   { qw/ mcninja 1 --mcninja 1 / },
+   '...and recognizes args-as-listref, works right even with some bad args';
 
 
-# testing _names_values
-is_deeply(
-   _names_values( qw/ a a b b c c d d e e / ),
-   { a => a => b => b => c => c => d => d => e => e => }
-);
-is_deeply(
-   _names_values( File::Util->new(), qw/ a a b b c c d d e e / ),
-   { a => a => b => b => c => c => d => d => e => e => }
-);
-is_deeply(
-   _names_values( a => 'a',  'b' ),
-   { a => a => b => undef }
-);
-is_deeply(
-   _names_values( a => 'a',  b => 'b', ( undef, 'u' ), c => 'c' ), # foolishness
-   { a => a => b => b => c => c => } # ...should go ignored (at least here)
-);
-
-exit;
 
 # testing _names_values
-is_deeply(
+is_deeply
    _names_values( qw/ a a b b c c d d e e / ),
-   { a => a => b => b => c => c => d => d => e => e => }
-);
-is_deeply(
+   { a => a => b => b => c => c => d => d => e => e => },
+   '_names_values() converts even-numbered args list to balanced hashref';
+
+is_deeply
    _names_values( File::Util->new(), qw/ a a b b c c d d e e / ),
-   { a => a => b => b => c => c => d => d => e => e => }
-);
-is_deeply(
+   { a => a => b => b => c => c => d => d => e => e => },
+   '...and does the same if args preceeded by a blessed object';
+
+is_deeply
    _names_values( a => 'a',  'b' ),
-   { a => a => b => undef }
-);
-is_deeply(
+   { a => a => b => undef },
+   '...and sets final name-value pair to value=undef for unbalanced lists';
+
+is_deeply
    _names_values( a => 'a',  b => 'b', ( undef, 'u' ), c => 'c' ), # foolishness
-   { a => a => b => b => c => c => } # ...should go ignored (at least here)
-);
+   { a => a => b => b => c => c => }, # ...should go ignored (at least here)
+   '...and ignores name-value pair in balanced list when name itself is undef';
+
+is File::Util::Interface::Classic::DESTROY(), undef, '::DESTROY() returns undef';
 
 exit;

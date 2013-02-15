@@ -118,8 +118,8 @@ sub _remove_opts {
 sub _parse_in {
 
    my @in   = _myargs( @_ );
-   my $opts = _remove_opts( \@in ) || {};
-   my $in   = _names_values( @in ) || {};
+   my $opts = _remove_opts( \@in ); # always returns a hashref, given a listref
+   my $in   = _names_values( @in ); # always returns a hashref, given anything
 
    # merge two hashrefs
    @$in{ keys %$opts } = values %$opts;
