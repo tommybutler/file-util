@@ -7,13 +7,14 @@ use warnings;
 # very well test list_dir() unless you have a good directory tree first;
 # this led to the combining of the make_dir and list_dir testing routines
 
-use Test::More tests => 24;
+use Test::More tests => 25;
 use Test::NoWarnings;
 
+use Cwd;
 use File::Temp qw( tempdir );
 
 use lib './lib';
-use File::Util qw( SL NL );
+use File::Util qw( SL NL OS );
 
 # one recognized instantiation setting
 my $ftl = File::Util->new( );
@@ -123,5 +124,90 @@ is_deeply
    [ sort { uc $a cmp uc $b } @list_as_lines ],
    'compare recursive listing to recursive callback return';
 
+SKIP: {
+
+   # this would work on windows except it's directory separator is not "/"
+   # so we wouldn't get an exact match on each hash key's value.
+   skip 'these tests are for testing by the author and only run on Unix/Linux', 1
+   unless
+   (
+      (
+         $ENV{RELEASE_TESTING} || $ENV{AUTHOR_TESTING} || $ENV{AUTHOR_TESTS}
+      ) && ( $^O =~ /bsd|linux|cygwin|solaris|aix/i || OS eq 'UNIX' )
+   );
+
+   my $tree  = setup_test_tree();
+   my $indir = getcwd;
+   chdir $tree;
+
+   is_deeply $ftl->list_dir( '.' => { recurse => 1, as_tree => 1 } ),
+   {
+     '.' => {
+              '_DIR_PARENT_'  => undef,
+              '_DIR_SELF_'    => '.',
+              'a.txt'         => './a.txt',
+              'b.log'         => './b.log',
+              'c.ini'         => './c.ini',
+              'd.bat'         => './d.bat',
+              'e.sh'          => './e.sh',
+              'f.conf'        => './f.conf',
+              'g.bin'         => './g.bin',
+              'h.rc'          => './h.rc',
+              'xfoo' => {
+                          '_DIR_PARENT_' => '.',
+                          '_DIR_SELF_'   => './xfoo',
+                          'zbar' => {
+                                      '_DIR_PARENT_'  => './xfoo',
+                                      '_DIR_SELF_'    => './xfoo/zbar',
+                                      'i.jpg'         => './xfoo/zbar/i.jpg',
+                                      'j.xls'         => './xfoo/zbar/j.xls',
+                                      'k.ppt'         => './xfoo/zbar/k.ppt',
+                                      'l.scr'         => './xfoo/zbar/l.scr',
+                                      'm.html'        => './xfoo/zbar/m.html',
+                                      'n.js'          => './xfoo/zbar/n.js',
+                                      'o.css'         => './xfoo/zbar/o.css',
+                                      'p.avi'         => './xfoo/zbar/p.avi',
+                                    },
+                        },
+            }
+   }, 'list_dir( "." => { recurse => 1, as_tree => 1 } ) - works OK';
+
+   chdir $indir;
+}
+
 exit;
 
+sub setup_test_tree {
+
+   my $tempdir = tempdir( CLEANUP => 1 );
+
+   my @test_files  = qw(
+      a.txt   b.log
+      c.ini   d.bat
+      e.sh    f.conf
+      g.bin   h.rc
+   );
+
+   for my $tfile ( @test_files )
+   {
+      $ftl->touch( $tempdir . SL . $tfile );
+   }
+
+   my $deeper = $tempdir . SL . 'xfoo' . SL . 'zbar';
+
+   $ftl->make_dir( $deeper );
+
+   @test_files = qw(
+      i.jpg   j.xls
+      k.ppt   l.scr
+      m.html  n.js
+      o.css   p.avi
+   );
+
+   for my $tfile ( @test_files )
+   {
+      $ftl->write_file( { file => $deeper . SL . $tfile, content => rand } );
+   }
+
+   return $tempdir;
+}
