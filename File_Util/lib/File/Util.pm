@@ -727,7 +727,7 @@ sub _match_or {
 sub _as_tree {
    my $this = shift @_;
    my $opts = $this->_remove_opts( \@_ );
-   my $dir  = shift @_ || '.';
+   my $dir  = shift @_;
    my $tree = {};
 
    my $treeify = sub
