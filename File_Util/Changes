@@ -1,5 +1,14 @@
 Revision history for Perl extension File::Util.pm
 
+4.130460 Thu Feb 14 22:24:50 CST 2013
+
+ - TRIAL version.  The third trial release of the 4.x series.  Removed a
+   few bits of code from the test suite that were causing false failures
+   in CPAN tester results.  More importantly, this version includes
+   optimizations to the list_dir() regex pattern matching when recursing
+   through directory trees.  Namely, the "pattern gathering" has been
+   memo-ized and stashed into the options passed to recursive calls.
+
 4.130425 Mon Feb 11 15:37:47 CST 2013
 
  - TRIAL version.  Released to CPAN after taking into account some changes

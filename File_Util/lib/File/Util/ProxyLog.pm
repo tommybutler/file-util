@@ -61,6 +61,15 @@ This module serves as an aid in debugging File::Util method calls, logging
 each call to a file of your choosing.  Just `tail -f` the log file and run
 your program.
 
+B<File::Util does not depend on or use this module.  It is stand-alone code.>
+
+This module is mainly a tool for the developers of File::Util to use in their
+testing, and is designed for that purpose.  Perl programmers can use it if
+they like, but it should not be considered an official part of the File::Util
+distribution for end-users, as its interface could change at any time to suit
+the needs of its maintainers.  This module is therefore primarily "for internal
+use only."
+
 =head1 SYNOPSIS
 
    use File::Util qw( SL );
@@ -75,5 +84,15 @@ your program.
    # now use $ftl like you would use any File::Util object, and watch the log...
 
    print $ftl->list_dir( '/some/directory' => { recurse => 1 } );
+
+=head1 METHODS
+
+=over
+
+=item new
+
+   my $ftl = File::Util::ProxyLog->new( $file_util_object, $log_file_name );
+
+=back
 
 =cut

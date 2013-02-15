@@ -568,44 +568,6 @@ sub _list_dir_lastround_dirmatch {
 
    my @return_dirs;
 
-#   {
-#      $opts->{_parent_matches_and} =
-#         defined $opts->{_parent_matches_and}
-#            ? $opts->{_parent_matches_and}
-#            : [];
-#
-#      $opts->{_parent_matches_or} =
-#         defined $opts->{_parent_matches_or}
-#            ? $opts->{_parent_matches_or}
-#            : [];
-#
-#      $opts->{_path_matches_and} =
-#         defined $opts->{_path_matches_and}
-#            ? $opts->{_path_matches_and}
-#            : [];
-#
-#      $opts->{_path_matches_or} =
-#         defined $opts->{_path_matches_or}
-#            ? $opts->{_path_matches_or}
-#            : [];
-#
-#      $opts->{_parent_matches_and} =
-#         [ _gather_and_patterns( $opts->{parent_matches} ) ]
-#            unless @{ $opts->{_parent_matches_and} };
-#
-#      $opts->{_parent_matches_or} =
-#         [ _gather_or_patterns( $opts->{parent_matches} ) ]
-#            unless @{ $opts->{_parent_matches_and} };
-#
-#      $opts->{_path_matches_and} =
-#         [ _gather_and_patterns( $opts->{path_matches} ) ]
-#            unless @{ $opts->{_path_matches_and} };
-#
-#      $opts->{_path_matches_or} =
-#         [ _gather_or_patterns( $opts->{path_matches} ) ]
-#            unless @{ $opts->{_path_matches_and} };
-#   }
-
 # LAST ROUND MATCHING DIRS BY PARENT DIR
 
    if ( $opts->{parent_matches} ) {
