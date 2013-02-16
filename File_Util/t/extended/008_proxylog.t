@@ -1,8 +1,23 @@
 
 use strict;
 use warnings;
+use Test::More;
+
+if ( $ENV{RELEASE_TESTING} || $ENV{AUTHOR_TESTING} || $ENV{AUTHOR_TESTS} )
+{                            # the tests in this file have nothing to do with
+   plan tests => 4;          # end users of File::Util
+
+   CORE::eval # hide the eval...
+   '
 use Test::NoWarnings;
-use Test::More tests => 4;
+   '; # ...from dist parsers
+}
+else
+{
+   plan skip_all => 'these tests are for testing by the author';
+}
+
+
 use File::Temp qw( tempdir );
 
 use lib './lib';
@@ -21,6 +36,6 @@ isa_ok $ftl, 'File::Util::ProxyLog', 'File::Util::ProxyLog object is a File::Uti
 
 isa_ok $$ftl, 'File::Util', '...and it is also a reference to a File::Util object';
 
-is $ftl->SL, SL, '...and it can proxy File::Util method calls';
+is $ftl->is_readable('.'), 1, '...and it can proxy File::Util method calls';
 
 exit;

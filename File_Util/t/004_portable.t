@@ -2,14 +2,14 @@
 use strict;
 use warnings;
 
-use Test::More tests => 49;
+use Test::More tests => 51;
 use Test::NoWarnings;
 
 use lib './lib';
 
 use File::Util qw
 (
-   SL   NL   escape_filename
+   SL   NL   escape_filename     ebcdic
    valid_filename   strip_path   needs_binmode
 );
 
@@ -91,6 +91,14 @@ ok valid_filename( q/;$%`!@#^&-_+=(){}[]~baz.foo'/ ),
    q/;$%`!@#^&-_+=(){}[]~baz.foo' is a valid filename/;
 
 ok valid_filename('C:\foo'), 'C:\foo is a valid filename';
+
+# these tests are here for coverage purposes.  Since they are more or less
+# constants, based only on the host OS, there's no point in testing them
+# against anything other than the testing File::Util already did in order
+# to determine the values of these constants.  We just test to make sure
+# the value is either 1 or 0
+ok needs_binmode =~ /^[10]$/, 'needs_binmode is 1 or 0';
+ok ebcdic        =~ /^[10]$/, 'ebcdic is 1 or 0';
 
 # directory listing tests...
 # remove '.' and '..' directory entries

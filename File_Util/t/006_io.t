@@ -1,7 +1,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 14;
+use Test::More tests => 17;
 use Test::NoWarnings;
 
 use File::Temp qw( tempdir );
@@ -27,26 +27,34 @@ SKIP: {
       skip 'Testing with an incooperative Solaris installation' => 13;
    }
 
-   # 1
+   is $f->is_readable( $tempdir ),
+      -r '.',
+      'File::Util can tell if something is readable';
+
+   is $f->is_writable( $tempdir ),
+      -w '.',
+      'File::Util can tell if something is writable';
+
+   # this method "just is"... there's nothing to test; here for test coverage
+   is $f->last_changed( $tempdir ),
+      $f->last_changed( $tempdir ),
+      'File::Util can tell when a file was last changed';
+
    # make a temporary testbed directory
    is $f->make_dir( $testbed => { if_not_exists => 1 } ),
       $testbed,
       "make temp testbed in $testbed";
 
-   # 2
    # see if it's there
    is -e $testbed, 1, 'testbed created OK';
 
-   # 3
    # ...again
    is $f->existent( $testbed ), 1, 'File::Util agrees it exists';
 
-   # 4
    # make a temporary file
    is $f->write_file( file => $tmpf, content => 'LARRY' ), 1,
       'write to a new text file' ;
 
-   # 5
    # File::Util::touch() a file, and see if it was created ok
    is(
       sub {
@@ -62,14 +70,13 @@ SKIP: {
       }->(), 1, 'create an empty file via File::Util::touch()'
    );
 
-   # 6
    # get an open file handle
    is(
       sub {
          $testfh = $f->open_handle(
             file => $tmpf,
             mode => 'append',
-            fatals_as_errmsg => 1,
+            onfail => 'message',
             warn_also => 1,
          );
 
@@ -77,18 +84,15 @@ SKIP: {
       }->(), 'GLOB', 'get open file handle for appending'
    );
 
-   # 7
    # make sure it's still open
    ok defined fileno $testfh, 'check if it has a fileno';
 
    # write to it, close it, write to it in append mode
    print $testfh 'WALL' and close $testfh;
 
-   # 8
    # load file
    is $f->load_file( $tmpf ), 'LARRYWALL', 'wrote to file OK';
 
-   # 9
    # write to it with method File::Util::write_file(), compare file contents
    # with the returned value
    is(
@@ -104,16 +108,13 @@ SKIP: {
       }->(), OS . NL, 'write to a file with File::Util->write_file'
    );
 
-   # 10
    # get line count of file
    is $f->line_count( $tmpf ), 1, 'line count of new file is right';
 
-   # 11
    # truncate file
    is sub { $f->trunc( $tmpf ); return -s $tmpf }->(), 0,
       'truncate file, then make sure it is zero bytes';
 
-   # 12
    # get line count of file
    is $f->line_count( $tmpf ), 0, 'truncated file linecount is zero';
 
@@ -139,7 +140,7 @@ sub solaris_cooperates {
 
    my $tmpf = $tempdir . SL . 'solaris';
 
-   my $sf  = File::Util->new( '--fatals-as-status' );
+   my $sf  = File::Util->new( fatals_as_status => 1 );
 
    my $fh = $sf->open_handle( file => $tmpf );
 

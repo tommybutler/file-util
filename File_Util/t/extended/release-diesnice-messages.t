@@ -6,7 +6,7 @@ use Test::More;
 
 if ( $ENV{RELEASE_TESTING} || $ENV{AUTHOR_TESTING} || $ENV{AUTHOR_TESTS} )
 {                            # the tests in this file have a higher probability
-   plan tests => 63;          # of failing in the wild, and so are reserved for
+   plan tests => 66;          # of failing in the wild, and so are reserved for
                              # the author/maintainers as release tests
    CORE::eval # hide the eval...
    '
@@ -62,6 +62,21 @@ like(
    'bad flock rules (diagnostic mode)'
 );
 
+is $f->diagnostic( 1 ), 1,
+   'manually toggle on diagnostic mode for entire object';
+
+# 2.25
+like(
+   $f->_throw(
+      'bad flock rules' => {
+         bad  => __FILE__,
+         all => [ $f->flock_rules() ],
+      }
+   ),
+   qr/Invalid file locking policy/,
+   'bad flock rules (diagnostic mode) after manual object-wide diag toggle'
+);
+
 # 2.5
 like(
    $f->_throw(
@@ -73,6 +88,9 @@ like(
    qr/(?sm)^Invalid file locking policy/,
    'bad flock rules'
 );
+
+is $f->diagnostic( 0 ), 0,
+   'manually toggle off diagnostic mode for entire object';
 
 # 3
 like(

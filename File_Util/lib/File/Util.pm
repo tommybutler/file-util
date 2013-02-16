@@ -46,6 +46,8 @@ sub new {
 
    $this->{opts} = $in || { };
 
+   $this->{opts}->{onfail} ||= 'die';
+
    # let constructor argument override globals, but set
    # constructor opts to global values if they have not
    # overridden them...
@@ -137,7 +139,7 @@ sub list_dir {
 
 # INPUT VALIDATION
 
-   return $this->_throw( 'no such file' => { filename => $dir } )
+   return $this->_throw( 'no such file' => { opts => $opts, filename => $dir } )
       unless -e $dir;
 
    # whack off any trailing directory separator, except for root directories
@@ -256,7 +258,7 @@ sub list_dir {
 
    if ( my $cb = $opts->{callback} ) {
 
-      $this->throw( qq(callback "$cb" not a coderef) )
+      $this->throw( qq(callback "$cb" not a coderef), $opts )
          unless ref $cb eq 'CODE';
 
       $cb->( $dir, \@dirs, \@items, scalar split_path( $dir ) - 1 );
@@ -264,7 +266,7 @@ sub list_dir {
 
    if ( my $cb = $opts->{d_callback} ) {
 
-      $this->throw( qq(d_callback "$cb" not a coderef) )
+      $this->throw( qq(d_callback "$cb" not a coderef), $opts )
          unless ref $cb eq 'CODE';
 
       $cb->( $dir, \@dirs, scalar split_path( $dir ) - 1 );
@@ -272,7 +274,7 @@ sub list_dir {
 
    if ( my $cb = $opts->{f_callback} ) {
 
-      $this->throw( qq(f_callback "$cb" not a coderef) )
+      $this->throw( qq(f_callback "$cb" not a coderef), $opts )
          unless ref $cb eq 'CODE';
 
       $cb->( $dir, \@items, scalar split_path( $dir ) - 1 );
@@ -891,8 +893,9 @@ sub load_file {
                ? $READ_LIMIT
                : 0;
 
-   return $this->_throw ( 'bad read_limit' => { bad => $read_limit } )
-      if $read_limit =~ /\D/;
+   return $this->_throw(
+      'bad read_limit' => { opts => $in, bad => $read_limit }
+   ) if $read_limit =~ /\D/;
 
    # support old-school "FH" option, *and* the new, more sensible "file_handle"
    $in->{FH} = $in->{file_handle} if defined $in->{file_handle};
@@ -1087,7 +1090,7 @@ sub load_file {
             }
          );
 
-      $this->_seize( $clean_name, $fh );
+      $this->_seize( $clean_name, $fh, $in );
    }
 
    # call binmode on binary files for portability accross platforms such
@@ -1118,7 +1121,7 @@ sub load_file {
    }
    else {
       # release shadow-ed locks on the file
-      $this->_release( $fh );
+      $this->_release( $fh, $in );
 
       close $fh or return $this->_throw(
          'bad close',
@@ -1398,7 +1401,7 @@ sub write_file {
             );
 
          # lock file before I/O on platforms that support it
-         my $lockstat = $this->_seize( $clean_name, $write_fh );
+         my $lockstat = $this->_seize( $clean_name, $write_fh, $in );
 
          return unless $lockstat;
 
@@ -1434,7 +1437,7 @@ sub write_file {
          );
 
          # lock file before I/O on platforms that support it
-         my $lockstat = $this->_seize( $clean_name, $write_fh );
+         my $lockstat = $this->_seize( $clean_name, $write_fh, $in );
 
          return unless $lockstat;
       }
@@ -1458,7 +1461,7 @@ sub write_file {
 
    # release lock on the file
 
-   $this->_release( $write_fh ) unless $$in{no_lock} || !$USE_FLOCK;
+   $this->_release( $write_fh, $in ) unless $$in{no_lock} || !$USE_FLOCK;
 
    close $write_fh or
       return $this->_throw(
@@ -1478,13 +1481,15 @@ sub write_file {
 # File::Util::_seize()
 # --------------------------------------------------------
 sub _seize {
-   my ( $this, $file, $fh ) = @_;
+   my ( $this, $file, $fh, $opts ) = @_;
 
-   return $this->_throw( 'no handle passed to _seize.' ) unless $fh;
+   return $this->_throw( 'no handle passed to _seize.' => $opts )
+      unless $fh;
 
    $file = defined $file ? $file : ''; # yes, even files named "0" are allowed
 
-   return $this->_throw( 'no file name passed to _seize.' ) unless length $file;
+   return $this->_throw( 'no file name passed to _seize.' => $opts )
+      unless length $file;
 
    # forget seizing if system can't flock
    return $fh if !$CAN_FLOCK;
@@ -1495,7 +1500,7 @@ sub _seize {
 
    while ( @policy ) {
 
-      my $fh = &{ $_LOCKS->{ shift @policy } }( $this, $file, $fh );
+      my $fh = &{ $_LOCKS->{ shift @policy } }( $this, $file, $fh, $opts );
 
       return $fh if $fh || !scalar @policy;
    }
@@ -1509,9 +1514,10 @@ sub _seize {
 # --------------------------------------------------------
 sub _release {
 
-   my ( $this, $fh ) = @_;
+   my ( $this, $fh, $opts ) = @_;
 
-   return $this->_throw( 'not a filehandle.', { argtype => ref $fh } )
+   return $this->_throw(
+      'not a filehandle.' => { opts => $opts, argtype => ref $fh } )
       unless $fh && ref $fh eq 'GLOB';
 
    if ( $CAN_FLOCK ) { flock $fh, &Fcntl::LOCK_UN }
@@ -1676,7 +1682,8 @@ sub existent { my $f = _myargs( @_ ); defined $f ? -e $f : undef }
 # --------------------------------------------------------
 sub touch {
    my $this = shift @_;
-   my $file = shift( @_ ) || '';
+   my $file = shift @_ || '';
+   my $opts = $this->_remove_opts( \@_ );
    my $path;
 
    return $this->_throw(
@@ -1684,7 +1691,7 @@ sub touch {
       {
          meth    => 'touch',
          missing => 'a file name or file handle reference',
-         opts    => { },
+         opts    => $opts,
       }
    ) unless defined $file && length $file;
 
@@ -1696,7 +1703,7 @@ sub touch {
       {
          filename => $file,
          dirname  => $path || '',
-         opts     => { },
+         opts     => $opts,
       }
    ) if -e $file && -d $file;
 
@@ -1710,7 +1717,7 @@ sub touch {
       {
          filename => $file,
          dirname  => $path,
-         opts     => { },
+         opts     => $opts,
       }
    ) if ( -e $path && !-r $path );
 
@@ -2044,7 +2051,7 @@ sub make_dir {
                exception => $!,
                dirname   => $dir,
                bitmask   => $bitmask,
-               opts     => $opts,
+               opts      => $opts,
             }
          );
    }
@@ -2062,7 +2069,8 @@ sub max_dives {
 
    if ( defined $arg ) {
 
-      return File::Util->new->_throw('bad max_dives') if $arg =~ /\D/;
+      return File::Util->new->_throw( 'bad max_dives' => { bad => $arg } )
+         if $arg =~ /\D/;
 
       $MAX_DIVES = $arg;
 
@@ -2071,6 +2079,19 @@ sub max_dives {
    }
 
    return $MAX_DIVES;
+}
+
+# --------------------------------------------------------
+# File::Util::onfail()
+# --------------------------------------------------------
+sub onfail {
+   my ( $this, $arg ) = @_;
+
+   return unless blessed $this;
+
+   $this->{opts}->{onfail} = $arg if $arg;
+
+   return $this->{opts}->{onfail};
 }
 
 
@@ -2105,9 +2126,9 @@ sub diagnostic {
 
    if ( defined $arg ) {
 
-      $WANT_DIAGNOSTICS = !!$arg;
+      $WANT_DIAGNOSTICS = $arg ? 1 : 0;
 
-      $this->{opts}->{diag} = !!$arg
+      $this->{opts}->{diag} = $arg ? 1 : 0
          if blessed $this && $this->{opts};
    }
 
@@ -2450,9 +2471,9 @@ sub open_handle {
                );
 
             # lock file before I/O on platforms that support it
-            my $lockstat = $this->_seize( $clean_name, $fh );
+            my $lockstat = $this->_seize( $clean_name, $fh, $in );
 
-            return $lockstat unless $lockstat;
+            warn "returning $lockstat" && return $lockstat unless fileno $lockstat;
 
             if ( $mode ne 'read' ) {
 
@@ -2483,7 +2504,7 @@ sub open_handle {
                );
 
             # lock file before I/O on platforms that support it
-            my $lockstat = $this->_seize( $clean_name, $fh );
+            my $lockstat = $this->_seize( $clean_name, $fh, $in );
 
             return $lockstat unless $lockstat;
          }
@@ -2505,7 +2526,7 @@ sub open_handle {
                );
 
             # lock file before I/O on platforms that support it
-            my $lockstat = $this->_seize( $clean_name, $fh );
+            my $lockstat = $this->_seize( $clean_name, $fh, $in );
 
             return $lockstat unless $lockstat;
 
@@ -2539,7 +2560,7 @@ sub open_handle {
             );
 
             # lock file before I/O on platforms that support it
-            my $lockstat = $this->_seize( $clean_name, $fh );
+            my $lockstat = $this->_seize( $clean_name, $fh, $in );
 
             return $lockstat unless $lockstat;
          }
@@ -2560,16 +2581,18 @@ sub open_handle {
 sub unlock_open_handle {
    my( $this, $fh ) = @_;
 
-   return 1 if !$USE_FLOCK;
+   return 1 unless $USE_FLOCK;
 
-   my $ref_type = ref \$fh || '';
-
-   return $this->_throw( 'not a filehandle' => { argtype => $ref_type } )
-      unless $fh && $ref_type eq 'GLOB';
+   return $this->_throw(
+      'not a filehandle' => {
+         opts    => $this->_remove_opts( \@_ ),
+         argtype => ref $fh,
+      }
+   ) unless $fh && fileno $fh;
 
    return flock( $fh, &Fcntl::LOCK_UN ) if $CAN_FLOCK;
 
-   return 1;
+   return 0;
 }
 
 
@@ -2691,6 +2714,8 @@ sub AUTOLOAD {
 
       goto \&$name;
    }
+
+   die qq(Unknown method: File::Util::$name\n);
 }
 
 
@@ -2947,6 +2972,8 @@ this document in a text terminal, open perldoc to the C<File::Util::Manual>.
 =item needs_binmode        I<(see L<needs_binmode|File::Util::Manual/needs_binmode>)>
 
 =item new                  I<(see L<new|File::Util::Manual/new>)>
+
+=item onfail               I<(see L<onfail|File::Util::Manual/onfail>)>
 
 =item open_handle          I<(see L<open_handle|File::Util::Manual/open_handle>)>
 

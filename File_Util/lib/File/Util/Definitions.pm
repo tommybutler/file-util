@@ -131,23 +131,31 @@ $_LOCKS->{BLOCKSH}   = sub {
    return $_[2] if flock( $_[2], &Fcntl::LOCK_SH ); return
 };
 $_LOCKS->{WARN} = sub {
-   $_[0]->_throw(
-      'bad flock' =>
+
+   my $this = shift;
+
+   return $this->_throw(
+      'bad flock'  =>
       {
-         filename  => $_[1],
+         filename  => shift,
          exception => $!,
          onfail    => 'warn',
+         opts      => $this->_remove_opts( \@_ ),
       },
-   ); return
+   );
 };
 $_LOCKS->{FAIL} = sub {
-   $_[0]->_throw(
-      'bad flock',
+
+   my $this = shift;
+
+   return $this->_throw(
+      'bad flock'  =>
       {
-         filename  => $_[1],
+         filename  => shift,
          exception => $!,
+         opts      => $this->_remove_opts( \@_ ),
       },
-   ); return 0
+   );
 };
 
 # (for use in error messages)

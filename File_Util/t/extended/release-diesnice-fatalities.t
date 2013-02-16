@@ -39,7 +39,7 @@ BEGIN {
 
             Test::Fatal->import( qw( exception dies_ok lives_ok ) );
 
-            plan tests => 29;
+            plan tests => 37;
 
             CORE::eval <<'__TEST_NOWARNINGS__';
 use Test::NoWarnings;
@@ -81,8 +81,28 @@ $ftl->make_dir( $tempdir . SL . 'a' . SL . 'b' . SL . 'c' );
 # let the fail begin
 # ----------------------------------------------------------------------
 
-# the first of our tests are  several simple failure scenarios wherein no
-# input is sent to a given method that requires it.
+# just test the onfail toggle for all recognized key words.  This needs
+# to be revisited to test the actual effect of a given call on a File::Util
+# object, and not merely whether or not they return as expected.
+is $ftl->onfail(), 'die', 'onfail "die" is default OK';
+
+$ftl->onfail( 'zero' );
+is $ftl->onfail(), 'zero', 'onfail "zero" setting toggled OK';
+
+$ftl->onfail( 'warn' );
+is $ftl->onfail(), 'warn', 'onfail "warn" setting toggled OK';
+
+$ftl->onfail( 'message' );
+is $ftl->onfail(), 'message', 'onfail "message" setting toggled OK';
+
+$ftl->onfail( sub { } );
+is ref $ftl->onfail(), 'CODE', 'onfail "callback" setting toggled OK';
+
+$ftl->onfail( 'die' );
+is $ftl->onfail(), 'die', 'onfail "die" setting toggled OK';
+
+# the first of our real tests are  several simple failure scenarios wherein
+# no input is sent to a given method that requires it.
 for my $method ( @methods_that_need_input )
 {
    # send no input to $method
@@ -274,7 +294,25 @@ like $exception,
      qr/a true file handle reference/,
      'call write_file with a file handle that is invalid (not a real FH ref)';
 
+# Knowing that the two tests below call File::Util methods with built-in
+# onfail callbacks to handle issues when they can't create leading directories,
+# and knowing that we're calling the methods in a way they will fail, we
+# know that our own onfail callbacks (below) should return what we expect
+# as long as the built-in onfail callbacks fire them off (repeater-style).
+# The built-in onfail callbacks wrap around the callbacks we define below
+# and make sure that those custom callbacks get invoked properly.
 
+is $ftl->write_file(
+   $noaccess_dir . SL . 'my' . SL . 'dog' . SL . 'rover', 'woof!' => {
+      onfail => sub { return 'lassie' }
+   }
+), 'lassie', 'test native onfail callback repeater mechanism in write_file()';
+
+is $ftl->open_handle(
+   $noaccess_dir . SL . 'my' . SL . 'friend' . SL . 'john' => {
+      onfail => sub { return 'ian' }
+   }
+), 'ian', 'test native onfail callback repeater mechanism in open_handle()';
 
 # ----------------------------------------------------------------------
 # clean up restricted-access files/dirs, and exit

@@ -2,6 +2,7 @@ use strict;
 use warnings;
 
 use lib 'lib';
+use Scalar::Util qw( blessed );
 
 package File::Util::ProxyLog;
 
@@ -11,6 +12,7 @@ use Data::Dumper;
    $Data::Dumper::Indent   = 2;
    $Data::Dumper::Terse    = 1;
    $Data::Dumper::Sortkeys = 1;
+   $Data::Dumper::Deparse  = 1;
 
 our $LOGFILE;
 our $LOGFH;
@@ -29,18 +31,39 @@ sub new
 sub AUTOLOAD
 {
    my ( $name ) = our $AUTOLOAD =~ /.*::(\w+)$/;
+   my $self     = shift;
 
-   my $self = shift @_;
-   my $time = time;
-   my $dump = qq(@{[ Dumper \@_ ]});
+   ## no critic
 
-   print $LOGFH <<__CALL__;
---------------------------------------------------------------------------------
+   no warnings 'redefine';
+   no strict 'refs';
+
+   ## use critic
+
+   my $method = \&{ qq(File::Util::$name) };
+
+   *{ qq(File::Util::$name) } = sub
+   {
+      my $self  = shift;
+      my $time  = time;
+      my $dump  = qq(@{[ Dumper \@_ ]});
+      my $delim = '-' x 80;
+
+      print $LOGFH <<__CALL__;
+$delim
 $time $name called with these args:
 $time   @{[ join "\n$time   ", split /\n/, $dump ]}
 __CALL__
 
+      unshift @_, $self if blessed $self;
+
+      goto $method;
+   };
+
    return $$self->$name( @_ );
+
+   # the below is cool, but doesn't work well, which is why it's commented-out
+   # unshift @_, $self and goto \&{ qq(File::Util::$name) };
 }
 
 sub DESTROY { if ( $LOGFH ) { close $LOGFH or die $! } return }

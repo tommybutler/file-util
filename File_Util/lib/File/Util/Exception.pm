@@ -26,6 +26,7 @@ $AUTHORITY   = 'cpan:TOMMY';
 # File::Util::Exception::_throw
 # --------------------------------------------------------
 sub _throw {
+
    my @in = @_;
    my ( $this, $error_class, $error ) = splice @_, 0 , 3;
    my $opts = $this->_remove_opts( \@_ );
@@ -37,15 +38,14 @@ sub _throw {
    # ...and we also handle support for the newer, more pretty error
    # handling policy syntax using "onfail" keywords/subrefs
 
-   $opts->{onfail} ||= $this->{opts}->{onfail};
-
    $opts->{onfail} ||=
-      $opts->{opts} &&
-      ref $opts->{opts} eq 'HASH'
+      $opts->{opts} && ref $opts->{opts} eq 'HASH'
          ? $opts->{opts}->{onfail}
          : '';
 
-   $opts->{onfail} ||= '';
+   $opts->{onfail} ||= $this->{opts}->{onfail};
+
+   $opts->{onfail} ||= 'die';
 
    # fatalality-handling rules passed to the failing caller trump the
    # rules set up in the attributes of the object; the mechanism below
