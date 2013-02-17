@@ -1,5 +1,16 @@
 Revision history for Perl extension File::Util.pm
 
+4.130483 Sat Feb 16 23:07:29 CST 2013
+
+ - TRIAL version, fourth trial in the 4.x series.
+
+ - Tidied up documentation for main man page (perldoc).
+
+ - Increased test coverage, Devel::Cover scores are very much higher
+
+ - Fixed some bugs discovered while expanding test coverage and writing
+   new tests - this is the best way to find and fix bugs.
+
 4.130460 Thu Feb 14 22:24:50 CST 2013
 
  - TRIAL version.  The third trial release of the 4.x series.  Removed a

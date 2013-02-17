@@ -2755,7 +2755,46 @@ I<(See L<DOCUMENTATION|/DOCUMENTATION> section below.)>
 
 =head1 SYNOPSIS
 
-   # .......... GETTING STARTED ...........................................
+   # use File::Util in your program
+   use File::Util;
+
+   # create a new File::Util object
+   my $f = File::Util->new();
+
+   # load a file into a variable
+   my $content = $f->load_file( 'some_file.txt' );
+
+   # write content to a file
+   $f->write_file( 'some_file.txt' => $content );
+
+=head1 DOCUMENTATION
+
+You can do much more with File::Util than just the basic examples this
+document.  For an explanation of all the features available to you,
+take a look at these other reference materials:
+
+=over
+
+=item B<The Manual>
+
+The L<File::Util::Manual> is the complete reference document explaing every
+available feature and object method.
+
+=item B<The "Nutshell">
+
+The L<File::Util::Manual::Examples> document has a long list of small, reusable
+code snippets and techniques to use in your own programs.
+
+=item B<The Cookbook>
+
+The L<File::Util::Cookbook> contains examples of complete, working programs
+that use File::Util to easily accomplish tasks which require file handling.
+
+=back
+
+=head1 BASIC USAGE
+
+=head2 Getting Started
 
    # use File::Util in your program
    use File::Util;
@@ -2770,7 +2809,7 @@ I<(See L<DOCUMENTATION|/DOCUMENTATION> section below.)>
    # ...you can enable diagnostics for individual objects:
    $f = File::Util->new( diag => 1 );
 
-   # .......... FILE OPERATIONS ...........................................
+=head2 File Operations
 
    # load content into a variable, be it text, or binary, either works
    my $content = $f->load_file( 'Meeting Notes.txt' );
@@ -2788,7 +2827,7 @@ I<(See L<DOCUMENTATION|/DOCUMENTATION> section below.)>
    );
 
    # try binary this time
-   my $binary_content = $f->load_file( 'cat-movie.avi' );
+   my $binary_content = $f->load_file( 'barking-cat.avi' );
 
    # get some image data from somewhere...
    my $picture_data = get_image_upload();
@@ -2823,7 +2862,7 @@ I<(See L<DOCUMENTATION|/DOCUMENTATION> section below.)>
    # get the number of lines in a file
    my $log_line_count = $f->line_count( '/var/log/messages' );
 
-   # .......... FILE HANDLES ..............................................
+=head2 File Handles
 
    # get an open file handle for reading
    my $fh = $f->open_handle( file => 'Ian likes cats.txt', mode => 'read' );
@@ -2843,9 +2882,9 @@ I<(See L<DOCUMENTATION|/DOCUMENTATION> section below.)>
 
    print $fh 'Shout out to Bob!';
 
-   close $fh or die $!; # _never_ forget to close ;-)
+   close $fh or die $!; # don't forget to close ;-)
 
-   # .......... DIRECTORIES ...............................................
+=head2 Directories
 
    # get a listing of files, recursively, skipping directories
    my @files = $f->list_dir( '/var/tmp' => { files_only => 1, recurse => 1 } );
@@ -2881,7 +2920,7 @@ I<(See L<DOCUMENTATION|/DOCUMENTATION> section below.)>
    # get an entire directory tree as a hierarchal datastructure reference
    my $tree = $f->list_dir( '/my/podcasts' => { as_tree => 1 } );
 
-   # .......... GETTING FILE DETAILS ......................................
+=head2 Getting Information About Files
 
    print "My file has a bitmask of " . $f->bitmask( 'my.file' );
 
@@ -2892,26 +2931,9 @@ I<(See L<DOCUMENTATION|/DOCUMENTATION> section below.)>
    print 'My file was last modified on ' .
       scalar localtime $f->last_modified( 'my.file' );
 
-...There's B<_lots_> more.  See the L<File::Util::Manual> for more details and
-more features like advanced pattern matching in directories, directory walking,
-user-definable error handlers, and more.
-
-=head1 INSTALLATION
-
-To install this module type the following at the command prompt:
-
-   perl Build.PL
-   perl Build
-   perl Build test
-   sudo perl Build install
-
-On Windows systems, the "sudo" part of the command may be omitted, but you
-will need to run the rest of the install command with Administrative privileges
-
-=head1 DOCUMENTATION
-
-There's more than just this document!  Take a look at the L<File::Util::Manual>,
-the L<File::Util::Manual::Examples>, and the L<File::Util::Cookbook>.
+...See the L<File::Util::Manual> for more details and features like advanced
+pattern matching in directories, directory walking, user-definable error
+handlers, and more.
 
 =head1 METHODS
 
@@ -3135,18 +3157,22 @@ unicode support
 
 =back
 
-=head1 EXAMPLES
+=head1 INSTALLATION
 
-See L<File::Util::Manual>
+To install this module type the following at the command prompt:
 
-=head1 EXAMPLES (Full Programs)
+   perl Build.PL
+   perl Build
+   perl Build test
+   sudo perl Build install
 
-See L<File::Util::Cookbook>
+On Windows systems, the "sudo" part of the command may be omitted, but you
+will need to run the rest of the install command with Administrative privileges
 
 =head1 BUGS
 
 Send bug reports and patches to the CPAN Bug Tracker for File::Util at
-L<https://rt.cpan.org/Dist/Display.html?Name=File%3A%3AUtil>
+L<rt.cpan.org|https://rt.cpan.org/Dist/Display.html?Name=File%3A%3AUtil>
 
 =head1 SUPPORT
 
@@ -3188,6 +3214,8 @@ the LICENSE file that is included in this distribution.
 This software is distributed in the hope that it will be useful, but without
 any warranty; without even the implied warranty of merchantability or fitness
 for a particular purpose.
+
+This disclaimer applies to every part of the File::Util distribution.
 
 =head1 SEE ALSO
 
