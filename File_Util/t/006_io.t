@@ -20,11 +20,11 @@ SKIP: {
 
    if ( !$have_perms ) {
 
-      skip 'Insufficient permissions to perform IO in tempdir' => 13;
+      skip 'Insufficient permissions to perform IO in tempdir' => 16;
    }
    elsif ( !solaris_cooperates() ) {
 
-      skip 'Testing with an incooperative Solaris installation' => 13;
+      skip 'Testing with an incooperative Solaris installation' => 16;
    }
 
    is $f->is_readable( $tempdir ),

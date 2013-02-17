@@ -36,15 +36,15 @@ SKIP: {
 
    if ( !$have_flock ) {
 
-      skip 'Your system cannot flock' => 8;
+      skip 'Your system cannot flock' => 9;
    }
    elsif ( !$have_perms ) {
 
-      skip 'Insufficient permissions' => 8;
+      skip 'Insufficient permissions' => 9;
    }
    elsif ( $^O =~ /solaris|sunos/i ) {
 
-      skip 'Solaris flock has issues' => 8;
+      skip 'Solaris flock has issues' => 9;
    }
 
    ok $f->can_flock( ) == $have_flock,
