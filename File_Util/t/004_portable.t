@@ -42,9 +42,9 @@ ok escape_filename
    'escape filename correctly';
 
 # path stripping in general
-ok strip_path(__FILE__) eq '004_portable.t', 'stripped path to this file OK';
-ok strip_path('C:\foo') eq 'foo', 'stripped path to abs win path OK';
-ok strip_path('C:\foo\bar\baz.txt') eq 'baz.txt',
+is strip_path(__FILE__), '004_portable.t', 'stripped path to this file OK';
+is strip_path('C:\foo'), 'foo', 'stripped path to abs win path OK';
+is strip_path('C:\foo\bar\baz.txt'), 'baz.txt',
    'stripped path to deeper abs win path OK';
 
 # illegal filename character intolerance

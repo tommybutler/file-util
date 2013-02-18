@@ -151,7 +151,7 @@ sub list_dir {
    unless ( length $dir == 1 || $dir =~ /^$WINROOT$/o ) {
 
       # removes one or more dirsep at the end of $dir
-      $dir =~ s/(?:$DIRSPLIT){1,}$//o;
+      $dir =~ s/$SL+$//o;
    }
 
    return $this->_throw (
@@ -197,7 +197,9 @@ sub list_dir {
 
    if ( defined $trailing_dirs && length $trailing_dirs ) {
 
-      $opts->{_recursion}{_depth} = scalar split_path( $trailing_dirs ) || 0;
+      my $depth = @{[ split /$SL/, $trailing_dirs ]};
+
+      $opts->{_recursion}{_depth} = $depth || 0;
    }
 
    return( () ) if
@@ -439,8 +441,8 @@ sub _list_dir_matching {
 
    @qualified_files = grep { !exists $dirs_only{ $_ } } @qualified_files;
 
-   my @files_match = map { strip_path( $_ ) } @qualified_files;
-   my @dirs_match  = map { strip_path( $_ ) } @qualified_dirs;
+   my @files_match = map { ( $_ ) =~ /^.*$SL(.*)/ } @qualified_files;
+   my @dirs_match  = map { ( $_ ) =~ /^.*$SL(.*)/ } @qualified_dirs;
 
    # memory management
    undef %dirs_only;
@@ -1563,7 +1565,7 @@ sub valid_filename {
 # --------------------------------------------------------
 # File::Util::strip_path()
 # --------------------------------------------------------
-sub strip_path { pop @{[ '', split /$DIRSPLIT/, _myargs( @_ ) ]} }
+sub strip_path {  _myargs( @_ ) =~ /^.*$DIRSPLIT(.*)/o and $1 }
 
 
 # --------------------------------------------------------
@@ -1572,13 +1574,13 @@ sub strip_path { pop @{[ '', split /$DIRSPLIT/, _myargs( @_ ) ]} }
 sub atomize_path {
    my $fqfn = _myargs( @_ );
 
-   $fqfn =~ m/$ATOMIZER/;
+   $fqfn =~ m/$ATOMIZER/o;
 
-   my $root = $1 || '';
-   my $path = $2 || '';
-   my $file = $3 || '';
+   # root = $1
+   # path = $2
+   # file = $3
 
-   return( $root, $path, $file );
+   return( $1||'', $2||'', $3||'' );
 }
 
 
