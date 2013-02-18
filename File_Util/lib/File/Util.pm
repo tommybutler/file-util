@@ -2765,7 +2765,10 @@ I<(See L<DOCUMENTATION|/DOCUMENTATION> section below.)>
    my $content = $f->load_file( 'some_file.txt' );
 
    # write content to a file
-   $f->write_file( 'some_file.txt' => $content );
+   $f->write_file( 'another_file.txt' => $content );
+
+   # get the contents of a directory, 3 levels deep
+   my @songs = $f->list_dir( '~/Music' => { recurse => 1, max_depth => 3 } );
 
 =head1 DOCUMENTATION
 
