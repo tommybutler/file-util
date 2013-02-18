@@ -177,6 +177,11 @@ mode of the file.  (You should usually omit this.)
 
    my @dirs_and_files = $f->list_dir( '/foo' => { recurse => 1 } );
 
+=head2 Do the same as above, but only to a certain maximum depth
+
+   my @dirs_and_files =
+      $f->list_dir( '/foo' => { recurse => 1, max_depth => 3 } );
+
 =head2 Get the names of all files (no subdirectories) in a directory
 
    my @dirs_and_files = $f->list_dir( '/foo' => { files_only => } );
@@ -251,7 +256,8 @@ of patterns (AND).
          parent_matches => { and => [ qr/vader/i, qr/darth/i ] },
          path_matches   => { and => [ qr/obi-wan/i, qr/^(?!.*Qui-Gon)/ ] },
          recursive      => 1,
-         files_only     => 1
+         files_only     => 1,
+         max_depth      => 8,
       }
    );
 
@@ -330,11 +336,12 @@ C<files_only>.
 *You should be careful using this feature with very large directory trees, due
 to the memory it might consume.  Memory usage is generally low, but will grow
 when you use this feature for larger and larger directory trees.  Bear in mind
-that the C<$MAX_DIVES> limit applies here too (see L<File::Util> documentation),
-which you can override manually by setting the C<max_dives> option:
+that the C<$ABORT_DEPTH> limit applies here too (see L<File::Util>
+documentation), which you can override manually by setting the C<abort_depth>
+option:
 
    # set max recursion limit to an integer value as shown below
-   $f->list_dir( '/tmp' => { as_tree => 1, recurse => 1, max_dives => 1234 } );
+   $f->list_dir( '/tmp' => { as_tree => 1, recurse => 1, abort_depth => 123 } );
 
 =head2 Determine if something is a valid file name
 

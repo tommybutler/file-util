@@ -169,19 +169,19 @@ Stopped reading: $EBL$opts->{filename}$EBR  Read limit exceeded: $opts->{read_li
 __read_limit__
 
 
-# BAD CALL TO File::Util::max_dives
-'bad max_dives' => <<'__max_dives__',
-Bad input provided to max_dives()
-__max_dives__
+# BAD CALL TO File::Util::abort_depth
+'bad abort_depth' => <<'__abort_depth__',
+Bad input provided to abort_depth()
+__abort_depth__
 
 
-# EXCEEDED MAX_DIVES
-'max_dives exceeded' => <<'__max_dives__',
+# EXCEEDED ABORT_DEPTH
+'abort_depth exceeded' => <<'__abort_depth__',
 Recursion limit exceeded at $EBL${\ scalar(
-   (exists $opts->{max_dives} && defined $opts->{max_dives}) ?
-   $opts->{max_dives} : $MAX_DIVES)
+   (exists $opts->{abort_depth} && defined $opts->{abort_depth}) ?
+   $opts->{abort_depth} : $ABORT_DEPTH)
 }$EBR dives.
-__max_dives__
+__abort_depth__
 
 
 # BAD OPENDIR

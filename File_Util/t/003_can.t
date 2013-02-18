@@ -40,7 +40,7 @@ map { ok( ref( $ftl->can( $_ ) ) eq 'CODE', "can $_" ) } qw
       load_file
       flock_rules
       make_dir
-      max_dives
+      abort_depth
       needs_binmode
       new
       open_handle

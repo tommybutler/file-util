@@ -30,19 +30,19 @@ cmp_ok $ftl->read_limit , '==', 1234567890,
    'read_limit (new-style) setting sticks after blessing';
 
 # yet another recognized instantiation setting
-$ftl = File::Util->new( max_dives => 9876543210 );
+$ftl = File::Util->new( abort_depth => 9876543210 );
 is ref $ftl, 'File::Util',
-   'new() is blessed right after max_dives-set invocation';
+   'new() is blessed right after abort_depth-set invocation';
 
-cmp_ok $ftl->max_dives, '==', 9876543210,
-   'max_dives toggle sticks after max_dives-set invocation';
+cmp_ok $ftl->abort_depth, '==', 9876543210,
+   'abort_depth toggle sticks after abort_depth-set invocation';
 
 # all recognized per-instantiation settings
 $ftl = File::Util->new
 (
    use_flock  => 1,
    read_limit => 1111111,
-   max_dives  => 2222222
+   abort_depth  => 2222222
 );
 
 is ref $ftl, 'File::Util',
@@ -57,8 +57,8 @@ cmp_ok $ftl->readlimit, '==', 1111111,
 cmp_ok $ftl->read_limit, '==', 1111111,
    'read_limit (new-style) sticks after multi-toggle blessing';
 
-cmp_ok $ftl->max_dives, '==', 2222222,
-   'max_dives sticks after multi-toggle blessing';
+cmp_ok $ftl->abort_depth, '==', 2222222,
+   'abort_depth sticks after multi-toggle blessing';
 
 # one recognized flag
 $ftl = File::Util->new( '--fatals-as-warning' );
@@ -99,7 +99,7 @@ $ftl = File::Util->new(
    {
       use_flock => 0,
       readlimit => 1111111,
-      max_dives => 2222222,
+      abort_depth => 2222222,
       fatals_as_status => 1,
       warn_also => 1
    }
@@ -114,8 +114,8 @@ is $ftl->use_flock(), 0,
 cmp_ok $ftl->readlimit(), '==', 1111111,
    'readlimit setting correct after modern multi-opt instantiation';
 
-cmp_ok $ftl->max_dives(), '==', 2222222,
-   'max_dives setting correct after modern multi-opt instantiation';
+cmp_ok $ftl->abort_depth(), '==', 2222222,
+   'abort_depth setting correct after modern multi-opt instantiation';
 
 is $ftl->{opts}{fatals_as_status}, 1,
    'peek at internals ok for "fatals_as_status"';

@@ -21,7 +21,7 @@ our @EXPORT_OK  = qw(
    SL      strip_path  is_readable   is_writable   valid_filename
    OS      bitmask     return_path   file_type     escape_filename
    is_bin  created     last_access   last_changed  last_modified
-   isbin   split_path  atomize_path  diagnostic
+   isbin   split_path  atomize_path  diagnostic    abort_depth
    size    can_read    can_write     read_limit
 );
 
@@ -80,12 +80,12 @@ sub new {
 
       $this->{opts}->{read_limit} = $READ_LIMIT;
 
-   $MAX_DIVES  = $in->{max_dives}
-      if exists  $in->{max_dives}
-      && defined $in->{max_dives}
-      && $in->{max_dives} !~ /\D/;
+   $ABORT_DEPTH = $in->{abort_depth}
+      if exists  $in->{abort_depth}
+      && defined $in->{abort_depth}
+      && $in->{abort_depth} !~ /\D/;
 
-      $this->{opts}->{max_dives} = $MAX_DIVES;
+      $this->{opts}->{abort_depth} = $ABORT_DEPTH;
 
    return $this;
 }
@@ -113,12 +113,13 @@ sub list_dir {
    my $dir  = shift @_;
    my $path = $dir;
    my ( @dirs, @files, @items );
-   my $maxd =
-      defined $opts->{max_dives}
-         ? $opts->{max_dives}
-         : defined $this->{opts}->{max_dives}
-            ? $this->{opts}->{max_dives}
-            : $MAX_DIVES;
+
+   my $abort_depth =
+      defined $opts->{abort_depth}
+         ? $opts->{abort_depth}
+         : defined $this->{opts}->{abort_depth}
+            ? $this->{opts}->{abort_depth}
+            : $ABORT_DEPTH;
 
    return $this->_throw(
       'no input' => {
@@ -127,6 +128,9 @@ sub list_dir {
          opts    => $opts,
       }
    ) unless defined $dir && length $dir;
+
+   # in case somebody wants to list_dir( "/tmp////" ) which is legal!
+   $path =~ s/$SL+$//go;
 
    # "." and ".." make no sense (and cause infinite loops) when recursing...
    $opts->{no_fsdots} = 1 if $opts->{recurse}; # ...so skip them
@@ -157,33 +161,59 @@ sub list_dir {
       }
    ) unless -d $dir;
 
-# RUNAWAY RECURSION PREVENTION
-
-   # this directory recursion method keeps track of dives based on the parent
-   # directory of $dir, rather than on $dir itself so that multiple
-   # subdirectories within the same parent directory don't improperly increment
-   # the number of dives made
-   if ( $opts->{recursing} ) {
-
-      my $pdir = $dir; $pdir =~ s/(^.*)$DIRSPLIT.*/$1/;
-
-      $this->{traversed}{ $pdir } = $pdir;
-   }
-   else { $this->{traversed} = { } }
-
-   # enforce maximum subdirectory dives, unless $MAX_DIVES is equal to zero
-   if ( $MAX_DIVES != 0 && ( scalar keys %{ $this->{traversed} } >= $maxd ) ) {
-
-      return $this->_throw(
-         'max_dives exceeded' => {
-            meth      => 'list_dir',
-            max_dives => $maxd,
-            opts      => $opts,
-         }
-      )
-   }
-
    $recursing = 1 if $opts->{follow} || $opts->{recurse};
+
+# RUNAWAY RECURSION PREVENTION...
+
+   # We have to keep an eye on recursion; we do it with a shared-reference.
+   # scalar references didn't work for me, so I'm using a hashref with a
+   # single key-value and it works beautifully
+   $opts->{_recursion} = {
+      _depth  => 0,
+      _base   => $dir,
+      _inodes => {},
+   } unless defined $opts->{_recursion};
+
+# ...AND FILESYSTEM LOOPING PREVENTION ARE TIED TOGETHER...
+   {
+      my ( $dev, $inode ) = ( lstat $dir )[0,1];
+      my $dir_ident = $dev . '_' . $inode;
+
+      # keep track of dir inodes or we're going to get stuck in filesystem
+      # loops the following bit of code incrementally populates (with each
+      # recursion) a hash table with keys named for the dev ID and inode of
+      # the directory, for every directory found
+
+      warn sprintf
+         qq(*WARNING! Filesystem loop detected at %s, dev %s, inode %s\n),
+            $dir, $dev, $inode
+            and return( () )
+               if exists $opts->{_recursion}{_inodes}{ $dir_ident };
+
+      $opts->{_recursion}{_inodes}{ $dir_ident } = undef;
+   }
+
+   my ( $trailing_dirs ) = $dir =~ /^$opts->{_recursion}{_base}$SL(.*)/;
+
+   if ( defined $trailing_dirs && length $trailing_dirs ) {
+
+      $opts->{_recursion}{_depth} = scalar split_path( $trailing_dirs ) || 0;
+   }
+
+   return( () ) if
+      $opts->{max_depth} &&
+      $opts->{_recursion}{_depth} >= $opts->{max_depth};
+
+   # fail if the shared reference indicates we're to deep
+   return $this->_throw(
+      'abort_depth exceeded' => {
+         meth        => 'list_dir',
+         abort_depth => $abort_depth,
+         opts        => $opts,
+      }
+   ) if $opts->{_recursion}{_depth} >= $abort_depth && $abort_depth != 0;
+
+# ACTUAL READING OF THE DIRECTORY
 
    opendir my $dir_fh, $dir
       or return $this->_throw
@@ -241,11 +271,14 @@ sub list_dir {
    # and files off into @dirs and @itmes, respectively
    for my $file ( @files ) {
 
+      warn qq(ERROR: Got a zero-length filename while reading "$dir"\n)
+         and next unless length $file; # ridiculous filesystem errors
+
       my $listing = ( $opts->{with_paths} || $recursing )
          ? $path . SL . $file
          : $file;
 
-      if ( -d $path . SL . $file ) {
+      if ( -d $path . SL . $file && !-l $path . SL . $file ) {
 
          push @dirs, $listing
       }
@@ -261,7 +294,7 @@ sub list_dir {
       $this->throw( qq(callback "$cb" not a coderef), $opts )
          unless ref $cb eq 'CODE';
 
-      $cb->( $dir, \@dirs, \@items, scalar split_path( $dir ) - 1 );
+      $cb->( $dir, \@dirs, \@items, $opts->{_recursion}{_depth} );
    }
 
    if ( my $cb = $opts->{d_callback} ) {
@@ -269,7 +302,7 @@ sub list_dir {
       $this->throw( qq(d_callback "$cb" not a coderef), $opts )
          unless ref $cb eq 'CODE';
 
-      $cb->( $dir, \@dirs, scalar split_path( $dir ) - 1 );
+      $cb->( $dir, \@dirs, $opts->{_recursion}{_depth} );
    }
 
    if ( my $cb = $opts->{f_callback} ) {
@@ -277,7 +310,7 @@ sub list_dir {
       $this->throw( qq(f_callback "$cb" not a coderef), $opts )
          unless ref $cb eq 'CODE';
 
-      $cb->( $dir, \@items, scalar split_path( $dir ) - 1 );
+      $cb->( $dir, \@items, $opts->{_recursion}{_depth} );
    }
 
 # RECURSION
@@ -299,7 +332,10 @@ sub list_dir {
             with_paths           => 1,
             recursing            => 1,
             no_fsdots            => 1,
-            max_dives            => $maxd,
+            abort_depth          => $abort_depth,
+            max_depth            => $opts->{max_depth},
+            onfail               => $opts->{onfail},
+            diag                 => $opts->{diag},
             rpattern             => $opts->{rpattern},
             files_match          => $opts->{files_match},
             dirs_match           => $opts->{dirs_match},
@@ -308,7 +344,7 @@ sub list_dir {
             callback             => $opts->{callback},
             d_callback           => $opts->{d_callback},
             f_callback           => $opts->{f_callback},
-            onfail               => $opts->{onfail},
+            _recursion           => $opts->{_recursion},
             _files_match_and     => $opts->{_files_match_and},
             _files_match_or      => $opts->{_files_match_or},
             _dirs_match_and      => $opts->{_dirs_match_and},
@@ -317,14 +353,16 @@ sub list_dir {
             _parent_matches_or   => $opts->{_parent_matches_or},
             _path_matches_and    => $opts->{_path_matches_and},
             _path_matches_or     => $opts->{_path_matches_or},
-
          };
 
          my ( $dirs_ref, $files_ref ) =
             $this->list_dir( $subdir, $recurse_opts );
 
-         push @dirs,  @$dirs_ref;
-         push @items, @$files_ref;
+         push @dirs,  @$dirs_ref
+            if ref $dirs_ref && ref $dirs_ref eq 'ARRAY';
+
+         push @items, @$files_ref
+            if ref $files_ref && ref $files_ref eq 'ARRAY';
       }
    }
 
@@ -394,7 +432,7 @@ sub _list_dir_matching {
    my @qualified_files = map { $path . SL . $_ } splice @$files, 0;
    # can't keep multiple huge lists of files --- ^^^^^^
 
-   my @qualified_dirs  = grep { -d $_ } @qualified_files;
+   my @qualified_dirs  = grep { -d $_ && !-l $_ } @qualified_files;
 
    my %dirs_only; @dirs_only{ @qualified_dirs } = @qualified_dirs;
 
@@ -1540,7 +1578,7 @@ sub valid_filename {
 # --------------------------------------------------------
 # File::Util::strip_path()
 # --------------------------------------------------------
-sub strip_path { pop @{[ '', split /$DIRSPLIT/, _myargs( @_ ) ]} || '' }
+sub strip_path { pop @{[ '', split /$DIRSPLIT/, _myargs( @_ ) ]} }
 
 
 # --------------------------------------------------------
@@ -2061,24 +2099,24 @@ sub make_dir {
 
 
 # --------------------------------------------------------
-# File::Util::max_dives()
+# File::Util::abort_depth()
 # --------------------------------------------------------
-sub max_dives {
+sub abort_depth {
    my $arg  = _myargs( @_ );
    my $this = shift @_;
 
    if ( defined $arg ) {
 
-      return File::Util->new->_throw( 'bad max_dives' => { bad => $arg } )
+      return File::Util->new->_throw( 'bad abort_depth' => { bad => $arg } )
          if $arg =~ /\D/;
 
-      $MAX_DIVES = $arg;
+      $ABORT_DEPTH = $arg;
 
-      $this->{opts}->{max_dives} = $arg
+      $this->{opts}->{abort_depth} = $arg
          if blessed $this && $this->{opts};
    }
 
-   return $MAX_DIVES;
+   return $ABORT_DEPTH;
 }
 
 # --------------------------------------------------------
@@ -2650,6 +2688,7 @@ sub AUTOLOAD {
       can_read  => \&is_readable,
       isbin     => \&is_bin,
       readlimit => \&read_limit,
+      max_dives => \&abort_depth,
    };
 
    if ( $name eq '_throw' )
@@ -2705,11 +2744,7 @@ sub AUTOLOAD {
    elsif ( exists $legacy_methods->{ $name } ) {
 
       ## no critic
-
-      no strict 'refs';
-
-      *{ $name } = $legacy_methods->{ $name };
-
+      { no strict 'refs'; *{ $name } = $legacy_methods->{ $name } }
       ## use critic
 
       goto \&$name;
@@ -2989,7 +3024,7 @@ this document in a text terminal, open perldoc to the C<File::Util::Manual>.
 
 =item make_dir             I<(see L<make_dir|File::Util::Manual/make_dir>)>
 
-=item max_dives            I<(see L<max_dives|File::Util::Manual/max_dives>)>
+=item abort_depth          I<(see L<abort_depth|File::Util::Manual/abort_depth>)>
 
 =item needs_binmode        I<(see L<needs_binmode|File::Util::Manual/needs_binmode>)>
 

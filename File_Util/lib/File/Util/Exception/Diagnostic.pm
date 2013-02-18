@@ -446,9 +446,9 @@ Solution:   Consider setting the limit to a higher number of bytes.
 __read_limit__
 
 
-# BAD CALL TO File::Util::max_dives
-'bad max_dives' => <<'__max_dives__',
-Bad call to $opts->{_pak}::max_dives().  This method can only be called with
+# BAD CALL TO File::Util::abort_depth
+'bad abort_depth' => <<'__abort_depth__',
+Bad call to $opts->{_pak}::abort_depth().  This method can only be called with
 a numeric value (bytes).  Non-integer numbers will be converted to integer
 format if specified (numbers like 5.2), but don't do that, it's inefficient.
 
@@ -456,18 +456,18 @@ This operation aborted.
 
 Origin:     This is a human error.
 Solution:   A human must fix the programming flaw.
-__max_dives__
+__abort_depth__
 
 
-# EXCEEDED MAX_DIVES
-'max_dives exceeded' => <<'__max_dives__',
+# EXCEEDED ABORT_DEPTH
+'abort_depth exceeded' => <<'__abort_depth__',
 Recursion limit reached at $EBL${\ scalar(
-   (exists $opts->{max_dives} && defined $opts->{max_dives}) ?
-   $opts->{max_dives} : $MAX_DIVES)
+   (exists $opts->{abort_depth} && defined $opts->{abort_depth}) ?
+   $opts->{abort_depth} : $ABORT_DEPTH)
 }$EBR dives.  Maximum number of subdirectory dives is set to the value returned
-by $opts->{_pak}::max_dives().  Try manually setting the value to a higher
+by $opts->{_pak}::abort_depth().  Try manually setting the value to a higher
 number before calling list_dir() with option --follow or --recurse (synonymous).
-Do so by calling $opts->{_pak}::max_dives() with the numeric argument
+Do so by calling $opts->{_pak}::abort_depth() with the numeric argument
 corresponding to the maximum number of subdirectory dives you want to allow when
 traversing directories recursively.
 
@@ -475,7 +475,7 @@ This operation aborted.
 
 Origin:     This is a human error.
 Solution:   Consider setting the limit to a higher number.
-__max_dives__
+__abort_depth__
 
 
 # BAD OPENDIR

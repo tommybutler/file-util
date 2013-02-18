@@ -491,27 +491,27 @@ like(
 );
 
 # 22
-like( $f->_throw( 'bad max_dives' => { diag => 1 } ),
-   qr/Bad call to .+?\:\:max_dives\(\)\.  This method can only be/,
-   'bad max_dives (diagnostic mode)'
+like( $f->_throw( 'bad abort_depth' => { diag => 1 } ),
+   qr/Bad call to .+?\:\:abort_depth\(\)\.  This method can only be/,
+   'bad abort_depth (diagnostic mode)'
 );
 
 # 22.5
-like( $f->_throw( 'bad max_dives' => { } ),
-   qr/(?sm)^Bad input provided to max_dives\(\)/,
-   'bad max_dives'
+like( $f->_throw( 'bad abort_depth' => { } ),
+   qr/(?sm)^Bad input provided to abort_depth\(\)/,
+   'bad abort_depth'
 );
 
 # 23
-like( $f->_throw( 'max_dives exceeded' => { diag => 1 } ),
+like( $f->_throw( 'abort_depth exceeded' => { diag => 1 } ),
    qr/Recursion limit reached at .+?dives\.  Maximum number of/,
-   'max_dives exceeded (diagnostic mode)'
+   'abort_depth exceeded (diagnostic mode)'
 );
 
 # 23.5
-like( $f->_throw( 'max_dives exceeded' => { } ),
+like( $f->_throw( 'abort_depth exceeded' => { } ),
    qr/(?sm)^Recursion limit exceeded at/,
-   'max_dives exceeded'
+   'abort_depth exceeded'
 );
 
 # 24

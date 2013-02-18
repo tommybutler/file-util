@@ -250,12 +250,12 @@ like $exception,
      qr/(?m)^Stopped reading:/,
      'attempt to read a file that\'s bigger than the set read_limit';
 
-# send bad input to max_dives()
-$exception = exception { $ftl->max_dives( 'cheezburger' ) };
+# send bad input to abort_depth()
+$exception = exception { $ftl->abort_depth( 'cheezburger' ) };
 
 like $exception,
-     qr/(?m)^Bad input provided to max_dives/,
-     'make a call to max_dives() with improper input';
+     qr/(?m)^Bad input provided to abort_depth/,
+     'make a call to abort_depth() with improper input';
 
 # send bad input to read_limit()
 $exception = exception { $ftl->read_limit( 'woof!' ) };
@@ -264,15 +264,15 @@ like $exception,
      qr/(?m)^Bad input provided to read_limit/,
      'make a call to read_limit() with improper input';
 
-# intentionally exceed max_dives
+# intentionally exceed abort_depth
 $exception = exception
 {
-   $ftl->list_dir( $tempdir => { recurse => 1, max_dives => 1 } )
+   $ftl->list_dir( $tempdir => { recurse => 1, abort_depth => 1 } )
 };
 
 like $exception,
      qr/(?m)^Recursion limit exceeded/,
-     'attempt to list_dir recursively past max_dives limit';
+     'attempt to list_dir recursively past abort_depth limit';
 
 # send bad input (illegal characters) to write_file()
 $exception = exception

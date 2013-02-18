@@ -885,13 +885,13 @@ return only directory contents which are files
 
 do not include "." and ".." in the list of directory contents returned
 
-=item C<< max_dives => positive integer >>
+=item C<< abort_depth => positive integer >>
 
-Override the global limit on L<max_dives|/max_dives> recursions for directory
-listings, on a per-listing basis with this option.  Just like the main
-C<max_dives()> object method, this option takes a positive integer.  The default
-is 1000.  Sometimes it is useful to increase this number by quite a lot when
-walking directories with callbacks.
+Override the global limit on L<abort_depth|/abort_depth> recursions for
+directory listings, on a per-listing basis with this option.  Just like the
+main C<abort_depth()> object method, this option takes a positive integer.  The
+default is 1000.  Sometimes it is useful to increase this number by quite a lot
+when walking directories with callbacks.
 
 =item C<< with_paths => boolean >>
 
@@ -902,7 +902,7 @@ to the directory named in the call.
 
 Recurse into subdirectories.  In other words, open up subdirectories and
 continue to descend into the directory tree either as far as it goes, or until
-the C<max_dives> limit is reached. I<See L<max_dives()|/max_dives>>
+the C<abort_depth> limit is reached. I<See L<abort_depth()|/abort_depth>>
 
 =item C<< dirs_as_ref => boolean >>
 
@@ -1402,11 +1402,11 @@ result as it is impossible to create a directory that already exists.
 
 =back
 
-=head2 C<max_dives>
+=head2 C<abort_depth>
 
 =over
 
-=item I<Syntax:> C<max_dives( [positive integer] )>
+=item I<Syntax:> C<abort_depth( [positive integer] )>
 
 When called without any arguments, this method returns an integer reflecting
 the current number of times the File::Util object will dive into the
@@ -1470,7 +1470,7 @@ than the number of bytes you specify.  This argument can only be
 a numeric integer value, otherwise it will be I<silently ignored.>  The default
 read limit for File::Util objects is 52428800 bytes (50 megabytes).
 
-=item C<< max_dives => positive integer >>
+=item C<< abort_depth => positive integer >>
 
 Optionally specify this option to the File::Util::new method to instruct the
 new object to set the maximum number of times it will recurse into
@@ -1478,7 +1478,7 @@ subdirectories while performing directory listing operations before failing
 with an error message.  This argument can only be a numeric integer value,
 otherwise it will be I<silently ignored.>
 
-I<(see also: L<max_dives()|/max_dives>)>
+I<(see also: L<abort_depth()|/abort_depth>)>
 
 =item B<C<< onfail => designated handler >>>
 
