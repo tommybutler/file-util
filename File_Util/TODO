@@ -41,15 +41,30 @@ Not necessarily listed in order of priority:
     what went wrong, how to fix it, and whose fault it was -- followed by a
     callstack.  We need the less verbose alternative now.
 
-14) Create a benchmark suite, plot and publish metrics as part of the
-    documentation.
+14) [DONE WITH CAVEATS*] Create a benchmark suite, plot and publish metrics as
+    part of the documentation.
+
+    *Turns out it wasn't such a good idea, given that benchmarking is of
+    little use without context, and that means comparing the performance of
+    File::Util to other distributions out there that do similar things.  This
+    has two problems, the first is that distributions are constantly evolving
+    and benchmarks recorded on one day are inaccurate the next.  The second
+    is that some of the numbers are NOT flattering.  In some test scenarios
+    File::Util has out-performed File::Find::Rule by 300%, while in others it
+    has been outperformed by some 100% or more.  Publishing things that
+    are potentially embarrassing is rude and I won't do it.
+
+    The best thing to come out of this was that I was able to increase the
+    performance of list_dir() by about double with help from Devel::NYTProf
 
 15) [DONE] Memo-ize pattern "gathering" for recursive list_dir() calls for
     greater efficiency.  Right now there's a gather op for ever recursion, and
     that just isn't necessary.  That can be optimized out.
 
-16) Provide an option to follow symlinks in list_dir(), and keep track of
-    inodes seen while traversing directories to avoid filesystem loops
+16) Provide an option to follow symlinks in list_dir(),
+
+17) [DONE] keep track of inodes seen while traversing directories to avoid
+    filesystem loops
 
 17) Try to get unicode-on-windows support for filenames, which is actually
     a Perl-core issue.  I might/might not be able to fix that.
