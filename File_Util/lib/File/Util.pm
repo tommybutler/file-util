@@ -262,7 +262,8 @@ sub list_dir {
 
 # ADVANCED MATCHING
 
-   @files = _list_dir_matching( $opts, $path, \@files );
+   @files = _list_dir_matching( $opts, $path, \@files )
+      if grep /match/ keys $opts;
 
 # SEPARATION OF DIRS FROM FILES
 
@@ -451,80 +452,64 @@ sub _list_dir_matching {
    {  # memo-ize these patterns
 
    # FILES AND
-      $opts->{_files_match_and} =
-         defined $opts->{_files_match_and}
-            ? $opts->{_files_match_and}
-            : [];
+      $opts->{_files_match_and} = []
+         unless defined $opts->{_files_match_and};
 
       $opts->{_files_match_and} =
          [ _gather_and_patterns( $opts->{files_match} ) ]
             unless @{ $opts->{_files_match_and} };
 
    # FILES OR
-      $opts->{_files_match_or} =
-         defined $opts->{_files_match_or}
-            ? $opts->{_files_match_or}
-            : [];
+      $opts->{_files_match_or} = []
+         unless defined $opts->{_files_match_or};
 
       $opts->{_files_match_or} =
          [ _gather_or_patterns( $opts->{files_match} ) ]
             unless @{ $opts->{_files_match_and} };
 
    # DIRS AND
-      $opts->{_dirs_match_and} =
-         defined $opts->{_dirs_match_and}
-            ? $opts->{_dirs_match_and}
-            : [];
+      $opts->{_dirs_match_and} = []
+         unless defined $opts->{_dirs_match_and};
 
       $opts->{_dirs_match_and} =
          [ _gather_and_patterns( $opts->{dirs_match} ) ]
             unless @{ $opts->{_dirs_match_and} };
 
    # DIRS OR
-      $opts->{_dirs_match_or} =
-         defined $opts->{_dirs_match_or}
-            ? $opts->{_dirs_match_or}
-            : [];
+      $opts->{_dirs_match_or} = []
+         unless defined $opts->{_dirs_match_or};
 
       $opts->{_dirs_match_or} =
          [ _gather_or_patterns( $opts->{dirs_match} ) ]
             unless @{ $opts->{_dirs_match_and} };
 
    # PARENT AND
-      $opts->{_parent_matches_and} =
-         defined $opts->{_parent_matches_and}
-            ? $opts->{_parent_matches_and}
-            : [];
+      $opts->{_parent_matches_and} = []
+         unless defined $opts->{_parent_matches_and};
 
       $opts->{_parent_matches_and} =
          [ _gather_and_patterns( $opts->{parent_matches} ) ]
             unless @{ $opts->{_parent_matches_and} };
 
    # PARENT OR
-      $opts->{_parent_matches_or} =
-         defined $opts->{_parent_matches_or}
-            ? $opts->{_parent_matches_or}
-            : [];
+      $opts->{_parent_matches_or} = []
+         unless defined $opts->{_parent_matches_or};
 
       $opts->{_parent_matches_or} =
          [ _gather_or_patterns( $opts->{parent_matches} ) ]
             unless @{ $opts->{_parent_matches_and} };
 
    # PATH AND
-      $opts->{_path_matches_and} =
-         defined $opts->{_path_matches_and}
-            ? $opts->{_path_matches_and}
-            : [];
+      $opts->{_path_matches_and} = []
+         unless defined $opts->{_path_matches_and};
 
       $opts->{_path_matches_and} =
          [ _gather_and_patterns( $opts->{path_matches} ) ]
             unless @{ $opts->{_path_matches_and} };
 
    # PATH OR
-      $opts->{_path_matches_or} =
-         defined $opts->{_path_matches_or}
-            ? $opts->{_path_matches_or}
-            : [];
+      $opts->{_path_matches_or} = []
+         unless defined $opts->{_path_matches_or};
 
       $opts->{_path_matches_or} =
          [ _gather_or_patterns( $opts->{path_matches} ) ]
