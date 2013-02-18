@@ -263,7 +263,7 @@ sub list_dir {
 # ADVANCED MATCHING
 
    @files = _list_dir_matching( $opts, $path, \@files )
-      if grep /match/ keys $opts;
+      if grep { /match/ } keys %$opts;
 
 # SEPARATION OF DIRS FROM FILES
 
@@ -3163,12 +3163,7 @@ valid_filename
 
 =item L<Exception::Handler>
 
-For graceful and helpful error handling
-
-=item L<Scalar::Util>
-
-For tools that support the improved call interface in C<File::Util> versions
-4.x and higher
+For helpful error handling
 
 =item L<Perl|perl> 5.006 or better ...
 

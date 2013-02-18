@@ -792,9 +792,9 @@ When you create a callback function, the File::Util will pass it four
 arguments in this order: The name of the current directory, a reference to a
 list of subdirectories in the current directory, a reference to a list of files
 in the current directory, and the depth (positive integer) relative to the
-B<top-level> directory in the path you provided as your first argument to
-C<list_dir()>.  I<This means that if you pass in a path such as> C</var/tmp>
-I<that "/" is depth of 0, "/var" is 1 deep, "/var/tmp" is 2 deep, and so on>
+directory you provided as your first argument to C<list_dir()>.
+I<This means if you pass in a path such as> C</var/tmp>,
+I<that "/var/tmp" is at a depth of 0, "/var/tmp/foo" is 1 deep, and so on>
 I<down through the "/var/tmp" directory.>
 
 Remember that the code in your callback gets executed in real time,
@@ -822,15 +822,14 @@ I<as list_dir() is walking the directory tree>.  Consider this example:
    #
    # Depth breakdown
    #
-   #    level 0 => ./
-   #    level 1 => ./droids/
-   #    level 2 => ./droids/by-owner/
-   #    level 2 => ./droids/by-boss/
-   #    level 2 => ./droids/by-series/
-   #    level 3 => ./droids/by-owner/luke/
-   #    level 3 => ./droids/by-boss/dooku/
-   #    level 3 => ./droids/by-series/imperial/
-   #    level 4 => ./droids/by-series/imperial/sentries/
+   #    level 0 => ./droids/
+   #    level 1 => ./droids/by-owner/
+   #    level 1 => ./droids/by-boss/
+   #    level 1 => ./droids/by-series/
+   #    level 2 => ./droids/by-owner/luke/
+   #    level 2 => ./droids/by-boss/dooku/
+   #    level 2 => ./droids/by-series/imperial/
+   #    level 3 => ./droids/by-series/imperial/sentries/
 
 Another way to use callbacks is in combination with closures, to "close around"
 a variable or variables defined in the same scope as the callback.  A demonstration
@@ -880,6 +879,12 @@ return only directory contents which are also directories
 =item C<< files_only => boolean >>
 
 return only directory contents which are files
+
+=item C<< max_depth => positive integer >>
+
+Works just like the C<-max_depth> flag in the GNU find command.  This option
+tells C<list_dir()> to limit results to directories at no more than the maximum
+depth you specify.  This only works in tandem with the C<recurse> option.
 
 =item C<< no_fsdots => boolean >>
 

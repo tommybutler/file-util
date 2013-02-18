@@ -6,15 +6,16 @@ use File::Util qw( NL );
 use Exception::Handler;
 
 my $ftl = File::Util->new();
+my $might_not_work = '/this/might/not/work';
 my $for_sure_file = '/tmp/file.txt';
 
 my $file_handle = $ftl->open_handle(
-   '/this/might/not/work' => {
+   $might_not_work => {
       mode   => 'append',
       onfail => sub {
          my ( $err, $trace ) = @_;
 
-         #warn "Couldn't open first choice, trying a backup plan...";
+         warn "Couldn't open first choice, trying a backup plan...";
 
          #warn $err . $trace;
 
@@ -24,10 +25,12 @@ my $file_handle = $ftl->open_handle(
 );
 
 print $file_handle scalar localtime;
+
 print $file_handle NL;
 
 close $file_handle;
 
 print $ftl->load_file( $for_sure_file );
 
+exit;
 
