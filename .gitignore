@@ -6,3 +6,4 @@
 _build
 File-Util*gz
 File-Util-[0-9]*/
+nytprof*
