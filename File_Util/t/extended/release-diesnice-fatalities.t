@@ -39,7 +39,7 @@ BEGIN {
 
             Test::Fatal->import( qw( exception dies_ok lives_ok ) );
 
-            plan tests => 37;
+            plan tests => 36;
 
             CORE::eval <<'__TEST_NOWARNINGS__';
 use Test::NoWarnings;
@@ -274,16 +274,6 @@ like $exception,
      qr/(?m)^Recursion limit exceeded/,
      'attempt to list_dir recursively past abort_depth limit';
 
-# send bad input (illegal characters) to write_file()
-$exception = exception
-{
-   $ftl->write_file( $tempdir . SL . 'foo\\\\bar' => 'dummycontent' )
-};
-
-like $exception,
-     qr/(?m)^String contains illegal characters:/,
-     'attempt to create a file with filename containing illegal characters';
-
 # call write_file() with an invalid file handle
 $exception = exception
 {
@@ -354,7 +344,7 @@ sub remove_inaccessible_file
 
 sub make_inaccessible_dir
 {
-   my $dirname = $ftl->strip_path( shift @_ );
+   my $dirname = shift @_;
 
    $dirname = $tempdir . SL . $dirname;
 

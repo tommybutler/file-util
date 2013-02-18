@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 51;
+use Test::More tests => 50;
 use Test::NoWarnings;
 
 use lib './lib';
@@ -32,14 +32,6 @@ ok escape_filename( q[./foo/bar/baz.t/], '+', '.' ) eq '++foo+bar+baz+t+',
 # test file escaping with defaults
 ok escape_filename(q[.\foo\bar\baz.t]) eq '._foo_bar_baz.t',
    'escaped filename with defaults';
-
-# test file escaping with option "--strip-path"
-ok escape_filename
-   (
-      q[.:foo:bar:baz.t],
-      '--strip-path'
-   ) eq 'baz.t',
-   'escape filename correctly';
 
 # path stripping in general
 is strip_path(__FILE__), '004_portable.t', 'stripped path to this file OK';

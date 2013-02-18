@@ -45,9 +45,11 @@ sub _myargs {
 # --------------------------------------------------------
 sub _remove_opts {
 
-   my $args = _myargs( @_ );
+   shift; # we don't need "$this" here
 
-   return unless UNIVERSAL::isa( $args, 'ARRAY' );
+   my $args = shift @_;
+
+   return unless ref $args eq 'ARRAY';
 
    my @triage = @$args; @$args = ();
    my $opts   = { };
@@ -94,7 +96,9 @@ sub _remove_opts {
 # --------------------------------------------------------
 sub _names_values {
 
-   my @in_pairs  = _myargs( @_ );
+   shift; # we don't need "$this" here
+
+   my @in_pairs =  @_;
    my $out_pairs = { };
 
    # this code no longer tries to catch foolishness such as names that are

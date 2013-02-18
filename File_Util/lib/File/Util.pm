@@ -130,7 +130,7 @@ sub list_dir {
    ) unless defined $dir && length $dir;
 
    # in case somebody wants to list_dir( "/tmp////" ) which is legal!
-   $path =~ s/$SL+$//go;
+   $path =~ s/$SL+$//o;
 
    # "." and ".." make no sense (and cause infinite loops) when recursing...
    $opts->{no_fsdots} = 1 if $opts->{recurse}; # ...so skip them
@@ -435,14 +435,14 @@ sub _list_dir_matching {
    my @qualified_files = map { $path . SL . $_ } splice @$files, 0;
    # can't keep multiple huge lists of files --- ^^^^^^
 
-   my @qualified_dirs  = grep { -d $_ && !-l $_ } @qualified_files;
+   my @qualified_dirs  = grep { !-l $_ } grep { -d $_ } @qualified_files;
 
    my %dirs_only; @dirs_only{ @qualified_dirs } = @qualified_dirs;
 
    @qualified_files = grep { !exists $dirs_only{ $_ } } @qualified_files;
 
-   my @files_match = map { ( $_ ) =~ /^.*$SL(.*)/ } @qualified_files;
-   my @dirs_match  = map { ( $_ ) =~ /^.*$SL(.*)/ } @qualified_dirs;
+   my @files_match = map { ( $_ ) =~ /^.*[\/\\:](.+)/o } @qualified_files;
+   my @dirs_match  = map { ( $_ ) =~ /^.*[\/\\:](.+)/o } @qualified_dirs;
 
    # memory management
    undef %dirs_only;
@@ -1174,7 +1174,7 @@ sub load_file {
 # --------------------------------------------------------
 sub write_file {
    my $this     = shift @_;
-   my $in       = _parse_in( @_ );
+   my $in       = $this->_parse_in( @_ );
    my $content  = '';
    my $raw_name = '';
    my $file     = '';
@@ -1209,6 +1209,8 @@ sub write_file {
          ? $maybe_content
          : $in->{content};
 
+   $file =~ s/$DIRSPLIT{2,}/$SL/o unless $file =~ /^$WINROOT$/o;
+
    $raw_name = $file; # preserve original filename input before line below:
 
    ( $root, $path, $file ) = atomize_path( $file );
@@ -1225,22 +1227,6 @@ sub write_file {
          opts    => $in,
       }
    ) unless length $file;
-
-   # if prospective filename contains 2+ dir separators in sequence then
-   # this is a syntax error we need to whine about
-   {
-      my $try_filename = $raw_name;
-
-      $try_filename =~ s/$WINROOT//; # windows abs paths would throw this off
-
-      return $this->_throw(
-         'bad chars' => {
-            string   => $raw_name,
-            purpose  => 'the name of a file or directory',
-            opts     => $in,
-         }
-      ) if $try_filename =~ /(?:$DIRSPLIT){2,}/;
-   }
 
    # if the call to this method didn't include any data which the caller
    # wants us to write or append to the file, then complain about it
@@ -1565,7 +1551,15 @@ sub valid_filename {
 # --------------------------------------------------------
 # File::Util::strip_path()
 # --------------------------------------------------------
-sub strip_path {  _myargs( @_ ) =~ /^.*$DIRSPLIT(.*)/o and $1 }
+sub strip_path {
+   my $arg = _myargs( @_ );
+
+   my ( $stripped ) = $arg =~ /^.*$DIRSPLIT(.+)/o;
+
+   return $stripped if defined $stripped;
+
+   return $arg;
+}
 
 
 # --------------------------------------------------------
@@ -1678,14 +1672,11 @@ sub ebcdic { $EBCDIC }
 # File::Util::escape_filename()
 # --------------------------------------------------------
 sub escape_filename {
-   my $opts = _remove_opts( \@_ );
    my( $file, $escape, $also ) = _myargs( @_ );
 
    return '' unless defined $file;
 
-   $escape = '_' if !defined($escape);
-
-   $file = strip_path($file) if $opts->{strip_path};
+   $escape = '_' if !defined $escape;
 
    if ( $also ) { $file =~ s/\Q$also\E/$escape/g }
 
@@ -1977,24 +1968,9 @@ sub make_dir {
       }
    }
 
-   # if prospective directory name contains 2+ dir separators in sequence then
-   # this is a syntax error we need to whine about
-   {
-      my $try_dir = $dir;
+   $dir =~ s/$DIRSPLIT{2,}/$SL/o unless $dir =~ /^$WINROOT$/o;
 
-      $try_dir =~ s/$WINROOT//; # windows abs paths would throw this off
-
-      return $this->_throw(
-         'bad chars',
-         {
-            string  => $dir,
-            purpose => 'the name of a directory',
-            opts    => $opts,
-         }
-      ) if $try_dir =~ /(?:$DIRSPLIT){2,}/;
-   }
-
-   $dir =~ s/$DIRSPLIT$// unless $dir eq $DIRSPLIT;
+   $dir =~ s/$DIRSPLIT+$//o unless $dir eq SL;
 
    my ( $root, $path ) = atomize_path( $dir . SL );
 
@@ -2207,6 +2183,8 @@ sub open_handle {
          : $in->{mode};
 
    $mode ||= 'read';
+
+   $file =~ s/$DIRSPLIT{2,}/$SL/o unless $file =~ /^$WINROOT$/o;
 
    $raw_name = $file; # preserve original filename input before line below:
 

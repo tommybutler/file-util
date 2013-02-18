@@ -36,12 +36,12 @@ $AUTHORITY  = 'cpan:TOMMY';
 # --------------------------------------------------------
 sub _names_values {
 
-   my @in_pairs  = _myargs( @_ );
+   # ignore $_[0] File::Util object reference
 
-   if ( UNIVERSAL::isa( $in_pairs[0], 'HASH' ) ) {
+   if ( ref $_[1] eq 'HASH' ) {
 
       # method was called like $f->method( { name => val } )
-      return shift @in_pairs;
+      return $_[1]
    }
 
    # ...method called like $f->methd( name => val );
@@ -55,9 +55,11 @@ sub _names_values {
 # --------------------------------------------------------
 sub _remove_opts {
 
-   my $args = _myargs( @_ );
+   shift; # we don't need "$this" here
 
-   return unless UNIVERSAL::isa( $args, 'ARRAY' );
+   my $args = shift @_;
+
+   return unless ref $args eq 'ARRAY';
 
    my @triage = @$args; @$args = ();
    my $opts   = { };
@@ -116,10 +118,10 @@ sub _remove_opts {
 # File::Util::Interface::Modern::_parse_in()
 # --------------------------------------------------------
 sub _parse_in {
+   my ( $this, @in ) = @_;
 
-   my @in   = _myargs( @_ );
-   my $opts = _remove_opts( \@in ); # always returns a hashref, given a listref
-   my $in   = _names_values( @in ); # always returns a hashref, given anything
+   my $opts = $this->_remove_opts( \@in ); # always returns a hashref, given a listref
+   my $in   = $this->_names_values( @in ); # always returns a hashref, given anything
 
    # merge two hashrefs
    @$in{ keys %$opts } = values %$opts;

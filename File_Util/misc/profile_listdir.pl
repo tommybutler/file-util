@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# perl -d:NYTProf misc/bench_listdir.pl
+# perl -d:NYTProf misc/profile_listdir.pl
 
 use strict;
 use warnings;
