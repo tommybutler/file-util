@@ -66,15 +66,6 @@ sub _throw {
 
    return if $opts->{onfail} eq 'undefined';
 
-   $this->{expt} ||= { };
-
-   unless ( UNIVERSAL::isa( $this->{expt}, 'Exception::Handler' ) ) {
-
-      require Exception::Handler;
-
-      $this->{expt} = Exception::Handler->new();
-   }
-
    my $is_plain;
 
    if ( !scalar keys %$opts ) {
@@ -118,27 +109,83 @@ sub _throw {
       $opts->{onfail} eq 'warn' ||
       $fatal_rules{fatals_as_warning}
    ) {
-      warn $this->{expt}->trace( $@ || $bad_news ) and return;
+      warn _trace( $@ || $bad_news ) and return;
    }
    elsif (
       $opts->{onfail} eq 'message'   ||
       $fatal_rules{fatals_as_errmsg} ||
       $opts->{return}
    ) {
-      return $this->{expt}->trace( $@ || $bad_news );
+      return _trace( $@ || $bad_news );
    }
 
-   warn $this->{expt}->trace( $@ || $bad_news ) if $opts->{warn_also};
+   warn _trace( $@ || $bad_news ) if $opts->{warn_also};
 
-   die $this->{expt}->trace( $@ || $bad_news )
+   die _trace( $@ || $bad_news )
       unless ref $opts->{onfail} eq 'CODE';
 
-   # the substr trick below just gets rid of the informational header on
-   # the stack trace, automatically placed there by Exception::Handler
-
-   @_ = ( $bad_news, substr $this->{expt}->trace('_'), 3 );
+   @_ = ( $bad_news, _trace() );
 
    goto $opts->{onfail};
+}
+
+
+
+# --------------------------------------------------------
+# File::Util::Exception::_trace
+# --------------------------------------------------------
+sub _trace { # <<<<< this is not a class or object method!
+   my @errors = @_;
+
+   my
+   (
+      $pak,     $file,      $line,     $sub,
+      $hasargs, $wantarray, $evaltext, $req_OR_use,
+      @stack,   $i,         $frame_no
+   );
+
+   $frame_no = 0;
+
+   while
+   (
+      (  $pak,     $file,      $line,     $sub,
+         $hasargs, $wantarray, $evaltext, $req_OR_use
+      ) = caller( $i++ )
+   )
+   {
+      $frame_no = $i - 2;
+
+      next unless $frame_no > 0;
+
+      push @stack, <<__ERR__
+$frame_no. $sub
+    -called at line ($line) of $file
+       @{[ $hasargs
+            ? '-was called with args'
+            : '-was called without args' ]}
+       @{[ $evaltext
+            ? '-was called to evalate text'
+            : '-was not called to evaluate anything' ]}
+__ERR__
+   }
+
+   $i = 0;
+
+   for my $error ( @errors ) {
+
+      $error = '' unless defined $error;
+
+      if ( !length $error ) {
+
+         $error = qq{Something is wrong.  Frame no. $frame_no...}
+      }
+
+      ++$i;
+   }
+
+   chomp for @errors;
+
+   return join NL, @errors, @stack;
 }
 
 

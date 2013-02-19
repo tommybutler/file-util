@@ -93,8 +93,10 @@ sub return_stderr {
 
 sub clean_err {
    my $err = shift @_;
+   $$err =~ s/^\n+//;
    $$err =~ s/^.*called at line.*$//mg;
-   $$err =~ s/\n\n2\. .*//sm; # delete everything after stack frame 1
+   $$err =~ s/\n2\. .*//sm; # delete everything after stack frame 1
+   chomp $$err;
    return;
 }
 
