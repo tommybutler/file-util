@@ -130,7 +130,7 @@ sub list_dir {
    ) unless defined $dir && length $dir;
 
    # in case somebody wants to list_dir( "/tmp////" ) which is legal!
-   $path =~ s/$SL+$//o;
+   $path =~ s/[\/\\:]+$//o;
 
    # "." and ".." make no sense (and cause infinite loops) when recursing...
    $opts->{no_fsdots} = 1 if $opts->{recurse}; # ...so skip them
@@ -151,7 +151,7 @@ sub list_dir {
    unless ( length $dir == 1 || $dir =~ /^$WINROOT$/o ) {
 
       # removes one or more dirsep at the end of $dir
-      $dir =~ s/$SL+$//o;
+      $dir =~ s/[\/\\:]+$//o;
    }
 
    return $this->_throw (
@@ -177,6 +177,9 @@ sub list_dir {
 # ...AND FILESYSTEM LOOPING PREVENTION ARE TIED TOGETHER...
    {
       my ( $dev, $inode ) = ( lstat $dir )[0,1];
+
+      next unless $inode; # windows SUCKS!
+
       my $dir_ident = $dev . '_' . $inode;
 
       # keep track of dir inodes or we're going to get stuck in filesystem
@@ -193,11 +196,12 @@ sub list_dir {
       $opts->{_recursion}{_inodes}{ $dir_ident } = undef;
    }
 
-   my ( $trailing_dirs ) = $dir =~ /^$opts->{_recursion}{_base}$SL(.*)/;
+   my ( $trailing_dirs ) = $dir =~ 
+      /^ \Q$opts->{_recursion}{_base}\E [\/\\:] (.+)/x;
 
    if ( defined $trailing_dirs && length $trailing_dirs ) {
 
-      my $depth = @{[ split /$SL/, $trailing_dirs ]};
+      my $depth = @{[ split /[\/\\:]+/, $trailing_dirs ]};
 
       $opts->{_recursion}{_depth} = $depth || 0;
    }
@@ -1209,7 +1213,12 @@ sub write_file {
          ? $maybe_content
          : $in->{content};
 
-   $file =~ s/$DIRSPLIT{2,}/$SL/o unless $file =~ /^$WINROOT$/o;
+   my ( $winroot ) = $file =~ /^($WINROOT)/;
+
+   $file =~ s/^($WINROOT)//;
+   $file =~ s/$DIRSPLIT{2,}/$SL/o;
+   $file =~ s/$DIRSPLIT+$//o unless $file eq SL;
+   $file =  $winroot . $file if $winroot;
 
    $raw_name = $file; # preserve original filename input before line below:
 
@@ -1968,9 +1977,12 @@ sub make_dir {
       }
    }
 
-   $dir =~ s/$DIRSPLIT{2,}/$SL/o unless $dir =~ /^$WINROOT$/o;
+   my ( $winroot ) = $dir =~ /^($WINROOT)/;
 
+   $dir =~ s/^($WINROOT)//;
+   $dir =~ s/$DIRSPLIT{2,}/$SL/o;
    $dir =~ s/$DIRSPLIT+$//o unless $dir eq SL;
+   $dir =  $winroot . $dir if $winroot;
 
    my ( $root, $path ) = atomize_path( $dir . SL );
 
@@ -2184,7 +2196,13 @@ sub open_handle {
 
    $mode ||= 'read';
 
-   $file =~ s/$DIRSPLIT{2,}/$SL/o unless $file =~ /^$WINROOT$/o;
+
+   my ( $winroot ) = $file =~ /^($WINROOT)/;
+
+   $file =~ s/^($WINROOT)//;
+   $file =~ s/$DIRSPLIT{2,}/$SL/o;
+   $file =~ s/$DIRSPLIT+$//o unless $file eq SL;
+   $file =  $winroot . $file if $winroot;
 
    $raw_name = $file; # preserve original filename input before line below:
 
