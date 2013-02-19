@@ -1,5 +1,32 @@
 Revision history for Perl extension File::Util.pm
 
+4.130500 Mon Feb 18 19:13:11 CST 2013
+ - Trial version, fifth trial in 4.x series prior to first official release;
+   we're being very careful.
+
+ - This release features mainly performance optimizations, and many
+   windows-specific bug-fixes for those new optimizations which were caught
+   during thorough testing.
+
+ - This new version features a "max_depth" option for list_dir, which works
+   the same as the -max_depth flag for GNU find.
+
+ - the max_dives() method has been renamed to abort_depth(), with back-compat
+   fully preserved; this is to avoid confusion with the new max_depth
+   option for list_dir()
+
+ - Documentation updated to show examples of the new feature.
+
+ - For operating systems that support it, list_dir() now keeps track of the
+   filesystem inodes it sees while walking directories to detect and avoid
+   filesystem loops.  Sadly, Windows does not support the native stat/lstat
+   calls in Perl, and therefore this is feature is silently disabled on
+   any platform where it is detected that the stat/lstat calls don't work.
+
+ - New example script added to examples/ directory and to the Cookbook.
+
+ - Main perldoc manpage for File::Util updated
+
 4.130483 Sat Feb 16 23:07:29 CST 2013
 
  - TRIAL version, fourth trial in the 4.x series.
