@@ -1,7 +1,18 @@
 Revision history for Perl extension File::Util.pm
 
+4.130510 Tue Feb 19 18:10:12 CST 2013
+
+ - TRIAL version, sixth trial in 4.x series prior to first official release;
+   we're being very careful.
+
+ - Removed dependency for Exception::Handler and stole/improved code from it
+   so now there's no external dependencies whatsoever.
+
+ - Tests and documentation adjusted to reflect the change
+
 4.130500 Mon Feb 18 19:13:11 CST 2013
- - Trial version, fifth trial in 4.x series prior to first official release;
+
+ - TRIAL version, fifth trial in 4.x series prior to first official release;
    we're being very careful.
 
  - This release features mainly performance optimizations, and many
