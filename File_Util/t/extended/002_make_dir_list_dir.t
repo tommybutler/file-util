@@ -99,7 +99,7 @@ is_deeply
       )
    ],
    [ sort @test_files, @test_files  ],
-   'same, but using intentially wrong modern call style, ' .
+   'same, but using intentionally wrong modern call style, ' .
    'stripped of fully qualified paths'
 );
 

@@ -54,8 +54,58 @@ cmpthese
 
 __END__
 
-typical results on my lowly laptop w/ intel i5 processor and pitifully slow hard drive
+----------------------------------------------------------------------
+Thu Feb 21 21:48:07 CST 2013
+----------------------------------------------------------------------
 
+NON-RECURSIVE
+                    Rate File::Find::Rule       File::Util
+File::Find::Rule  4065/s               --             -79%
+File::Util       19231/s             373%               --
+
+NON-RECURSIVE WITH REGEXES
+                    Rate File::Find::Rule       File::Util
+File::Find::Rule  3704/s               --             -66%
+File::Util       10753/s             190%               --
+
+RECURSIVE
+                   Rate File::Find::Rule       File::Util
+File::Find::Rule 23.9/s               --             -13%
+File::Util       27.5/s              15%               --
+
+RECURSIVE WITH REGEXES
+                   Rate       File::Util File::Find::Rule
+File::Util       26.1/s               --              -0%
+File::Find::Rule 26.2/s               0%               --
+
+
+----------------------------------------------------------------------
+Thu Feb 21 15:43:42 CST 2013
+----------------------------------------------------------------------
+NON-RECURSIVE
+                    Rate File::Find::Rule       File::Util
+File::Find::Rule  4132/s               --             -77%
+File::Util       17857/s             332%               --
+
+NON-RECURSIVE WITH REGEXES
+                    Rate File::Find::Rule       File::Util
+File::Find::Rule  3425/s               --             -68%
+File::Util       10870/s             217%               --
+
+RECURSIVE
+                   Rate       File::Util File::Find::Rule
+File::Util       21.9/s               --             -18%
+File::Find::Rule 26.7/s              22%               --
+
+RECURSIVE WITH REGEXES
+                   Rate       File::Util File::Find::Rule
+File::Util       23.4/s               --             -22%
+File::Find::Rule 30.0/s              28%               --
+
+
+----------------------------------------------------------------------
+Wed Feb 20 ??:??:?? CST 2013
+----------------------------------------------------------------------
 NON-RECURSIVE
                     Rate File::Find::Rule       File::Util
 File::Find::Rule  4717/s               --             -75%
@@ -75,5 +125,4 @@ RECURSIVE WITH REGEXES
                    Rate       File::Util File::Find::Rule
 File::Util       16.7/s               --             -41%
 File::Find::Rule 28.2/s              69%               --
-
 
