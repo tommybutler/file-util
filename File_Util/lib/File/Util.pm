@@ -132,14 +132,14 @@ sub list_dir {
    # in case somebody wants to list_dir( "/tmp////" ) which is legal!
    $dir =~ s/(?<=.)[\/\\:]+$// unless $dir =~ /^$WINROOT$/o;
 
+   # recurse_fast implies recurse, and so does the legacy opt "follow"
+   $opts->{recurse} = 1 if $opts->{recurse_fast} || $opts->{follow};
+
    # "." and ".." make no sense (and cause infinite loops) when recursing...
    $opts->{no_fsdots} = 1 if $opts->{recurse}; # ...so skip them
 
    # break off immediately to helper function if asked to make a ref-tree
-   return $this->_as_tree( $dir => $opts ) if $opts->{ as_tree };
-
-   my $recursing = 0; # flag to dynamicall indicate whether or not this
-                      # method is being used recursively for this call
+   return $this->_as_tree( $dir => $opts ) if $opts->{as_tree};
 
 # INPUT VALIDATION
 
@@ -153,26 +153,24 @@ sub list_dir {
       }
    ) unless -d $dir;
 
-   $recursing = 1 if $opts->{recurse} || $opts->{follow};
-
 # RUNAWAY RECURSION PREVENTION...
 
    # We have to keep an eye on recursion; we do it with a shared-reference.
    # scalar references didn't work for me, so I'm using a hashref with a
    # single key-value and it works beautifully
    $opts->{_recursion} = {
+      _fast   => $opts->{recurse_fast},
       _depth  => 0,
       _base   => $dir,
       _inodes => {},
    } unless defined $opts->{_recursion};
 
 # ...AND FILESYSTEM LOOPING PREVENTION ARE TIED TOGETHER...
+   if ( !$opts->{_recursion}->{_fast} )
    {
-      my ( $dev, $inode ) = ( lstat $dir )[0,1];
+      my ( $dev, $inode ) = lstat $dir;
 
-      next unless $inode; # windows SUCKS!
-
-      my $dir_ident = $dev . '_' . $inode;
+      next unless $inode; # windows :-(
 
       # keep track of dir inodes or we're going to get stuck in filesystem
       # loops the following bit of code incrementally populates (with each
@@ -183,9 +181,9 @@ sub list_dir {
          qq(*WARNING! Filesystem loop detected at %s, dev %s, inode %s\n),
             $dir, $dev, $inode
             and return( () )
-               if exists $opts->{_recursion}{_inodes}{ $dir_ident };
+               if exists $opts->{_recursion}{_inodes}{ $dev, $inode };
 
-      $opts->{_recursion}{_inodes}{ $dir_ident } = undef;
+      $opts->{_recursion}{_inodes}{ $dev, $inode } = undef;
    }
 
    my ( $trailing_dirs ) = $dir =~
@@ -253,7 +251,7 @@ sub list_dir {
 
    # get rid of "." and ".." if they are unwanted, and try to do it as fast
    # as possible for large directories; Devel::NYTprof says this is faster
-   if ( $recursing || $opts->{no_fsdots} )
+   if ( $opts->{no_fsdots} )
    {
       if ( $dir_contents[0] eq '.' && $dir_contents[1] eq '..' )
       {
@@ -267,8 +265,10 @@ sub list_dir {
 
 # SEPARATION OF DIRS FROM FILES
 
-   while ( my $dir_entry = shift @dir_contents )
+   while ( @dir_contents ) # !! don't do: while my $foo = shift !!
    {
+      my $dir_entry = shift @dir_contents;
+
       warn qq(ERROR: Got a zero-length filename while reading "$dir"\n)
          and next unless length $dir_entry; # ridiculous filesystem errors
 
@@ -300,7 +300,7 @@ sub list_dir {
    # prepend full path information to each file name if paths were
    # requested, or if we are recursing.  Then separate the directories
    # and files off into @dirs and @itmes, respectively
-   if ( $recursing || $opts->{with_paths} )
+   if ( $opts->{recurse} || $opts->{with_paths} )
    {
       @$subdirs = map { $dir . SL . $_ } @$subdirs;
       @$files   = map { $dir . SL . $_ } @$files;
@@ -336,7 +336,7 @@ sub list_dir {
 
 # RECURSION
 
-   if ( $recursing ) {
+   if ( $opts->{recurse} ) {
 
       # recurse into all subdirs
       for my $subdir ( @$subdirs ) {
@@ -349,7 +349,6 @@ sub list_dir {
          my $recurse_opts = {
             as_ref               => 1,
             with_paths           => 1,
-            recursing            => 1,
             no_fsdots            => 1,
             abort_depth          => $abort_depth,
             max_depth            => $opts->{max_depth},
@@ -363,9 +362,10 @@ sub list_dir {
             callback             => $opts->{callback},
             d_callback           => $opts->{d_callback},
             f_callback           => $opts->{f_callback},
-            _recursion           => $opts->{_recursion},
             _matching            => $opts->{_matching},
             _patterns            => $opts->{_patterns} || {},
+            _recursion           => $opts->{_recursion},
+            _recursing           => 1,
          };
 
          my ( $dirs_ref, $files_ref ) =
@@ -382,7 +382,7 @@ sub list_dir {
 # FINAL PREPARATIONS before returning results
 
    if (
-        !$opts->{recursing} &&
+        !$opts->{_recursing} &&
       (
          $opts->{path_matches} || $opts->{parent_matches}
       )
@@ -425,7 +425,6 @@ sub list_dir {
 
    $subdirs = [ $subdirs ] if $opts->{dirs_as_ref};
    $files   = [ $files   ] if $opts->{files_as_ref};
-
 
    return @$subdirs if $opts->{dirs_only};
    return @$files   if $opts->{files_only};
