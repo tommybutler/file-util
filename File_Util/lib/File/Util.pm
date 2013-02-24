@@ -114,44 +114,52 @@ sub list_dir {
 
    my ( @dir_contents, $subdirs, $files );
 
-   my $abort_depth =
-      defined $opts->{abort_depth}
-         ? $opts->{abort_depth}
-         : defined $this->{opts}->{abort_depth}
-            ? $this->{opts}->{abort_depth}
-            : $ABORT_DEPTH;
+   my $abort_depth = $opts->{abort_depth};
 
-   return $this->_throw(
-      'no input' => {
-         meth    => 'list_dir',
-         missing => 'a directory name',
-         opts    => $opts,
-      }
-   ) unless defined $dir && length $dir;
+   # We can bypass all this extra checking/validation when we are recursing
+   # because we know we called ourself correctly--
 
-   # in case somebody wants to list_dir( "/tmp////" ) which is legal!
-   $dir =~ s/(?<=.)[\/\\:]+$// unless $dir =~ /^$WINROOT$/o;
+# INPUT VALIDATION AND DEFAULT VALUES
 
-   # recurse_fast implies recurse, and so does the legacy opt "follow"
-   $opts->{recurse} = 1 if $opts->{recurse_fast} || $opts->{follow};
+   if ( !$opts->{_recursing} ) { # bypass all this if recursing
 
-   # "." and ".." make no sense (and cause infinite loops) when recursing...
-   $opts->{no_fsdots} = 1 if $opts->{recurse}; # ...so skip them
+      return $this->_throw(
+         'no input' => {
+            meth    => 'list_dir',
+            missing => 'a directory name',
+            opts    => $opts,
+         }
+      ) unless defined $dir && length $dir;
 
-   # break off immediately to helper function if asked to make a ref-tree
-   return $this->_as_tree( $dir => $opts ) if $opts->{as_tree};
+      $abort_depth =
+         defined $opts->{abort_depth}
+            ? $opts->{abort_depth}
+            : defined $this->{opts}->{abort_depth}
+               ? $this->{opts}->{abort_depth}
+               : $ABORT_DEPTH;
 
-# INPUT VALIDATION
+      # in case somebody wants to list_dir( "/tmp////" ) which is legal!
+      $dir =~ s/(?<=.)[\/\\:]+$// unless $dir =~ /^$WINROOT$/o;
 
-   return $this->_throw( 'no such file' => { opts => $opts, filename => $dir } )
-      unless -e $dir;
+      # recurse_fast implies recurse, and so does the legacy opt "follow"
+      $opts->{recurse} = 1 if $opts->{recurse_fast} || $opts->{follow};
 
-   return $this->_throw (
-      'called opendir on a file' => {
-         filename => $dir,
-         opts     => $opts,
-      }
-   ) unless -d $dir;
+      # "." and ".." make no sense (and cause infinite loops) when recursing...
+      $opts->{no_fsdots} = 1 if $opts->{recurse}; # ...so skip them
+
+      # break off immediately to helper function if asked to make a ref-tree
+      return $this->_as_tree( $dir => $opts ) if $opts->{as_tree};
+
+      return $this->_throw( 'no such file' => { opts => $opts, filename => $dir } )
+         unless -e $dir;
+
+      return $this->_throw (
+         'called opendir on a file' => {
+            filename => $dir,
+            opts     => $opts,
+         }
+      ) unless -d $dir;
+   }
 
 # RUNAWAY RECURSION PREVENTION...
 
@@ -166,34 +174,35 @@ sub list_dir {
    } unless defined $opts->{_recursion};
 
 # ...AND FILESYSTEM LOOPING PREVENTION ARE TIED TOGETHER...
+
    if ( !$opts->{_recursion}->{_fast} )
    {
       my ( $dev, $inode ) = lstat $dir;
 
-      next unless $inode; # windows :-(
+      if ( $inode ) { # noop on windows which always returns zero (0) for inode
 
-      # keep trace of dir inodes or we're going to get stuck in filesystem
-      # loops the following bit of code incrementally populates (with each
-      # recursion) a hash table with keys named for the dev ID and inode of
-      # the directory, for every directory found
+         # keep track of dir inodes or we're going to get stuck in filesystem
+         # loops the following bit of code incrementally populates (with each
+         # recursion) a hash table with keys named for the dev ID and inode of
+         # the directory, for every directory found
 
-      warn sprintf
-         qq(*WARNING! Filesystem loop detected at %s, dev %s, inode %s\n),
-            $dir, $dev, $inode
-            and return( () )
-               if exists $opts->{_recursion}{_inodes}{ $dev, $inode };
+         warn sprintf
+            qq(*WARNING! Filesystem loop detected at %s, dev %s, inode %s\n),
+               $dir, $dev, $inode
+               and return( () )
+                  if exists $opts->{_recursion}{_inodes}{ $dev, $inode };
 
-      $opts->{_recursion}{_inodes}{ $dev, $inode } = undef;
+         $opts->{_recursion}{_inodes}{ $dev, $inode } = undef;
+      }
    }
 
-# DETERMINE DEPTH
+# DETERMINE DEPTH AND BAIL IF TOO DEEP
+
    my ( $trailing_dirs ) =
       $dir =~ /^ \Q$opts->{_recursion}{_base}\E [\/\\:] (.+)/x;
 
-   if ( defined $trailing_dirs && length $trailing_dirs ) {
-
-      $opts->{_recursion}{_depth} = $trailing_dirs =~ tr/[\/\\:]+// + 1;
-   }
+   $opts->{_recursion}{_depth} = $trailing_dirs =~ tr/[\/\\:]+// + 1
+      if defined $trailing_dirs;
 
    return( () ) if
       $opts->{max_depth} &&
