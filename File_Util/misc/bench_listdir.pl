@@ -12,33 +12,30 @@ use lib '../lib';
 use File::Util;
 use File::Find::Rule;
 
-my $f   = File::Util->new();
-
-# some directory with no subdirs
-my $nrdir = '/home/superman/nocloud/projects/personal/perl/CPAN/file-util/File_Util/lib/File/Util/Manual';
+my $f = File::Util->new();
 
 # some dir with several subdirs (and .pod files preferably)
-my $dir = '/home/superman/nocloud/';
+my $dir = '.';
 
 print "\nNON-RECURSIVE\n";
 cmpthese
    10_000,
    {
-      'File::Util'       => sub { $f->list_dir( $nrdir ) },
-      'File::Find::Rule' => sub { File::Find::Rule->file->in( $nrdir ) },
+      'File::Util'       => sub { $f->list_dir( $dir => { files_only => 1 } ) },
+      'File::Find::Rule' => sub { File::Find::Rule->maxdepth(1)->file->in( $dir ) },
    };
 
 print "\nNON-RECURSIVE WITH REGEXES\n";
 cmpthese
    10_000,
    {
-      'File::Util'       => sub { $f->list_dir( $nrdir => { files_match => qr/\.pod$/ } ) },
-      'File::Find::Rule' => sub { File::Find::Rule->file->name( qr/\.pod$/ )->in( $nrdir ) },
+      'File::Util'       => sub { $f->list_dir( $dir => { files_only => 1, files_match => qr/\.pod$/ } ) },
+      'File::Find::Rule' => sub { File::Find::Rule->maxdepth(1)->file->name( qr/\.pod$/ )->in( $dir ) },
    };
 
 print "\nRECURSIVE\n";
 cmpthese
-   200,
+   400,
    {
       'File::Util'       => sub { $f->list_dir( $dir => { recurse => 1, files_only => 1 } ) },
       'File::Find::Rule' => sub { File::Find::Rule->file->in( $dir ) },
@@ -46,13 +43,38 @@ cmpthese
 
 print "\nRECURSIVE WITH REGEXES\n";
 cmpthese
-   200,
+   400,
    {
       'File::Util'       => sub { $f->list_dir( $dir => { recurse => 1, files_only => 1, files_match => qr/\.pod$/ } ) },
       'File::Find::Rule' => sub { File::Find::Rule->file->name( qr/\.pod$/ )->in( $dir ) },
    };
 
 __END__
+
+----------------------------------------------------------------------
+Sat Feb 23 21:47:33 CST 2013
+----------------------------------------------------------------------
+
+NON-RECURSIVE
+                    Rate File::Find::Rule       File::Util
+File::Find::Rule  2611/s               --             -80%
+File::Util       12987/s             397%               --
+
+NON-RECURSIVE WITH REGEXES
+                   Rate File::Find::Rule       File::Util
+File::Find::Rule 2551/s               --             -73%
+File::Util       9524/s             273%               --
+
+RECURSIVE
+                  Rate File::Find::Rule       File::Util
+File::Find::Rule 211/s               --             -29%
+File::Util       299/s              42%               --
+
+RECURSIVE WITH REGEXES
+                  Rate File::Find::Rule       File::Util
+File::Find::Rule 215/s               --             -25%
+File::Util       286/s              33%               --
+
 
 ----------------------------------------------------------------------
 Thu Feb 21 21:48:07 CST 2013
