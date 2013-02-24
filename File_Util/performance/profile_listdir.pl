@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# perl -d:NYTProf misc/profile_listdir.pl
+# perl -d:NYTProf performance/profile_listdir.pl
 
 use strict;
 use warnings;
@@ -13,7 +13,10 @@ use File::Util;
 my $f   = File::Util->new();
 my $dir = '/home/superman/nocloud/';
 
-$f->list_dir( $dir => { recurse => 1, files_only => 1, files_match => qr/\.pod$/ } );
+for ( 0 .. 99 )
+{
+   $f->list_dir( $dir => { recurse => 1, files_only => 1, files_match => qr/\.pod$/ } );
+}
 
 __END__
 
