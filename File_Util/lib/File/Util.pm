@@ -160,8 +160,8 @@ sub list_dir {
    # single key-value and it works beautifully
    $opts->{_recursion} = {
       _fast   => $opts->{recurse_fast},
+      _base   => $dir eq '/' ? '' : $dir,
       _depth  => 0,
-      _base   => $dir,
       _inodes => {},
    } unless defined $opts->{_recursion};
 
@@ -172,7 +172,7 @@ sub list_dir {
 
       next unless $inode; # windows :-(
 
-      # keep track of dir inodes or we're going to get stuck in filesystem
+      # keep trace of dir inodes or we're going to get stuck in filesystem
       # loops the following bit of code incrementally populates (with each
       # recursion) a hash table with keys named for the dev ID and inode of
       # the directory, for every directory found
@@ -186,14 +186,13 @@ sub list_dir {
       $opts->{_recursion}{_inodes}{ $dev, $inode } = undef;
    }
 
-   my ( $trailing_dirs ) = $dir =~
-      /^ \Q$opts->{_recursion}{_base}\E [\/\\:] (.+)/x;
+# DETERMINE DEPTH
+   my ( $trailing_dirs ) =
+      $dir =~ /^ \Q$opts->{_recursion}{_base}\E [\/\\:] (.+)/x;
 
    if ( defined $trailing_dirs && length $trailing_dirs ) {
 
-      my $depth = @{[ split /[\/\\:]+/, $trailing_dirs ]};
-
-      $opts->{_recursion}{_depth} = $depth || 0;
+      $opts->{_recursion}{_depth} = $trailing_dirs =~ tr/[\/\\:]+// + 1;
    }
 
    return( () ) if
@@ -206,8 +205,9 @@ sub list_dir {
          meth        => 'list_dir',
          abort_depth => $abort_depth,
          opts        => $opts,
+         dir         => $dir,
       }
-   ) if $opts->{_recursion}{_depth} >= $abort_depth && $abort_depth != 0;
+   ) if $opts->{_recursion}{_depth} == $abort_depth && $abort_depth != 0;
 
 # ACTUAL READING OF THE DIRECTORY
 
@@ -265,14 +265,13 @@ sub list_dir {
 
 # SEPARATION OF DIRS FROM FILES
 
+   my $dir_base = $dir ne '/' ? $dir . SL : $dir; # << we use this further down
+
    while ( @dir_contents ) # !! don't do: while my $foo = shift !!
    {
       my $dir_entry = shift @dir_contents;
 
-      warn qq(ERROR: Got a zero-length filename while reading "$dir"\n)
-         and next unless length $dir_entry; # ridiculous filesystem errors
-
-      if ( -d $dir . SL . $dir_entry && !-l $dir . SL . $dir_entry )
+      if ( -d $dir_base . $dir_entry && !-l $dir_base . $dir_entry )
       {
          push @$subdirs, $dir_entry
       }
@@ -302,8 +301,8 @@ sub list_dir {
    # and files off into @dirs and @itmes, respectively
    if ( $opts->{recurse} || $opts->{with_paths} )
    {
-      @$subdirs = map { $dir . SL . $_ } @$subdirs;
-      @$files   = map { $dir . SL . $_ } @$files;
+      @$subdirs = map { $dir_base . $_ } @$subdirs;
+      @$files   = map { $dir_base . $_ } @$files;
    }
 
 # CALLBACKS (HIGHER ORDER FUNCTIONS)
@@ -335,9 +334,14 @@ sub list_dir {
    }
 
 # RECURSION
-
-   if ( $opts->{recurse} ) {
-
+   if
+   (
+      $opts->{recurse} && !
+      (
+         $opts->{max_depth} && # don't recurse if we will then be at max depth
+         $opts->{_recursion}{_depth} == $opts->{max_depth} - 1
+      )
+   ) {
       # recurse into all subdirs
       for my $subdir ( @$subdirs ) {
 
