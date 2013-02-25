@@ -147,6 +147,9 @@ sub list_dir {
       # "." and ".." make no sense (and cause infinite loops) when recursing...
       $opts->{no_fsdots} = 1 if $opts->{recurse}; # ...so skip them
 
+      # be compatible with GNU find
+      $opts->{max_depth} = delete $opts->{maxdepth} if $opts->{maxdepth};
+
       # break off immediately to helper function if asked to make a ref-tree
       return $this->_as_tree( $dir => $opts ) if $opts->{as_tree};
 
