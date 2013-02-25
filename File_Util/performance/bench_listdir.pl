@@ -15,7 +15,7 @@ use File::Find::Rule;
 my $f = File::Util->new();
 
 # some dir with several subdirs (and .pod files preferably)
-my $dir = '.';
+my $dir = shift @ARGV || '.';
 
 print "\nNON-RECURSIVE\n";
 cmpthese
@@ -52,99 +52,29 @@ cmpthese
 __END__
 
 ----------------------------------------------------------------------
-Sat Feb 23 21:47:33 CST 2013
+Mon Feb 25 12:30:03 CST 2013
+----------------------------------------------------------------------
+TEST - 1045 files, 32 directories varying from one to 4 levels deep
 ----------------------------------------------------------------------
 
 NON-RECURSIVE
                     Rate File::Find::Rule       File::Util
-File::Find::Rule  2611/s               --             -80%
-File::Util       12987/s             397%               --
+File::Find::Rule  2128/s               --             -80%
+File::Util       10753/s             405%               --
 
 NON-RECURSIVE WITH REGEXES
                    Rate File::Find::Rule       File::Util
-File::Find::Rule 2551/s               --             -73%
-File::Util       9524/s             273%               --
-
-RECURSIVE
-                  Rate File::Find::Rule       File::Util
-File::Find::Rule 211/s               --             -29%
-File::Util       299/s              42%               --
-
-RECURSIVE WITH REGEXES
-                  Rate File::Find::Rule       File::Util
-File::Find::Rule 215/s               --             -25%
-File::Util       286/s              33%               --
-
-
-----------------------------------------------------------------------
-Thu Feb 21 21:48:07 CST 2013
-----------------------------------------------------------------------
-
-NON-RECURSIVE
-                    Rate File::Find::Rule       File::Util
-File::Find::Rule  4065/s               --             -79%
-File::Util       19231/s             373%               --
-
-NON-RECURSIVE WITH REGEXES
-                    Rate File::Find::Rule       File::Util
-File::Find::Rule  3704/s               --             -66%
-File::Util       10753/s             190%               --
+File::Find::Rule 2375/s               --             -70%
+File::Util       7937/s             234%               --
 
 RECURSIVE
                    Rate File::Find::Rule       File::Util
-File::Find::Rule 23.9/s               --             -13%
-File::Util       27.5/s              15%               --
+File::Find::Rule 72.2/s               --             -55%
+File::Util        160/s             122%               --
 
 RECURSIVE WITH REGEXES
-                   Rate       File::Util File::Find::Rule
-File::Util       26.1/s               --              -0%
-File::Find::Rule 26.2/s               0%               --
-
-
-----------------------------------------------------------------------
-Thu Feb 21 15:43:42 CST 2013
-----------------------------------------------------------------------
-NON-RECURSIVE
-                    Rate File::Find::Rule       File::Util
-File::Find::Rule  4132/s               --             -77%
-File::Util       17857/s             332%               --
-
-NON-RECURSIVE WITH REGEXES
-                    Rate File::Find::Rule       File::Util
-File::Find::Rule  3425/s               --             -68%
-File::Util       10870/s             217%               --
-
-RECURSIVE
-                   Rate       File::Util File::Find::Rule
-File::Util       21.9/s               --             -18%
-File::Find::Rule 26.7/s              22%               --
-
-RECURSIVE WITH REGEXES
-                   Rate       File::Util File::Find::Rule
-File::Util       23.4/s               --             -22%
-File::Find::Rule 30.0/s              28%               --
-
-
-----------------------------------------------------------------------
-Wed Feb 20 ??:??:?? CST 2013
-----------------------------------------------------------------------
-NON-RECURSIVE
-                    Rate File::Find::Rule       File::Util
-File::Find::Rule  4717/s               --             -75%
-File::Util       18519/s             293%               --
-
-NON-RECURSIVE WITH REGEXES
                    Rate File::Find::Rule       File::Util
-File::Find::Rule 4292/s               --             -54%
-File::Util       9346/s             118%               --
+File::Find::Rule 87.9/s               --             -42%
+File::Util        153/s              74%               --
 
-RECURSIVE
-                   Rate       File::Util File::Find::Rule
-File::Util       15.0/s               --             -45%
-File::Find::Rule 27.4/s              83%               --
-
-RECURSIVE WITH REGEXES
-                   Rate       File::Util File::Find::Rule
-File::Util       16.7/s               --             -41%
-File::Find::Rule 28.2/s              69%               --
 

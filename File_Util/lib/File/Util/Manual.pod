@@ -105,17 +105,25 @@ done.  No compiling required.
 
 =head2 What File::Util Is NOT
 
-File::Util is B<NOT> a performance-optimized file-finding/searching utility.
-While it does provide robust tools to allow you to filter the results of
-recursive directory listings against regular expressions,
-I<it is not a file-finder/searcher.>
+File::Util offers significant performance increases over other modules for
+most directory-walking and searching, whether doing so in a single
+directory or in many directories recursively. I<(See also the benchmarking>
+I<and profiling scripts included in the performance subdirectory as part of>
+I<this distribution)*>
 
-If you are looking for a tool that allows you to search rapidly through
-directory trees, B<I<NOT just filtering results>>, take a look at L<File::Find>.
-There are many up-and-comers in the Perl file searching utilities niche that you
-can also try, however they are still hard pressed to meet with the raw
-performance and speed of File::Find in very large file trees.
+However File::Util is B<NOT> a single-purpose file-finding/searching utility
+like File::Find::Rule which offers a handful of extra built-in search features
+that File::Util does not give you out of the box, such as searching for files by
+owner/group or size.  It is possible to accomplish the same things by
+taking advantage of File::Util's callbacks if you want to, but this isn't
+the "one thing" File::Util was built to do.
 
+File::Util also doesn't offer unicode support yet.  If you want to write files
+in UTF-8 encoding, File::Util won't do that for you.  This will not always be
+the case, but for the time being it is a limitation.
+
+I<*Sometimes it doesn't matter how fast you can search through a directory 1000>
+I<times.  Performance alone isn't the best criteria for choosing a module.>
 
 =head1 SYNTAX
 

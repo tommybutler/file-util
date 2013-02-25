@@ -14,10 +14,9 @@ use File::Find::Rule;
 my $f = File::Util->new();
 
 # some dir with several subdirs (and .pod files preferably)
-my $dir = '/home/superman/nocloud/';
+my $dir = shift @ARGV || '.';
 
-
-for ( 0 .. 100 ) {
+for ( 1 .. 100 ) {
 
    print "$_\n";
 

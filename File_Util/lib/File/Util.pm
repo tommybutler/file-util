@@ -2829,21 +2829,24 @@ I<(See L<DOCUMENTATION|/DOCUMENTATION> section below.)>
 
 =head1 DOCUMENTATION
 
-You can do much more with File::Util than just the basic examples this
-document.  For an explanation of all the features available to you,
-take a look at these other reference materials:
+You can do much more with File::Util than the examples above.  For an
+explanation of all the features available to you, take a look at these other
+reference materials:
 
 =over
-
-=item B<The Manual>
-
-The L<File::Util::Manual> is the complete reference document explaing every
-available feature and object method.
 
 =item B<The "Nutshell">
 
 The L<File::Util::Manual::Examples> document has a long list of small, reusable
-code snippets and techniques to use in your own programs.
+code snippets and techniques to use in your own programs.  This is the "cheat
+sheet", and is a great place to get started quickly.  Almost everything you
+need is here.
+
+=item B<The Manual>
+
+The L<File::Util::Manual> is the complete reference document explaing every
+available feature and object method.  Use this to look up the full information
+on any given feature when the examples aren't enough.
 
 =item B<The Cookbook>
 
@@ -2995,6 +2998,20 @@ that use File::Util to easily accomplish tasks which require file handling.
 pattern matching in directories, directory walking, user-definable error
 handlers, and more.
 
+=head1 PERFORMANCE
+
+File::Util has been optimized to run fast.*  In many scenarios it can
+out-perform other modules like File::Find::Rule from anywhere from 100%-400% --
+I<(See the benchmarking and profiling scripts that are included as part of this>
+I<distribution.)>
+
+File::Util consists of several modules, but only loads the ones it needs when
+it needs them and also offers a comparatively fast load-up time, so using
+File::Util doesn't bloat your code footprint.
+
+I<*Sometimes it doesn't matter how fast you can search through a directory 1000>
+I<times.  Performance alone isn't the best criteria for choosing a module.>
+
 =head1 METHODS
 
 File::Util exposes the following public methods.
@@ -3088,7 +3105,7 @@ this document in a text terminal, open perldoc to the C<File::Util::Manual>.
 Exports nothing by default.  File::Util fully respects your namespace.
 You can, however, ask it for certain things (below).
 
-=head2 @EXPORT_OK
+=head2 EXPORT_OK
 
 The following symbols comprise C<@File::Util::EXPORT_OK>), and as such are
 available for import to your namespace only upon request.  They can be
@@ -3099,97 +3116,14 @@ to use them as an object method, use this kind of syntax:
 
 C<use File::Util qw( strip_path NL );>
 
-=over
-
-=item *
-
-atomize_path
-
-=item *
-
-can_flock
-
-=item *
-
-created
-
-=item *
-
-diagnostic
-
-=item *
-
-ebcdic
-
-=item *
-
-escape_filename
-
-=item *
-
-existent
-
-=item *
-
-file_type
-
-=item *
-
-is_bin
-
-=item *
-
-is_readable
-
-=item *
-
-is_writable
-
-=item *
-
-last_access
-
-=item *
-
-last_changed
-
-=item *
-
-last_modified
-
-=item *
-
-NL
-
-=item *
-
-needs_binmode
-
-=item *
-
-return_path
-
-=item *
-
-size
-
-=item *
-
-SL
-
-=item *
-
-split_path
-
-=item *
-
-strip_path
-
-=item *
-
-valid_filename
-
-=back
+   * atomize_path      * can_flock         * created
+   * diagnostic        * ebcdic            * escape_filename
+   * existent          * file_type         * is_bin
+   * is_readable       * is_writable       * last_access
+   * last_changed      * last_modified     * NL
+   * needs_binmode     * return_path       * size
+   * SL                * split_path        * strip_path
+   * valid_filename
 
 =head2 EXPORT_TAGS
 
@@ -3226,6 +3160,9 @@ On Windows systems, the "sudo" part of the command may be omitted, but you
 will need to run the rest of the install command with Administrative privileges
 
 =head1 BUGS
+
+File::Util can't write files in UTF-8 encoding yet.  This limitation will go
+away soon.
 
 Send bug reports and patches to the CPAN Bug Tracker for File::Util at
 L<rt.cpan.org|https://rt.cpan.org/Dist/Display.html?Name=File%3A%3AUtil>
@@ -3279,7 +3216,7 @@ The rest of the documentation:
 L<File::Util::Manual>, L<File::Util::Manual::Examples>, L<File::Util::Cookbook>,
 
 Other Useful Modules that do similar things:
-L<File::Slurp>, L<File::Spec>, L<Path::Class>
+L<File::Slurp>, L<File::Spec>, L<File::Find::Rule>, L<Path::Class>
 
 =cut
 

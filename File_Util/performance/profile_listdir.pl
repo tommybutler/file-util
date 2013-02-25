@@ -11,7 +11,7 @@ use lib '../lib';
 use File::Util;
 
 my $f   = File::Util->new();
-my $dir = '/home/superman/nocloud/';
+my $dir = shift @ARGV || '.';
 
 for ( 0 .. 99 )
 {
