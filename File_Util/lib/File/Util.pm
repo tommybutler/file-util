@@ -213,7 +213,7 @@ sub list_dir {
    else
    {
       ( $trailing_dirs ) =
-         $dir =~ /^ \Q$opts->{_recursion}{_base}\E $SL (.+) /x;
+         $dir =~ /^ \Q$opts->{_recursion}{_base}$SL\E (.+) /x;
    }
 
    if ( $SL eq '/' )
@@ -297,7 +297,10 @@ sub list_dir {
 
 # SEPARATION OF DIRS FROM FILES
 
-   my $dir_base = $dir ne '/' ? $dir . SL : $dir; # << we use this further down
+   my $dir_base = # << we use this further down
+      ( $dir ne '/' && $dir !~ /^$WINROOT$/ )
+         ? $dir . SL
+         : $dir;
 
    while ( @dir_contents ) # !! don't do: while my $foo = shift !!
    {
