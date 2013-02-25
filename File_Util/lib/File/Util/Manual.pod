@@ -882,9 +882,13 @@ return only directory contents which are files
 
 =item C<< max_depth => positive integer >>
 
-Works just like the C<-max_depth> flag in the GNU find command.  This option
+Works just like the C<-maxdepth> flag in the GNU find command.  This option
 tells C<list_dir()> to limit results to directories at no more than the maximum
-depth you specify.  This only works in tandem with the C<recurse> option.
+depth you specify.  This only works in tandem with the C<recurse> option
+(or the C<recurse_fast> option which is similar).
+
+For compatibility reasons, you can use "C<maxdepth>" without the underscore
+instead, and get the same functionality.
 
 =item C<< no_fsdots => boolean >>
 
@@ -908,6 +912,18 @@ to the directory named in the call.
 Recurse into subdirectories.  In other words, open up subdirectories and
 continue to descend into the directory tree either as far as it goes, or until
 the C<abort_depth> limit is reached. I<See L<abort_depth()|/abort_depth>>
+
+=item C<< recurse_fast => boolean >>
+
+Recurse into subdirectories, without checking for filesystem loops.  This
+works exactly like the C<recurse> option, except it turns off internal
+checking for duplicate inodes while descending through a file tree.
+
+You get a performance boost at the sacrifice of a little "safety checking".
+
+The bigger your file tree, the more performance gains you see.
+
+This option has no effect on Windows. I<(see perldoc -f stat)>
 
 =item C<< dirs_as_ref => boolean >>
 
