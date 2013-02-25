@@ -1,5 +1,22 @@
 Revision history for Perl extension File::Util.pm
 
+4.130560 Mon Feb 25 14:03:44 CST 2013
+
+ - TRIAL version, seventh trial in 4.x series.  I am just about confident
+   enough to release this current code as an offical stable release to the
+   CPAN, but first I wanted to include the optimizations in this release.
+
+ - This release represents a vast number of optimizations that greatly
+   increase the performance of recursive calls.
+
+ - This release fixes some windows-specific bugs that have to deal with
+   recursively listing directories from a root volume, such as "C:\" for
+   example.
+
+ - Added performance measurement scripts that allow users to both benchmark
+   and profile File::Util, with Devel::NYTProf being a prerequisite to such
+   activities.
+
 4.130510 Tue Feb 19 18:10:12 CST 2013
 
  - TRIAL version, sixth trial in 4.x series prior to first official release;

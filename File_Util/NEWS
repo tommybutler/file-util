@@ -1,5 +1,14 @@
 NEWS for File::Util
 
+Mon Feb 25 14:07:13 CST 2013
+   A vast number of optimizations have been applied to recursive calls in
+   methods like list_dir() which bring it more-than-up-to-par with mainstream
+   modules for directory searching and traversal in terms of performance.
+
+   Windows-specific bug fixes have been added, necessary in great part due
+   to the non-posix nature of its filesystems and its lack of support for
+   the CORE::stat() function.
+
 Sun Feb 10 21:32:36 CST 2013
    More added to the TODO list since the last news update.  We have now a
    4.x build that is CPAN ready (as a TRIAL).  The manual has been combed

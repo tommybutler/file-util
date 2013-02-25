@@ -981,6 +981,12 @@ Returns a hierarchal datastructure (hashref) of the file tree in the directory
 you specify as the first argument to C<list_dir()>.  Use in combination with
 other options to get the exact results you want in the datastructure.
 
+*Note: When using this option, the C<"files_only"> and C<"dirs_only"> options
+are ignored, but you can still specify things like a C<"max_depth"> argument,
+however.  Note also that you need to specifically call this with the
+C<"recurse"> or C<"recurse_fast"> option or you will only get a single-level
+tree structure.
+
 One quick example:
 
    my $tree = $ftl->list_dir(

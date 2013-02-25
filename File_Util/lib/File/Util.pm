@@ -872,18 +872,11 @@ sub _as_tree {
       }
    };
 
-   $this->list_dir(
-      $dir => {
-         callback       => $treeify,
-         recurse        => $opts->{recurse},
-         files_match    => $opts->{files_match},
-         dirs_match     => $opts->{dirs_match},
-         parent_matches => $opts->{parent_matches},
-         path_matches   => $opts->{path_matches},
-         pattern        => $opts->{pattern},
-         rpattern       => $opts->{rpattern},
-      }
-   );
+   $opts->{callback} = $treeify;
+
+   delete $opts->{as_tree};
+
+   $this->list_dir( $dir => $opts );
 
    return $tree;
 }
