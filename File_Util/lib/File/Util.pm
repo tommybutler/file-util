@@ -168,7 +168,8 @@ sub list_dir {
    # single key-value and it works beautifully
    $opts->{_recursion} = {
       _fast   => $opts->{recurse_fast},
-      _base   => $dir eq '/' ? '' : $dir,
+      _base   => $dir,
+      _isroot => ( $dir eq '/' || $dir =~ /^$WINROOT/ ) ? 1 : 0,
       _depth  => 0,
       _inodes => {},
    } unless defined $opts->{_recursion};
@@ -198,11 +199,33 @@ sub list_dir {
 
 # DETERMINE DEPTH AND BAIL IF TOO DEEP
 
-   my ( $trailing_dirs ) =
-      $dir =~ /^ \Q$opts->{_recursion}{_base}\E [\/\\:] (.+)/x;
+   # this is highly dependent on OS platform, and also whether or not we are
+   # listing a root directory, which makes optimizations harder ( / or C:\ )
+   # *note - $SL comes from File::Util::Definitions
 
-   $opts->{_recursion}{_depth} = $trailing_dirs =~ tr/[\/\\:]+// + 1
-      if defined $trailing_dirs;
+   my $trailing_dirs;
+
+   if ( $opts->{_recursion}{_isroot} )
+   {
+      ( $trailing_dirs ) =
+         $dir =~ /^ \Q$opts->{_recursion}{_base}\E (.+) /x;
+   }
+   else
+   {
+      ( $trailing_dirs ) =
+         $dir =~ /^ \Q$opts->{_recursion}{_base}\E $SL (.+) /x;
+   }
+
+   if ( $SL eq '/' )
+   {
+      $opts->{_recursion}{_depth} = $trailing_dirs =~ tr/\/// + 1
+         if defined $trailing_dirs;
+   }
+   else
+   {
+      $opts->{_recursion}{_depth} = $trailing_dirs =~ tr/[\\:]// + 1
+         if defined $trailing_dirs;
+   }
 
    return( () ) if
       $opts->{max_depth} &&
