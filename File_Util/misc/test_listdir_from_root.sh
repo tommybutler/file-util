@@ -1,0 +1,1 @@
+sudo true && vimdiff <( sudo find / -maxdepth 2 -type d | sort ) <( sudo perl -Mlib=lib -MFile::Util -E 'say for File::Util->new->list_dir( "/" => { recurse => 1, max_depth => 2, dirs_only => 1, onfail => "warn" } )' | sort )
