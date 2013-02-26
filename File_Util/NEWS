@@ -1,5 +1,14 @@
 NEWS for File::Util
 
+Mon Feb 25 19:36:21 CST 2013
+   The latest version introduces unicode support for reading/writing/appending
+   via UTF-8 encoding.  See the documentation for details.
+
+   The affected methods are:
+      * load_file()
+      * open_handle()
+      * write_file()
+
 Mon Feb 25 14:07:13 CST 2013
    A vast number of optimizations have been applied to recursive calls in
    methods like list_dir() which bring it more-than-up-to-par with mainstream

@@ -9,10 +9,13 @@ Not necessarily listed in order of priority:
 3)  [DONE] Gradually transform methods to accept input parameters in a
     *::Class-like style (hashrefs, etc) while preserving backward compatibility
 
-4)  Support for Perl IO "layers", which just hasn't been requested but
-    should be there for completeness.  This item has become an all-out quest
-    to introduce full unicode support for both file/directory names and
-    file encodings (on platforms where it is supported).
+4)  [DONE] Unicode support for reading/writing files, which just hasn't been
+    requested but is now there for completeness.  This item has become an all-out
+    quest to introduce full unicode support for both file/directory names and
+    file encodings (on platforms where it is supported), but given the great
+    minefield of problems with unicode on windows regarding file names, and
+    directories, that may never become a reality until Perl itself "fixes" the
+    problem.
 
 5)  [DONE] Transform (where useful) various methods to accept callbacks.
     File::Util::list_dir() is the primary target

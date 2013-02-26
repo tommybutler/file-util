@@ -653,4 +653,16 @@ like( $f->_throw( 'empty error' => { } ),
    'empty error'
 );
 
+# 32
+like( $f->_throw( 'no unicode' => { diag => 1 } ),
+   qr/(?sm)can't read\/write with \(binmode => 'utf8'\)/,
+   'no unicode support (diagnostic mode)'
+);
+
+# 32.5
+like( $f->_throw( 'no unicode' => { } ),
+   qr/(?sm)^Your version of Perl is not new enough/,
+   'no unicode support'
+);
+
 exit;

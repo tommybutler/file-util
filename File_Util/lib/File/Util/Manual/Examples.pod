@@ -45,6 +45,10 @@ something more obvious instead, such as C<$ftl> or C<$futil>
 
    my $contents = $f->load_file( 'C:\path\to\filename' );
 
+=head2 Get the contents of a UTF-8 encoded file in a UTF-8 encoded string
+
+   my $encoded_data = $f->load_file( 'encoded.txt' => { binmode => 'utf8' } );
+
 =head2 Get the contents of a file in an array of lines in the file
 
    my @contents = $f->load_file( 'filename' => { as_lines => 1 } );
@@ -60,6 +64,9 @@ something more obvious instead, such as C<$ftl> or C<$futil>
 
    # ... you can also use the shorter syntax:
    my $fh = $f->open_handle( '/some/existing/file' => 'read' );
+
+   # ... you can open a file handle to a UTF-8 encoded file too
+   my $fh = $f->open_handle( 'encoded.txt' => 'read' => { binmode => 'utf8' } );
 
    # then use the filehandle like you would use any other file handle:
    while ( my $line = <$fh> ) {
@@ -85,6 +92,9 @@ if your system supports it.
    # ... you can also use the shorter syntax:
    my $fh = $f->open_handle( '/some/file' => 'write' );
 
+   # ... you can open a file handle with UTF-8 encoding support
+   my $fh = $f->open_handle( '/some/file' => 'write' => { binmode => 'utf8' } );
+
    print $fh 'Hello world!';
 
    close $fh or die $!;
@@ -99,6 +109,11 @@ if your system supports it.
 
    # you can use the shorter syntax:
    $f->write_file( 'a new file.txt' => $content );
+
+      -OR-
+
+   # write UTF-8 encoded data also.  the file will have UTF-8 encoding:
+   $f->write_file( 'encoded.txt' => $encoded_data => { binmode => 'utf8' } );
 
 You can optionally specify a bitmask for a file if it doesn't exist yet.
 The bitmask is combined with the user's current umask for the creation
@@ -181,6 +196,11 @@ mode of the file.  (You should usually omit this.)
 
    my @dirs_and_files =
       $f->list_dir( '/foo' => { recurse => 1, max_depth => 3 } );
+
+=head2 Do the same, but ignore potential filesystem loops for a speed boost
+
+   my @dirs_and_files =
+      $f->list_dir( '/foo' => { recurse_fast => 1, max_depth => 3 } );
 
 =head2 Get the names of all files (no subdirectories) in a directory
 

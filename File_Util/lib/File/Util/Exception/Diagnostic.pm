@@ -33,6 +33,17 @@ sub _errors {
 
    # begin long table of helpful diag error messages
    my %error_msg_table = (
+# NO UNICODE SUPPORT
+'no unicode' => <<'__no_unicode__',
+$opts->{_pak} can't read/write with (binmode => 'utf8') because your version of
+Perl is not new enough to support unicode:
+   Your currently running Perl is $EBL$^V$EBR
+
+Origin:     This is a human error.
+Solution:   Upgrade to Perl version 5.008001 (5.8) or newer for unicode support
+            or do not use binmode => 'utf8' in your programs.
+__no_unicode__
+
 # NO SUCH FILE
 'no such file' => <<'__bad_open__',
 $opts->{_pak} can't open

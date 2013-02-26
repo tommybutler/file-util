@@ -33,6 +33,12 @@ sub _errors {
 
    # begin long table of helpful diag error messages
    my %error_msg_table = (
+# NO UNICODE SUPPORT
+'no unicode' => <<'__no_unicode__',
+Your version of Perl is not new enough to support unicode: $EBL$^V$EBR
+__no_unicode__
+
+
 # NO SUCH FILE
 'no such file' => <<'__bad_open__',
 File inaccessible or does not exist: $EBL$opts->{filename}$EBR
