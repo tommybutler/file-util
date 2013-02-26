@@ -6,7 +6,7 @@ use Test::More;
 
 if ( $ENV{RELEASE_TESTING} || $ENV{AUTHOR_TESTING} || $ENV{AUTHOR_TESTS} )
 {                            # the tests in this file have a higher probability
-   plan tests => 66;          # of failing in the wild, and so are reserved for
+   plan tests => 68;          # of failing in the wild, and so are reserved for
                              # the author/maintainers as release tests
    CORE::eval # hide the eval...
    '
