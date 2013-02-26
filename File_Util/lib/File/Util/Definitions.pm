@@ -13,7 +13,7 @@ use vars qw(
    $USE_FLOCK  @ONLOCKFAIL $ILLEGAL_CHR  $CAN_FLOCK
    $EBCDIC     $DIRSPLIT   $_LOCKS       $NEEDS_BINMODE
    $WINROOT    $ATOMIZER   $SL   $NL     $EMPTY_WRITES_OK
-   $FSDOTS     $AUTHORITY  $EBL  $EBR
+   $FSDOTS     $AUTHORITY  $EBL  $EBR    $HAVE_UU
 );
 
 use Exporter;
@@ -26,6 +26,7 @@ $AUTHORITY  = 'cpan:TOMMY';
    $EBCDIC     $DIRSPLIT   $_LOCKS       $NEEDS_BINMODE
    $WINROOT    $ATOMIZER   $SL   $NL     $EMPTY_WRITES_OK
    $FSDOTS     $AUTHORITY   SL    NL     $EBL   $EBR
+   $HAVE_UU
 );
 
 %EXPORT_TAGS = ( all => [ @EXPORT_OK ] );
@@ -37,6 +38,8 @@ BEGIN {
       require Config;
       eval { no warnings 'once'; $OS = $Config::Config{osname} }
    };
+
+   { local $@; eval { require 5.008001; }; $HAVE_UU = !$@; }
 
       if ( $OS =~ /^darwin/i ) { $OS = 'UNIX'      }
    elsif ( $OS =~ /^cygwin/i ) { $OS = 'CYGWIN'    }

@@ -86,7 +86,7 @@ sub _throw {
 
       if ( $error eq 'plain error' ) {
 
-         $opts->{error} = shift @_;
+         $opts->{error} ||= shift @_;
 
          $is_plain++;
       }
