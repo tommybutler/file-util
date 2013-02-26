@@ -1156,7 +1156,29 @@ sub load_file {
    # call binmode on binary files for portability accross platforms such
    # as MS flavor OS family
 
-   CORE::binmode( $fh ) if -B $clean_name;
+   binmode $fh if -B $clean_name;
+
+   # call binmode on the filehandle if it was requested or UTF-8
+   if ( $in->{binmode} )
+   {
+      if ( lc $in->{binmode} eq 'utf8' )
+      {
+         if ( $HAVE_UU )
+         {
+            binmode $fh, ':unix:encoding(UTF-8)';
+         }
+         else
+         {
+            close $fh;
+
+            return $this->_throw( 'no unicode' => $in );
+         }
+      }
+      else
+      {
+         binmode $fh;
+      }
+   }
 
    # assign the content of the file to this lexically scoped scalar variable
    # (memory for *that* variable will be freed when execution leaves this
@@ -1507,7 +1529,26 @@ sub write_file {
       }
    }
 
-   CORE::binmode( $write_fh ) if $in->{binmode};
+   if ( $in->{binmode} )
+   {
+      if ( lc $in->{binmode} eq 'utf8' )
+      {
+         if ( $HAVE_UU )
+         {
+            binmode $write_fh, ':unix:encoding(UTF-8)';
+         }
+         else
+         {
+            close $write_fh;
+
+            return $this->_throw( 'no unicode' => $in );
+         }
+      }
+      else
+      {
+         binmode $write_fh;
+      }
+   }
 
    syswrite( $write_fh, $content );
 
@@ -2620,8 +2661,27 @@ sub open_handle {
       }
    }
 
-   # call binmode on the filehandle if it was requested
-   CORE::binmode( $fh ) if $in->{binmode};
+   # call binmode on the filehandle if it was requested or UTF-8
+   if ( $in->{binmode} )
+   {
+      if ( lc $in->{binmode} eq 'utf8' )
+      {
+         if ( $HAVE_UU )
+         {
+            binmode $fh, ':unix:encoding(UTF-8)';
+         }
+         else
+         {
+            close $fh;
+
+            return $this->_throw( 'no unicode' => $in );
+         }
+      }
+      else
+      {
+         binmode $fh;
+      }
+   }
 
    # return file handle reference to the caller
    return $fh;
@@ -2895,6 +2955,10 @@ that use File::Util to easily accomplish tasks which require file handling.
       { binmode => 1, bitmask => oct 644 }
    );
 
+   # ...or write a file with UTF-8 encoding (unicode support), using the
+   # short notation: write_file( [file name] => [content] => { options } )
+   $f->write_file( 'encoded.txt' => qq(\x{c0}) => { binmode => 'utf8' } );
+
    # load a file into an array, line by line
    my @lines = $f->load_file( 'file.txt' => { as_lines => 1 } );
 
@@ -3153,9 +3217,6 @@ On Windows systems, the "sudo" part of the command may be omitted, but you
 will need to run the rest of the install command with Administrative privileges
 
 =head1 BUGS
-
-File::Util can't write files in UTF-8 encoding yet.  This limitation will go
-away soon.
 
 Send bug reports and patches to the CPAN Bug Tracker for File::Util at
 L<rt.cpan.org|https://rt.cpan.org/Dist/Display.html?Name=File%3A%3AUtil>
