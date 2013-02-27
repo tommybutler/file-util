@@ -3,15 +3,16 @@ use strict;
 use warnings;
 
 use Test::More;
-use File::Temp qw( tempdir );
+use File::Temp qw( tempfile );
 
 use lib './lib';
 
-use File::Util qw( SL NL existent );
-
+use File::Util qw( NL );
 
 BEGIN # determine if we can run these unicode tests, or skip_all
 {
+   $|++;
+
    {
       local $@;
 
@@ -34,23 +35,23 @@ __TEST_NOWARNINGS__
    }
 }
 
-my $ftl      = File::Util->new();
-my $tempdir  = tempdir( CLEANUP => 1 );
-my $tempfile = $tempdir . SL . time . $$ . '.tmp';
+my $ftl = File::Util->new();
+
+my ( $tempfh, $tempfile ) = tempfile; close $tempfh;
 
 $ftl->touch( $tempfile => { binmode => 'utf8' } );
 
 is utf8::is_utf8( $ftl->load_file( $tempfile => { binmode => 'utf8' } ) ),
    1, 'file touched and read as UTF-8 strict';
 
-unlink $tempfile or die $!;
+( $tempfh, $tempfile ) = tempfile; close $tempfh;
 
 $ftl->write_file( $tempfile => "\N{U+263A}" => { binmode => 'utf8' } );
 
 is utf8::is_utf8( $ftl->load_file( $tempfile => { binmode => 'utf8' } ) ),
    1, 'file written and read as UTF-8 strict';
 
-unlink $tempfile or die $!;
+( $tempfh, $tempfile ) = tempfile; close $tempfh;
 
 my $utf8fh = $ftl->open_handle( $tempfile => 'write' => { binmode => 'utf8' } );
 
@@ -63,7 +64,7 @@ close $utf8fh;
 is utf8::is_utf8( $ftl->load_file( $tempfile => { binmode => 'utf8' } ) ),
    1, 'file written via file handle API and read as UTF-8 strict';
 
-unlink $tempfile or die $!;
+( $tempfh, $tempfile ) = tempfile; close $tempfh;
 
 {
    local $@;
@@ -91,8 +92,6 @@ is utf8::is_utf8( readline $utf8fh ),
 $ftl->unlock_open_handle( $utf8fh );
 
 close $utf8fh;
-
-unlink $tempfile or die $!;
 
 # XXX ... more tests coming
 
