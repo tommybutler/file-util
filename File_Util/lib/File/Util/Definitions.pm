@@ -34,12 +34,14 @@ $AUTHORITY  = 'cpan:TOMMY';
 BEGIN {
 
    # Some OS logic.
-   unless ( $OS = $^O ) {
+   unless ( $OS = $^O )
+   {
       require Config;
-      eval { no warnings 'once'; $OS = $Config::Config{osname} }
+
+      { no warnings 'once'; $OS = $Config::Config{osname} }
    };
 
-   { local $@; eval { require 5.008001; }; $HAVE_UU = !$@; }
+   { local $@; $HAVE_UU = eval { require 5.008001 } }
 
       if ( $OS =~ /^darwin/i ) { $OS = 'UNIX'      }
    elsif ( $OS =~ /^cygwin/i ) { $OS = 'CYGWIN'    }
