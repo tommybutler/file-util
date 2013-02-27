@@ -1,7 +1,8 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use 5.10.0;
+
+BEGIN { sub say { print shift || 'Something is wrong'; print "\n" } } # << hack for old perl versions
 
 use Encode 'is_utf8';
 
@@ -21,7 +22,7 @@ say 'Load file in raw mode';
 my $content = $ftl->load_file( $tmpfile );
 
 say 'Check if loaded content looks like UTF-8';
-say is_utf8( $content )
+say Encode::is_utf8( $content )
    ? ' -> String is UTF-8 encoded'
    : ' -> String is NOT UTF-8 encoded';
 say '...';
