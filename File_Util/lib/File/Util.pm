@@ -3212,6 +3212,9 @@ C<use File::Util qw( strip_path NL );>
 
    :diag (imports nothing to your namespace, it just enables diagnostics)
 
+You can use these tags alone, or in combination with individual symbols as
+shown above.
+
 =head1 PREREQUISITES
 
 =over
@@ -3220,11 +3223,11 @@ C<use File::Util qw( strip_path NL );>
 
 File::Util only depends on modules that are part of the Core Perl distribution
 
-=item L<Perl|perl> 5.8 or better ...
+=item L<Perl|perl> 5.8.1 or better ...
 
 You can technically run File::Util on older versions of Perl 5, but it isn't
-recommended.  The minimum version requirement will likely increase soon with
-the advent of increasingly better unicode support.
+recommended, especially if you want unicode support and wish to take advantage
+of File::Util's ability to read and write files using UTF-8 encoding.
 
 =back
 

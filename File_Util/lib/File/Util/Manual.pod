@@ -1541,6 +1541,37 @@ section (above), along with proper syntax and example usage.
 
 =back
 
+=head2 C<onfail>
+
+=over
+
+=item I<Syntax:> C<onfail( [keyword or code reference] )>
+
+Dynamically set/change the default error handling policy for an object.
+
+This works exactly the same as it does when you specify an "onfail"
+handler to the constructor method (I<see also C<L<new|/new>>>).
+
+The syntax and keywords available to use for this method are already disussed
+above in the L<ERROR HANDLING|/ERROR HANDLING> section, so refer to that for
+in-depth details.
+
+Here are some examples:
+
+   $ftl->onfail( 'die' );
+
+   $ftl->onfail( 'zero' );
+
+   $ftl->onfail( 'undefined' );
+
+   $ftl->onfail( 'message' );
+
+   $ftl->onfail( \&subroutine_reference );
+
+   $ftl->onfail( sub { my ( $error, $stack_trace ) = @_; ... } );
+
+=back
+
 =head2 C<open_handle>
 
 =over
