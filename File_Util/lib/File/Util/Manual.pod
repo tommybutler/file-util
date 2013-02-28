@@ -1429,7 +1429,7 @@ is returned to the caller.
 
 Example:
 
-   $f->make_dir( '/home/jspice' => 755 => { if_not_exists => 1 } );
+   $f->make_dir( '/home/jspice' => oct 755 => { if_not_exists => 1 } );
 
 If this option is enabled then make_dir will not attempt to create the directory
 if it already exists.  Rather it will return the name of the directory as it
