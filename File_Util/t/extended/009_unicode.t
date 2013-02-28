@@ -37,6 +37,8 @@ __TEST_NOWARNINGS__
 
 my $ftl = File::Util->new();
 
+$ftl->use_flock( 0 ) if $^O =~ /solaris|sunos/i;
+
 my ( $tempfh, $tempfile ) = tempfile; close $tempfh;
 
 $ftl->touch( $tempfile => { binmode => 'utf8' } );
