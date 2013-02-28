@@ -75,3 +75,5 @@ Not necessarily listed in order of priority:
 
 17) [DONE] keep track of inodes seen while traversing directories to avoid
     filesystem loops
+
+18) Write even more unicode tests

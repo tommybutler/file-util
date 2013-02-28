@@ -1,5 +1,17 @@
 Revision history for Perl extension File::Util.pm
 
+4.130590 Wed Feb 27 21:59:30 CST 2013
+
+ - TRIAL version, probably the final trial before release as a mature distro
+   in the 4.x series (the 3.x series is already "mature" status).
+
+ - This release introduces unicode support via UTF-8 strict.  Naturally
+   the test suite and coverage had to be expanded to cover the new feature
+   set.  Documentation has also been updated to include explanation of
+   how to make use UTF-8 encoding in File::Util.
+
+ - Minor bug fixes and polish.
+
 4.130560 Mon Feb 25 14:03:44 CST 2013
 
  - TRIAL version, seventh trial in 4.x series.  I am just about confident

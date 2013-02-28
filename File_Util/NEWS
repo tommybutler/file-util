@@ -1,5 +1,9 @@
 NEWS for File::Util
 
+Wed Feb 27 21:55:28 CST 2013
+   Testing suite and documentation updated with information regarding the
+   support of UTF-8 in File::Util and how to use it.  Minor bug fixes.
+
 Mon Feb 25 19:36:21 CST 2013
    The latest version introduces unicode support for reading/writing/appending
    via UTF-8 encoding.  See the documentation for details.
