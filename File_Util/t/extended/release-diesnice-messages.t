@@ -504,7 +504,7 @@ like( $f->_throw( 'bad abort_depth' => { } ),
 
 # 23
 like( $f->_throw( 'abort_depth exceeded' => { diag => 1 } ),
-   qr/Recursion limit reached at .+?dives\.  Maximum number of/,
+   qr/Recursion limit reached at .+?dives\.  The maximum level of/,
    'abort_depth exceeded (diagnostic mode)'
 );
 
