@@ -2933,19 +2933,13 @@ that use File::Util to easily accomplish tasks which require file handling.
 =head2 File Operations
 
    # load content into a variable, be it text, or binary, either works
-   my $content = $f->load_file( 'Meeting Notes.txt' );
-
-   # ...or do it with diagnostics, for just for this call
-   $content = $f->load_file( 'Meeting Notes.txt' => { diag => 1 } );
+   my $content = $f->load_file( 'data.txt' );
 
    # wrangle some text
    $content =~ s/this/that/g;
 
-   # re-write the file with your changes
-   $f->write_file(
-      file => 'Meeting Notes.txt',
-      content => $content,
-   );
+   # write a file with your changes
+   $f->write_file( 'new_data.txt' => $content );
 
    # try binary this time
    my $binary_content = $f->load_file( 'barking-cat.avi' );
@@ -2955,13 +2949,10 @@ that use File::Util to easily accomplish tasks which require file handling.
 
    # ...and write a binary image file, using some other options as well
    $f->write_file(
-      file => 'llama.jpg',
-      content => $picture_data,
-      { binmode => 1, bitmask => oct 644 }
+      'llama.jpg' => $picture_data => { binmode => 1, bitmask => oct 644 }
    );
 
-   # ...or write a file with UTF-8 encoding (unicode support), using the
-   # short notation: write_file( [file name] => [content] => { options } )
+   # ...or write a file with UTF-8 encoding (unicode support)
    $f->write_file( 'encoded.txt' => qq(\x{c0}) => { binmode => 'utf8' } );
 
    # load a file into an array, line by line
@@ -2970,10 +2961,7 @@ that use File::Util to easily accomplish tasks which require file handling.
    # see if you have permission to write to a file, then append to it
    if ( $f->is_writable( 'captains.log' ) ) {
 
-      my $fh = $f->open_handle(
-         file => 'captains.log',
-         mode => 'append'
-      );
+      my $fh = $f->open_handle( 'captains.log' => 'append' );
 
       print $fh "Captain's log, stardate 41153.7.  Our destination is...";
 
@@ -2990,24 +2978,31 @@ that use File::Util to easily accomplish tasks which require file handling.
 =head2 File Handles
 
    # get an open file handle for reading
-   my $fh = $f->open_handle( file => 'Ian likes cats.txt', mode => 'read' );
+   my $fh = $f->open_handle( 'Ian likes cats.txt' => 'read' );
 
    while ( my $line = <$fh> ) { # read the file, line by line
-
       # ... do stuff
    }
 
-   close $fh or die $!; # don't forget to close ;-)
+   # get an open file handle for writing the same way
+   $fh = $f->open_handle( 'John prefers dachshunds.txt' => 'write' );
 
-   # get an open file handle for writing
+   # You add the option to turn on UTF-8 strict encoding for your reads/writes
    $fh = $f->open_handle(
-      file => 'John prefers dachshunds.txt',
-      mode => 'write'
+      'John prefers dachshunds.txt' => 'write' => { binmode => 'utf8' }
    );
 
-   print $fh 'Shout out to Bob!';
+   print $fh "Bob is happy! \N{U+263A}"; # << unicode smiley face!
 
-   close $fh or die $!; # don't forget to close ;-)
+   # you can use sysopen to get low-level with your file handles if needed
+   $fh = $f->open_handle(
+      'alderaan.txt' => 'rwclobber' => { use_sysopen => 1 }
+   );
+
+   syswrite $fh, "that's no moon";
+
+   # ...you can use any of these syswrite modes, also with { binmode => 'utf8' }
+   # read, write, append, rwcreate, rwclobber, rwappend, rwupdate, and trunc
 
 =head2 Directories
 
@@ -3023,22 +3018,12 @@ that use File::Util to easily accomplish tasks which require file handling.
       }
    );
 
-   # walk a directory, using an anonymous function or function ref as a
-   # callback (higher order Perl)
+   # walk a directory, using an anonymous function or function ref as a callback
    $f->list_dir( '/home/larry' => {
       recurse  => 1,
       callback => sub {
          my ( $selfdir, $subdirs, $files ) = @_;
-
-         print "In $selfdir there are...\n";
-
-         print scalar @$subdirs . " subdirectories, and ";
-         print scalar @$files   . " files\n";
-
-         for my $file ( @$files ) {
-
-            # ... do something with $file
-         }
+         # do stuff ...
       },
    } );
 
@@ -3056,7 +3041,7 @@ that use File::Util to easily accomplish tasks which require file handling.
    print 'My file was last modified on ' .
       scalar localtime $f->last_modified( 'my.file' );
 
-=head1 Getting Information About Your System's IO Capabilities
+=head2 Getting Information About Your System's IO Capabilities
 
    # Does your running Perl support unicode?
    print 'I support unicode' if $f->can_utf8;
@@ -3212,7 +3197,7 @@ C<use File::Util qw( strip_path NL );>
 
    :diag (imports nothing to your namespace, it just enables diagnostics)
 
-You can use these tags alone, or in combination with individual symbols as
+You can use these tags alone, or in combination with other symbols as
 shown above.
 
 =head1 PREREQUISITES
