@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Test::NoWarnings;
-use Test::More tests => 9;
+use Test::More tests => 8;
 
 use lib './lib';
 
@@ -13,7 +13,6 @@ use File::Util::Interface::Modern;
 use File::Util::Exception;
 use File::Util::Exception::Standard;
 use File::Util::Exception::Diagnostic;
-use File::Util::ProxyLog;
 
 is File::Util::DESTROY(),
    undef,
@@ -42,9 +41,5 @@ is File::Util::Exception::Standard::DESTROY(),
 is File::Util::Exception::Diagnostic::DESTROY(),
    undef,
    'File::Util::Exception::Diagnostic::DESTROY() returns as expected';
-
-is File::Util::ProxyLog::DESTROY(),
-   undef,
-   'File::Util::ProxyLog::DESTROY() returns as expected';
 
 exit;

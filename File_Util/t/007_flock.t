@@ -9,7 +9,6 @@ use File::Temp qw( tmpnam );
 
 use lib './lib';
 use File::Util qw( SL NL OS );
-use File::Util::ProxyLog;
 
 my $f = File::Util->new( { onfail => 'zero' } );
 
