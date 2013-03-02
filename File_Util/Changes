@@ -1,5 +1,12 @@
 Revision history for Perl extension File::Util.pm
 
+4.130610 Sat Mar  2 01:13:46 CST 2013
+
+ - TRIAL version, much polish on the quality of the distribution itself,
+   including extensive POD checks, fixes in documentation quality, and
+   overall tidiness.  Reorganized the test suite so it remains correct to
+   "t" and "xt" test division conventions.  Included a list of contributors.
+
 4.130590 Wed Feb 27 21:59:30 CST 2013
 
  - TRIAL version, probably the final trial before release as a mature distro
