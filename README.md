@@ -5,13 +5,13 @@ This is the git repository for the File::Util Perl 5 package
 
 If you want to DOWNLOAD a packaged release of File::Util, this is not the 
 place to get it. Use your CPAN client or download a package from 
-http://search.cpan.org (search for File::Util)
+https://metacpan.org/module/File::Util
 
 If you want HELP with File::Util, or even if you want to complain about 
 it, send me an email from www.atrixnet.com/contact or post your question 
 at www.perlmonks.org
 
-If you want INFORMATION about File::Util, go to http://search.cpan.org/~tommy 
+If you want INFORMATION about File::Util, go to https://metacpan.org/author/TOMMY 
 and click on the "File::Util" link. All the documentation and packaged 
 distributions are there.
 
