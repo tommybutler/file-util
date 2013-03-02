@@ -15,7 +15,7 @@ This manual is is the complete reference to all available public methods for use
 in L<File::Util>.  It also touches on a few other topics as set forth below.
 
 For a "nutshell"-type reference full of actual small example code snippets, take
-a look ath the L<File::Util::Manual::Examples>
+a look at the L<File::Util::Manual::Examples>
 
 For examples of full Programs using File::Util, take a look at the
 L<File::Util::Cookbook>.
@@ -36,7 +36,7 @@ tools to wrangle files and directories.  It has higher order methods
 of File::Util's object methods and they will be treated like "callbacks").
 
 File::Util is mainly Object-Oriented Perl, but strives to be gentle and
-accomodating to those who do not know about or who do not like "OO" interfaces.
+accommodating to those who do not know about or who do not like "OO" interfaces.
 As such, many of the object methods available in File::Util can also be
 imported into your namespace and I<used like regular subroutines> to make
 short work of simple tasks.
@@ -389,8 +389,9 @@ Methods listed in alphabetical order.
 
 =item I<Syntax:> C<atomize_path( [/file/path or file_name] )>
 
-This method is used internally by File::Util to portably handle absolute
-filenames on different platforms, but it can be a useful tool for you as well.
+This method is used internally by File::Util to handle absolute filenames on
+different platforms in a portable manner, but it can be a useful tool for you
+as well.
 
 This method takes a single string as its argument.  The string is expected
 to be a fully-qualified (absolute) or relative path to a file or directory.
@@ -767,7 +768,7 @@ directory is inaccessible.
 Note that this is one of File::Util's most robust methods, and can be very
 useful.  It can be used as a higher order function (accepting callback
 subrefs), and can be used for advanced pattern matching against files.
-It can also return a heirarchal datastructure of the file tree you ask it to
+It can also return a hierarchical data structure of the file tree you ask it to
 walk.
 
 See the L<File::Util::Manual::Examples> for several useful ways to use
@@ -907,7 +908,7 @@ when walking directories with callbacks.
 
 =item C<< with_paths => boolean >>
 
-Return results with the preceeding file paths intact, relative
+Return results with the preceding file paths intact, relative
 to the directory named in the call.
 
 =item C<< recurse => boolean >>
@@ -972,9 +973,9 @@ specified by other options (i.e.- "dirs_only", "recurse", etc.)
 
 =item C<< as_tree => boolean >>
 
-Returns a hierarchal datastructure (hashref) of the file tree in the directory
+Returns a hierarchical data structure (hashref) of the file tree in the directory
 you specify as the first argument to C<list_dir()>.  Use in combination with
-other options to get the exact results you want in the datastructure.
+other options to get the exact results you want in the data structure.
 
 *Note: When using this option, the C<"files_only"> and C<"dirs_only"> options
 are ignored, but you can still specify things like a C<"max_depth"> argument,
@@ -1042,7 +1043,7 @@ it to with C<< recurse => 1 >>
 
 C<list_dir()> can use Perl L<Regular Expressions|perlre> to match against
 and thereby filter the results it returns.  It can match based on file name,
-directory name, the path preceeding results, and the parent directory of
+directory name, the path preceding results, and the parent directory of
 results.  The matching arguments you use must be real regular expression
 references as shown (i.e.- NOT strings).
 
@@ -1065,13 +1066,13 @@ I<result in considerable slowdowns and bottlenecks in any application.>
 
 =item I<OR:> C<< files_match => { and/or => [ qr/listref of/, qr/regexps/ ] } >>
 
-Return only file names matching the regex(es).  Preceeding directories are
+Return only file names matching the regex(es).  Preceding directories are
 included in the results; for technical reasons they are not excluded (if they
 were excluded, C<list_dir()> would not be able to "cascade" or recurse into
 subdirectories in search of matching files.
 
 Use the C<files_only> option in combination with this matching parameter to
-exclude the preceeding directory names.
+exclude the preceding directory names.
 
 =item C<< dirs_match => qr/regexp/ >>
 
@@ -1096,7 +1097,7 @@ this with the C<dirs_only> option.
 
 =item I<OR:> C<< path_matches => { and/or => [ qr/listref of/, qr/regexps/ ] } >>
 
-Return only files and subdirectory names with preceeding paths that match the
+Return only files and subdirectory names with preceding paths that match the
 regex(es) you specify.
 
 =item C<< parent_matches => qr/regexp reference/ >>
@@ -1261,7 +1262,7 @@ particularly when dealing with large lists.
 
 C<load_dir()> does not recurse or accept matching parameters, etc.  It's an
 effective tool for loading up things like a directory of template files on
-a webserver, or to store binary data streams in memory.  Use it however you
+a web server, or to store binary data streams in memory.  Use it however you
 like.
 
 However, if you do want to load files into a hashref/listref or array while
@@ -1552,7 +1553,7 @@ Dynamically set/change the default error handling policy for an object.
 This works exactly the same as it does when you specify an "onfail"
 handler to the constructor method (I<see also C<L<new|/new>>>).
 
-The syntax and keywords available to use for this method are already disussed
+The syntax and keywords available to use for this method are already discussed
 above in the L<ERROR HANDLING|/ERROR HANDLING> section, so refer to that for
 in-depth details.
 
@@ -1594,7 +1595,7 @@ C<File::Util> object is created I<(see L<new|/new>)> or by using the
 C<no_lock> option when calling C<open_handle>, that file locking is going to
 automagically be handled for you behind the scenes, so long as your OS supports
 file locking of any kind at all.  Great!  It's very convenient for you to not
-have to worry about portably taking care of file locking between one
+have to worry about portability in taking care of file locking between one
 application and the next; by using C<File::Util> in all of them, you know
 that you're covered.
 
@@ -1784,7 +1785,7 @@ can't mix native Perl I/O with system I/O.
 =item I<Syntax:> C<read_limit( [positive integer] )>
 
 By default, the largest size file that File::Util will read into memory and
-return via the L<load_file|/load_file> is 52428800 byptes (50 megabytes).
+return via the L<load_file|/load_file> is 52428800 bytes (50 megabytes).
 
 This value can be modified by calling this method with an integer value
 reflecting the new limit you want to impose, in bytes.  For example, if you want
@@ -2039,7 +2040,7 @@ to the end of the file.
 =item C<< binmode => [ boolean or 'utf8' ] >>
 
 Tell File::Util to write the file in binmode (if set to a true boolean: B<C<1>>),
-or to write the file with UTF-8 encodeding, specify a value of B<C<utf8>> to this
+or to write the file with UTF-8 encoding, specify a value of B<C<utf8>> to this
 option.  I<(see L<perlfunc/binmode>)>.
 
 You need Perl 5.8 or better to use C<"utf8"> or your program will fail with
@@ -2084,7 +2085,7 @@ For the given string, returns 1 if the string is a legal file name for the
 system on which the program is running, or returns undef if it is not.  This
 method does not test for the validity of file paths!  It tests for the validity
 of file names only.  (It is used internally to check beforehand if a file name
-is useable when creating new files, but is also a public method available for
+is usable when creating new files, but is also a public method available for
 external use.)
 
 =back
@@ -2121,7 +2122,7 @@ which your program runs.
 
 Returns the File::Util keyword for the operating system B<FAMILY> it detected.
 The keyword for the detected operating system will be one of the following,
-derived from the conents of C<$^O>, or if C<$^O> can not be found, from the
+derived from the contents of C<$^O>, or if C<$^O> can not be found, from the
 contents of C<$Config::Config{osname}> (see native L<Config> library), or if
 that doesn't contain a recognizable value, finally falls back to C<UNIX>.
 

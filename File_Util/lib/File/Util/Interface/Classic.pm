@@ -138,7 +138,7 @@ and private methods of File::Util.  It is as a subclass for File::Util
 developers that want to use it, and provides some base methods that are
 inherited by L<File::Util::Interface::Modern>, but the _remove_opts method
 is overridden in that namespace, whose more progressive version of that
-method supports both ::Classic and ::Modern call syntaxen.
+method supports both ::Classic and ::Modern call syntaxes.
 
 Users, don't use this module by itself.  It is intended for internal use only.
 

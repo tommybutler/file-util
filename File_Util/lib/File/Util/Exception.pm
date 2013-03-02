@@ -92,12 +92,6 @@ sub _throw {
       }
    }
 
-   ## no critic
-   map { $_ = defined $_ ? $_ : 'undefined value' }
-   keys %$opts
-   unless $is_plain;
-   ## use critic
-
    my $bad_news = CORE::eval # tokenizing via stringy eval (is NOT evil)
    (
       '<<__ERRBLOCK__' . NL .

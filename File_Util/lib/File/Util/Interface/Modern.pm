@@ -79,7 +79,7 @@ sub _remove_opts {
          # ...as oppsed to the classic syntax:
          #     e.g.- $ftl->method( arg => value, --opt1=value, --flag )
          #
-         # the bit of code below makes it possible to support both call syntaxen
+         # the bit of code below makes it possible to support both call syntaxes
 
          @$opts{ keys %$arg } = values %$arg; # crane lower that rover (ahhhhh)
                                               # err, Perl flatcopy that hashref
