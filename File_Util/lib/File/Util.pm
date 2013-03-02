@@ -2823,9 +2823,7 @@ sub AUTOLOAD {
    }
    elsif ( exists $redirect_methods->{ $name } ) {
 
-      ## no critic
       { no strict 'refs'; *{ $name } = $redirect_methods->{ $name } }
-      ## use critic
 
       goto \&$name;
    }
@@ -2876,11 +2874,11 @@ I<(See L<DOCUMENTATION|/DOCUMENTATION> section below.)>
    # create a new File::Util object
    my $f = File::Util->new();
 
-   # load a file into a variable
+   # read file into a variable
    my $content = $f->load_file( 'some_file.txt' );
 
    # write content to a file
-   $f->write_file( 'another_file.txt' => $content );
+   $f->write_file( 'some_other_file.txt' => 'Hello world!' );
 
    # get the contents of a directory, 3 levels deep
    my @songs = $f->list_dir( '~/Music' => { recurse => 1, max_depth => 3 } );
@@ -2902,7 +2900,7 @@ need is here.
 
 =item B<The Manual>
 
-The L<File::Util::Manual> is the complete reference document explaing every
+The L<File::Util::Manual> is the complete reference document explaining every
 available feature and object method.  Use this to look up the full information
 on any given feature when the examples aren't enough.
 
@@ -3177,19 +3175,27 @@ The following symbols comprise C<@File::Util::EXPORT_OK>), and as such are
 available for import to your namespace only upon request.  They can be
 used either as object methods or like regular subroutines in your program.
 
+   -  atomize_path        -  can_flock         -  can_utf8
+   -  created             -  diagnostic        -  ebcdic
+   -  escape_filename     -  existent          -  file_type
+   -  is_bin              -  is_readable       -  is_writable
+   -  last_access         -  last_changed      -  last_modified
+   -  needs_binmode       -  return_path       -  size
+   -  split_path          -  strip_path        -  valid_filename
+   -  NL and S L
+
 To get any of these functions/symbols into your namespace without having
-to use them as an object method, use this kind of syntax:
+to use them as object methods, use this kind of syntax:
 
-C<use File::Util qw( strip_path NL );>
+   use File::Util qw( strip_path return_path existent size );
 
-   * atomize_path      * can_flock         * can_utf8
-   * created           * diagnostic        * ebcdic
-   * escape_filename   * existent          * file_type
-   * is_bin            * is_readable       * is_writable
-   * last_access       * last_changed      * last_modified
-   * needs_binmode     * return_path       * size
-   * split_path        * strip_path        * valid_filename
-   * NL and SL
+   my $file  = $ARGV[0];
+   my $fname = strip_path( $file );
+   my $path  = return_path( $file );
+   my $size  = size( $file );
+
+   print qq(File "$fname" exists in "$path", and is $size bytes in size)
+      if existent( $file );
 
 =head2 EXPORT_TAGS
 
@@ -3204,11 +3210,12 @@ shown above.
 
 =over
 
-=item No External Prerequisites
+=item None.  There are no external prerequisite modules.
 
-File::Util only depends on modules that are part of the Core Perl distribution
+File::Util only depends on modules that are part of the Core Perl distribution,
+and you don't need a compiler on your system to install it.
 
-=item L<Perl|perl> 5.8.1 or better ...
+=item File::Util recommends L<Perl|perl> 5.8.1 or better ...
 
 You can technically run File::Util on older versions of Perl 5, but it isn't
 recommended, especially if you want unicode support and wish to take advantage
@@ -3251,6 +3258,36 @@ L<https://github.com/tommybutler/file-util>
 Clone it at L<git://github.com/tommybutler/file-util.git>
 
 This project was a private endeavor for too long so don't hesitate to pitch in.
+
+=head1 CONTRIBUTORS
+
+The following people have contributed to File::Util in the form of feedback,
+encouragement, recommendations, testing, or assistance with problems either
+on or offline in one form or another.  Listed in no particular order:
+
+=over
+
+=item *
+
+John Fields <jfields.cpan.org@spammenot.com>
+
+=item *
+
+BrowserUk <browseruk@cpan.org>
+
+=item *
+
+Ricardo SIGNES <rjbs@cpan.org>
+
+=item *
+
+Matt S Trout <perl-stuff@trout.me.uk>
+
+=item *
+
+Nicholas Perez <nperez@cpan.org>
+
+=back
 
 =head1 AUTHORS
 
