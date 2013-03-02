@@ -3062,17 +3062,17 @@ error handlers, and more.
 
 =head1 PERFORMANCE
 
-File::Util has been optimized to run fast.*  In many scenarios it can
-out-perform other modules (like some of those listed in the SEE ALSO section)
-from anywhere from 100%-400% -- I<(See the benchmarking and profiling scripts>
-I<that are included as part of this distribution.)>
-
 File::Util consists of several modules, but only loads the ones it needs when
 it needs them and also offers a comparatively fast load-up time, so using
 File::Util doesn't bloat your code footprint.
 
-I<*Sometimes it doesn't matter how fast you can search through a directory 1000>
-I<times.  Performance alone isn't the best criteria for choosing a module.>
+Additionally, File::Util has been optimized to run fast.*  In many scenarios
+it does more and still out-performs other popular IO modules from anywhere
+from 100%-400%, although L<Path::Tiny> is also extremely fast at what it is
+designed to do.
+
+I<(See the benchmarking and profiling scripts>
+I<that are included as part of this distribution.)>
 
 =head1 METHODS
 
@@ -3287,6 +3287,10 @@ Matt S Trout <perl-stuff@trout.me.uk>
 
 Nicholas Perez <nperez@cpan.org>
 
+=item *
+
+David Golden <dagolden@cpan.org>
+
 =back
 
 =head1 AUTHORS
@@ -3316,10 +3320,11 @@ This disclaimer applies to every part of the File::Util distribution.
 =head1 SEE ALSO
 
 The rest of the documentation:
-L<File::Util::Manual>, L<File::Util::Manual::Examples>, L<File::Util::Cookbook>,
+L<File::Util::Manual>, L<File::Util::Manual::Examples>, L<File::Util::Cookbook>
 
 Other Useful Modules that do similar things:
-L<File::Slurp>, L<File::Spec>, L<File::Find::Rule>, L<Path::Class>
+L<File::Slurp>, L<File::Spec>, L<File::Find::Rule>, L<Path::Class>,
+L<Path::Tiny>
 
 =cut
 
