@@ -1,5 +1,10 @@
 NEWS for File::Util
 
+Thu Jun  6 23:11:39 CDT 2013
+   Since Sat Mar 2 01:13:46 CST 2013, 580 test runs from the CPAN testers
+   have had 100% complete PASSes.  I'm releasing the code as-is, as
+   "STABLE"/"MATURE"
+
 Wed Feb 27 21:55:28 CST 2013
    Testing suite and documentation updated with information regarding the
    support of UTF-8 in File::Util and how to use it.  Minor bug fixes.

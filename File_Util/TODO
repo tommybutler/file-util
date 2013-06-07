@@ -77,3 +77,7 @@ Not necessarily listed in order of priority:
     filesystem loops
 
 18) Write even more unicode tests
+
+19) Create option to allow user to specify that atomic file operations should
+    be performed instead of regular IO.  It's a handy feature that will be
+    added in soon
