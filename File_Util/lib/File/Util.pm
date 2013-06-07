@@ -3066,7 +3066,7 @@ File::Util consists of several modules, but only loads the ones it needs when
 it needs them and also offers a comparatively fast load-up time, so using
 File::Util doesn't bloat your code footprint.
 
-Additionally, File::Util has been optimized to run fast.*  In many scenarios
+Additionally, File::Util has been optimized to run fast.  In many scenarios
 it does more and still out-performs other popular IO modules from anywhere
 from 100%-400%, although L<Path::Tiny> is also extremely fast at what it is
 designed to do.
@@ -3171,7 +3171,7 @@ You can, however, ask it for certain things (below).
 
 =head2 EXPORT_OK
 
-The following symbols comprise C<@File::Util::EXPORT_OK>), and as such are
+The following symbols comprise C<@File::Util::EXPORT_OK>, and as such are
 available for import to your namespace only upon request.  They can be
 used either as object methods or like regular subroutines in your program.
 

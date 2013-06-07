@@ -1,18 +1,23 @@
 Revision history for Perl extension File::Util.pm
 
+4.131591 Fri Jun  7 22:19:05 CDT 2013
+
+ - POD (documentation) corrections.
+
 4.131570 Thu Jun  6 23:15:27 CDT 2013
-   Since Sat Mar 2 01:13:46 CST 2013, there has been an unofficial code
+
+ - Since Sat Mar 2 01:13:46 CST 2013, there has been an unofficial code
    freeze in effect, during which time 580 test runs from the CPAN smoke
    testers have had a 100% complete PASS rate.
 
-   So I'm pleased to announce that I'm releasing this code as-is, under
+ - So I'm pleased to announce that I'm releasing this code as-is, under
    the "STABLE"/"MATURE" designation.
 
-   There are important bug fixes since the last STABLE release, particularly
+ - There are important bug fixes since the last STABLE release, particularly
    in making the File::Util::max_dives() method behave as documented.  See
    also https://rt.cpan.org/Ticket/Display.html?id=85141
 
-   Near future plans are laid out in the TODO documentation file also
+ - Near future plans are laid out in the TODO documentation file also
    included with this documentation.
 
 4.130610 Sat Mar  2 01:13:46 CST 2013

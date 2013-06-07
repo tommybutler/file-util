@@ -242,7 +242,7 @@ mode of the file.  (You should usually omit this.)
 =head2 Recursively Get the names of all files that end in '.pl'
 
    my @perl_files = $f->list_dir(
-      '/home/scripts' => { files_match => qr/\.txt$/, recurse => 1 }
+      '/home/scripts' => { files_match => qr/\.pl$/, recurse => 1 }
    }
 
 =head2 Recursively get the names of all files that do NOT end in '.pl'
@@ -282,11 +282,13 @@ of patterns (AND).
    );
 
 The above example would find and return files like:
+
    /home/anakin/mentors/obi-wan/villains/darth-vader/R2.png
    /home/anakin/mentors/obi-wan/villains/darth-vader/C3P0.dict
    /home/anakin/mentors/obi-wan/villains/darth-vader/my_droids.list
 
 But would not return files like:
+
    /home/anakin/mentors/Qui-Gon Jinn/villains/darth-vader/my_droids.list
 
 =head2 Use a callback to descend through (walk) a directory tree
