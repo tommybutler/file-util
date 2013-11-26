@@ -23,6 +23,7 @@ our @EXPORT_OK  = qw(
    is_bin  created     last_access   last_changed  last_modified
    isbin   split_path  atomize_path  diagnostic    abort_depth
    size    can_read    can_write     read_limit    can_utf8
+                       default_path  strict_path
 );
 
 our %EXPORT_TAGS = ( all => [ @EXPORT_OK ], diag => [ ] );
@@ -1661,7 +1662,7 @@ sub atomize_path {
 
 
 # --------------------------------------------------------
-# File::Util::atomize_path()
+# File::Util::split_path()
 # --------------------------------------------------------
 sub split_path {
    my $path = _myargs( @_ );
@@ -1806,7 +1807,7 @@ sub touch {
       'cant touch on a dir',
       {
          filename => $file,
-         dirname  => $path || '',
+         dirname  => $path,
          opts     => $opts,
       }
    ) if -e $file && -d $file;
@@ -2717,7 +2718,42 @@ sub unlock_open_handle {
 # --------------------------------------------------------
 # File::Util::return_path()
 # --------------------------------------------------------
-sub return_path { my $f = _myargs( @_ ); $f =~ s/(^.*)$DIRSPLIT.*/$1/o; $f }
+sub return_path { my $f = _myargs( @_ ); $f =~ s/(^.*)$DIRSPLIT.*/$1/; $f }
+
+
+# --------------------------------------------------------
+# File::Util::strict_path()
+# --------------------------------------------------------
+sub strict_path
+{
+   my $path = _myargs( @_ );
+   my $copy = $path;
+
+   ( $path ) = $path =~ /(^.*$DIRSPLIT)/;
+
+   ( $path ) = $copy =~ /(^\.{1,2}$)/ if !defined $path;
+
+   return unless defined $path;
+
+   $path .= SL unless substr $path, -1, 1 =~ /$DIRSPLIT/;
+
+   return $path =~ /$DIRSPLIT/ ? $path : undef;
+}
+
+
+# --------------------------------------------------------
+# File::Util::default_path()
+# --------------------------------------------------------
+sub default_path
+{
+   my ( $path, $dflt ) = _myargs( @_ );
+
+   $dflt = defined $dflt ? $dflt : '.' . SL;
+
+   $path = strict_path( $path );
+
+   return defined $path ? $path : $dflt;
+}
 
 
 # --------------------------------------------------------
@@ -3096,6 +3132,8 @@ this document in a text terminal, open perldoc to the C<File::Util::Manual>.
 
 =item created              I<(see L<created|File::Util::Manual/created>)>
 
+=item default_path         I<(see L<default_path|File::Util::Manual/default_path>)>
+
 =item diagnostic           I<(see L<diagnostic|File::Util::Manual/diagnostic>)>
 
 =item ebcdic               I<(see L<ebcdic|File::Util::Manual/ebcdic>)>
@@ -3148,6 +3186,8 @@ this document in a text terminal, open perldoc to the C<File::Util::Manual>.
 
 =item split_path           I<(see L<split_path|File::Util::Manual/split_path>)>
 
+=item strict_path          I<(see L<strict_path|File::Util::Manual/strict_path>)>
+
 =item strip_path           I<(see L<strip_path|File::Util::Manual/strip_path>)>
 
 =item touch                I<(see L<touch|File::Util::Manual/touch>)>
@@ -3175,14 +3215,14 @@ The following symbols comprise C<@File::Util::EXPORT_OK>, and as such are
 available for import to your namespace only upon request.  They can be
 used either as object methods or like regular subroutines in your program.
 
-   -  atomize_path        -  can_flock         -  can_utf8
-   -  created             -  diagnostic        -  ebcdic
-   -  escape_filename     -  existent          -  file_type
-   -  is_bin              -  is_readable       -  is_writable
-   -  last_access         -  last_changed      -  last_modified
-   -  needs_binmode       -  return_path       -  size
-   -  split_path          -  strip_path        -  valid_filename
-   -  NL and S L
+   -  atomize_path      -  can_flock         -  can_utf8
+   -  created           -  default_path      -  diagnostic
+   -  ebcdic            -  escape_filename   -  existent
+   -  file_type         -  is_bin            -  is_readable
+   -  is_writable       -  last_access       -  last_changed
+   -  last_modified     -  needs_binmode     -  strict_path
+   -  return_path       -  size              -  split_path
+   -  strip_path        -  valid_filename    -  NL and S L
 
 To get any of these functions/symbols into your namespace without having
 to use them as object methods, use this kind of syntax:
@@ -3220,6 +3260,10 @@ and you don't need a compiler on your system to install it.
 You can technically run File::Util on older versions of Perl 5, but it isn't
 recommended, especially if you want unicode support and wish to take advantage
 of File::Util's ability to read and write files using UTF-8 encoding.
+
+L<Unicode::UTF8> is also recommended and helps speed things up
+in several places where you might choose to use unicode as described
+elsewhere in the L<File::Util::Manual>.
 
 =back
 

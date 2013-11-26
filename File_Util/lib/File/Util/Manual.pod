@@ -483,6 +483,29 @@ I<see also L<DIAGNOSTICS|/DIAGNOSTICS>>
 
 =back
 
+=head2 C<default_path>
+
+=over
+
+=item I<Syntax:> C<default_path( [string, string] )>
+
+The second string argument is optional.
+
+Works just like C<L<strict_path|/strict_path>>, except that instead of
+returning C<undef> when the argument passed in doesn't look like a path,
+it will return a default string instead.  The default string returned
+will either be the built-in default path, or the string you specify as
+a second argument to this method.
+
+The default string returned by this method is '.' . SL
+I<(see L<SL|/SL>)>
+
+This means that on windows, the built-in default would be C<.\> whereas on
+a POSIX-compliant system (Linux, UNIX, Mac, etc) you would get C<./>
+
+I<see also L<strict_path|/strict_path>)>
+
+=back
 
 =head2 C<ebcdic>
 
@@ -1805,6 +1828,15 @@ for the File::Util object will be returned.
 Takes the file path from the file name provided and returns it such that
 C</who/you/callin/scruffy.txt> is returned as C</who/you/callin>.
 
+This method is optimized for speed and returns anything that could possibly
+be a file path, even if that means the path is actually C<foo.bar> if you
+passed it such an argument.  Technically, you could indeed have a directory
+named C<blaster.txt>, so this method doesn't distinguish between strings
+that look like file names and ones that don't.
+
+If you want one that does, you need to use C<strict_path()> instead.
+I<(see L<strict_path|/strict_path>)>
+
 =back
 
 =head2 C<size>
@@ -1833,6 +1865,24 @@ This method doesn't divine or detect any information about the path, it simply
 manipulates the string value.  It doesn't map it to any real filesystem object.
 It doesn't matter whether or not the file/path named in the input string
 exists or not.
+
+=back
+
+=head2 C<strict_path>
+
+=over
+
+=item I<Syntax:> C<strict_path( [string] )>
+
+Works just like C<L<return_path()|/return_path>> except that it is more
+strict in what it returns.  If you pass it a string that does not "look"
+like a path (a string with no directory separators or that is not C<.> or
+C<..>), then this method will return C<undef>.
+
+If you'd like to get a default path string returned instead of C<undef>, then
+you want to use the C<L<default_path()|/default_path>> method instead.
+
+I<(see also L<return_path|/return_path> and L<default_path|/default_path>>
 
 =back
 

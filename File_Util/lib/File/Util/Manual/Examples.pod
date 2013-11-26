@@ -466,7 +466,7 @@ examples using *nix-style paths:
    #  (prints "/usr/bin")
    print $f->return_path( '/usr/bin/perl' );
 
-   # On a Mac
+   # On a (very, very old) Mac
    #  (prints "foo:bar")
    print $f->return_path( 'foo:bar:baz' );
 
