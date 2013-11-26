@@ -1882,7 +1882,7 @@ C<..>), then this method will return C<undef>.
 If you'd like to get a default path string returned instead of C<undef>, then
 you want to use the C<L<default_path()|/default_path>> method instead.
 
-I<(see also L<return_path|/return_path> and L<default_path|/default_path>>
+I<(see also L<return_path|/return_path> and L<default_path|/default_path>)>
 
 =back
 
