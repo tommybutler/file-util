@@ -2537,14 +2537,14 @@ sub open_handle {
          # get open mode
          $mode = $$MODES{sysopen}{ $mode };
 
-         sysopen( $fh, $clean_name, $$MODES{sysopen}{ $mode } ) or
+         sysopen( $fh, $clean_name, $mode ) or
             return $this->_throw(
                'bad open',
                {
                   filename  => $clean_name,
                   mode      => $mode,
                   exception => $!,
-                  cmd       => qq($clean_name, $$MODES{sysopen}{ $mode }),
+                  cmd       => qq($clean_name, $mode),
                   opts      => $in,
                }
             );
