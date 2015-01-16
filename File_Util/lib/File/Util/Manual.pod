@@ -833,7 +833,7 @@ I<as list_dir() is walking the directory tree>.  Consider this example:
    sub filesize {
       my ( $selfdir, $subdirs, $files, $depth ) = @_;
 
-      print( "$_ | " . ( -s $_ ) . " | $depth levels deep\n" for @$files;
+      print "$_ | " . ( -s $_ ) . " | $depth levels deep\n" for @$files;
    }
 
    # Now list directory recursively, invoking the callback on every recursion
