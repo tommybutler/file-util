@@ -39,7 +39,7 @@ BEGIN {
 
             Test::Fatal->import( qw( exception dies_ok lives_ok ) );
 
-            plan tests => 36;
+            plan tests => 37;
 
             CORE::eval <<'__TEST_NOWARNINGS__';
 use Test::NoWarnings;
@@ -205,6 +205,24 @@ $exception = exception
 like $exception,
      qr/(?m)^Illegal mode specified for sysopen:/,
      'provide illegal SYSopen "mode" to write_file()';
+
+# try to SYSopen a file with a utf8 binmode
+$exception = exception
+{
+   $ftl->open_handle
+   (
+      {
+         use_sysopen => 1,
+         filename    => 'dummyfile',
+         mode        => 'write',
+         binmode     => 'utf8',
+      }
+   )
+};
+
+like $exception,
+     qr/(?m)^The use of system IO.+?on utf8 file handles is deprecated/,
+     'try to open_handle with mixed utf8 and systemIO options';
 
 # try to opendir on an inaccessible directory
 $exception = exception { $ftl->list_dir( $noaccess_dir ) };

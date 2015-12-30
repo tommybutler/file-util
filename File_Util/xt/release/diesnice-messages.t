@@ -6,7 +6,7 @@ use Test::More;
 
 if ( $ENV{RELEASE_TESTING} || $ENV{AUTHOR_TESTING} || $ENV{AUTHOR_TESTS} )
 {                            # the tests in this file have a higher probability
-   plan tests => 68;          # of failing in the wild, and so are reserved for
+   plan tests => 70;          # of failing in the wild, and so are reserved for
                              # the author/maintainers as release tests
    CORE::eval # hide the eval...
    '
@@ -663,6 +663,25 @@ like( $f->_throw( 'no unicode' => { diag => 1 } ),
 like( $f->_throw( 'no unicode' => { } ),
    qr/(?sm)^Your version of Perl is not new enough/,
    'no unicode support'
+);
+
+# 33
+like(
+   $f->_throw(
+      'bad binmode' => {
+         filename => __FILE__,
+         meth     => 'anonymous',
+         diag     => 1,
+      }
+   ),
+   qr/(?m)^IO discipline conflict/,
+   'cant mix syswrite with :utf8 (diagnostic mode)'
+);
+
+# 33.5
+like( $f->_throw( 'bad binmode' => { } ),
+   qr/(?m)^The use of system IO.+?on utf8 file handles is deprecated/,
+   'cant mix syswrite with :utf8'
 );
 
 exit;
