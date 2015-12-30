@@ -543,6 +543,29 @@ Solution:   A human must remove the illegal characters from this string.
 __bad_chars__
 
 
+# CAN'T USE UTF8 WITH SYSOPEN
+'bad binmode' => <<'__bad_binmode__',
+IO discipline conflict.  $opts->{_pak} can't properly perform IO to this file
+while using the options you specified:
+   $EBL$opts->{filename}$EBR
+
+The use of system IO (sysread/syswrite/etc) on utf8 file handles is deprecated,
+and causes portability/reliability problems.  To learn more, you can read the
+notes regarding binmode in `perldoc perlport`.
+
+In short, please don't use these conflicting options together:
+   use_sysopen => 1
+   binmode     => 'utf8'
+
+Origin:     This is a human error.
+Solution:   A human must make a change to the code which calls
+            $opts->{_pak}::$opts->{meth}(), so that it does not contain
+            conflicting options.  Either use binmode => 'utf8' without the
+            use_sysopen option, or don't direct $opts->{_pak}::$opts->{meth}()
+            to 'use_sysopen'.
+__bad_binmode__
+
+
 # NOT A VALID FILEHANDLE
 'not a filehandle' => <<'__bad_handle__',
 $opts->{_pak} can't unlock file with an invalid file handle reference:

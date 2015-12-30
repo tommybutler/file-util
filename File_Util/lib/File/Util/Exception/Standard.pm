@@ -224,6 +224,13 @@ Call to $EBL$opts->{meth}()$EBR failed: @{[
 __no_input__
 
 
+# CAN'T USE UTF8 WITH SYSOPEN
+'bad binmode' => <<'__bad_binmode__',
+The use of system IO (sysread/syswrite/etc) on utf8 file handles is deprecated.
+Please don't specify { use_sysopen => 1 } together with { binmode => 'utf8' }
+__bad_binmode__
+
+
 # PLAIN ERROR TYPE
 'plain error' => <<'__plain_error__',
 ${\ scalar ($_[0] || ((exists $opts->{error} && defined $opts->{error}) ?

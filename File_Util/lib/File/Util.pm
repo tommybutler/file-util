@@ -1428,19 +1428,41 @@ sub write_file {
       # only non-existent files get bitmask arguments
       if ( -e $clean_name ) {
 
-         sysopen
-            $write_fh,
-            $clean_name,
-            $$MODES{sysopen}{ $mode }
-         or return $this->_throw(
+         # XXX
+         # you can't use UTF8 'mode' on system IO, so if a user requests
+         # UTF8, we have to use PerlIO
+         if ( $in->{binmode} && lc $in->{binmode} eq 'utf8' )
+         {
+            open
+               $write_fh,
+               $$MODES{popen}{ $mode },
+               $clean_name
+            or return $this->_throw(
                'bad open'   => {
                   filename  => $clean_name,
                   mode      => $mode,
-                  exception => $!,
-                  cmd       => qq($clean_name, $$MODES{sysopen}{ $mode }),
                   opts      => $in,
+                  exception => $!,
+                  cmd       => $mode . $clean_name,
                }
             );
+         }
+         else
+         {
+            sysopen
+               $write_fh,
+               $clean_name,
+               $$MODES{sysopen}{ $mode }
+            or return $this->_throw(
+               'bad open'   => {
+                  filename  => $clean_name,
+                  mode      => $mode,
+                  opts      => $in,
+                  exception => $!,
+                  cmd       => qq($clean_name, $$MODES{sysopen}{ $mode }),
+               }
+            );
+         }
       }
       else {
 
@@ -1464,52 +1486,97 @@ sub write_file {
       # open read-only first to safely check if we can get a lock.
       if ( -e $clean_name ) {
 
-         open $write_fh, '<', $clean_name or
-            return $this->_throw(
-               'bad open'   => {
-                  filename  => $clean_name,
-                  mode      => 'read',
-                  exception => $!,
-                  cmd       => $mode . $clean_name,
-                  opts      => $in,
-               }
-            );
+         open $write_fh, '<', $clean_name
+         or return $this->_throw(
+            'bad open'   => {
+               filename  => $clean_name,
+               mode      => 'read',
+               exception => $!,
+               cmd       => $mode . $clean_name,
+               opts      => $in,
+            }
+         );
 
          # lock file before I/O on platforms that support it
          my $lockstat = $this->_seize( $clean_name, $write_fh, $in );
 
          return unless $lockstat;
 
-         sysopen
-            $write_fh,
-            $clean_name,
-            $$MODES{sysopen}{ $mode }
-         or return $this->_throw(
-            'bad open'   => {
-               filename  => $clean_name,
-               mode      => $mode,
-               opts      => $in,
-               exception => $!,
-               cmd       => qq($clean_name, $$MODES{sysopen}{ $mode }),
-            }
-         );
+         # XXX
+         # you can't use UTF8 'mode' on system IO, so if a user requests
+         # UTF8, we have to use PerlIO
+         if ( $in->{binmode} && lc $in->{binmode} eq 'utf8' )
+         {
+            open
+               $write_fh,
+               $$MODES{popen}{ $mode },
+               $clean_name
+            or return $this->_throw(
+               'bad open'   => {
+                  filename  => $clean_name,
+                  mode      => $mode,
+                  opts      => $in,
+                  exception => $!,
+                  cmd       => $mode . $clean_name,
+               }
+            );
+         }
+         else
+         {
+            sysopen
+               $write_fh,
+               $clean_name,
+               $$MODES{sysopen}{ $mode }
+            or return $this->_throw(
+               'bad open'   => {
+                  filename  => $clean_name,
+                  mode      => $mode,
+                  opts      => $in,
+                  exception => $!,
+                  cmd       => qq($clean_name, $$MODES{sysopen}{ $mode }),
+               }
+            );
+         }
       }
       else { # only non-existent files get bitmask arguments
+             # ...unless doing utf8 business, in which case it's irrelevant
 
-         sysopen
-            $write_fh,
-            $clean_name,
-            $$MODES{sysopen}{ $mode },
-            $bitmask
-         or return $this->_throw(
-            'bad open'   => {
-               filename  => $clean_name,
-               mode      => $mode,
-               opts      => $in,
-               exception => $!,
-               cmd       => qq($clean_name, $$MODES{sysopen}{$mode}, $bitmask),
-            }
-         );
+         # XXX
+         # you can't use UTF8 'mode' on system IO, so if a user requests
+         # UTF8, we have to use PerlIO
+         if ( $in->{binmode} && lc $in->{binmode} eq 'utf8' )
+         {
+            open
+               $write_fh,
+               $$MODES{popen}{ $mode },
+               $clean_name
+            or return $this->_throw(
+               'bad open'   => {
+                  filename  => $clean_name,
+                  mode      => $mode,
+                  opts      => $in,
+                  exception => $!,
+                  cmd       => $mode . $clean_name,
+               }
+            );
+         }
+         else
+         {
+            sysopen
+               $write_fh,
+               $clean_name,
+               $$MODES{sysopen}{ $mode },
+               $bitmask
+            or return $this->_throw(
+               'bad open'   => {
+                  filename  => $clean_name,
+                  mode      => $mode,
+                  opts      => $in,
+                  exception => $!,
+                  cmd       => qq($clean_name, $$MODES{sysopen}{$mode}, $bitmask),
+               }
+            );
+         }
 
          # lock file before I/O on platforms that support it
          my $lockstat = $this->_seize( $clean_name, $write_fh, $in );
@@ -1530,6 +1597,7 @@ sub write_file {
       }
    }
 
+   # XXX
    if ( $in->{binmode} )
    {
       if ( lc $in->{binmode} eq 'utf8' )
@@ -1537,6 +1605,8 @@ sub write_file {
          if ( $HAVE_UU )
          {
             binmode $write_fh, ':unix:encoding(UTF-8)';
+
+            print $write_fh $content; # utf8 filehandles use PerlIO
          }
          else
          {
@@ -1548,10 +1618,14 @@ sub write_file {
       else
       {
          binmode $write_fh;
+
+         syswrite( $write_fh, $content );
       }
    }
-
-   syswrite( $write_fh, $content );
+   else
+   {
+      syswrite( $write_fh, $content );
+   }
 
    # release lock on the file
 
@@ -2511,6 +2585,28 @@ sub open_handle {
          }
       );
    }
+
+   # XXX
+   # Final bit of input validation made necessary by the would-be perils
+   # of IO encoding while using sys(open,read,write,seek,tell,etc) -
+   # Basically, using :utf8 encoding with syswrite is deprecated
+   if
+   (
+      ( exists $in->{use_sysopen} && defined $in->{use_sysopen} ) &&
+      ( $in->{binmode} && lc $in->{binmode} eq 'utf8' )
+   )
+   {
+      return $this->_throw(
+         'bad binmode',
+         {
+            meth    => 'open_handle',
+            filename => $clean_name,
+            dirname  => $root . $path,
+            opts     => $in,
+         }
+      );
+   }
+
    # input validation sequence finished
 
    if ( $$in{no_lock} || !$USE_FLOCK ) {
