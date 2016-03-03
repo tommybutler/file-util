@@ -1154,7 +1154,7 @@ sub load_file {
       $this->_seize( $clean_name, $fh, $in );
    }
 
-   # call binmode on binary files for portability accross platforms such
+   # call binmode on binary files for portability across platforms such
    # as MS flavor OS family
 
    binmode $fh if -B $clean_name;
@@ -1175,9 +1175,13 @@ sub load_file {
             return $this->_throw( 'no unicode' => $in );
          }
       }
-      else
+      elsif ( $in->{binmode} == 1 )
       {
          binmode $fh;
+      }
+      else
+      {
+         binmode $fh, $in->{binmode} # apply user-specified IO layer(s)
       }
    }
 
@@ -1426,9 +1430,8 @@ sub write_file {
    if ( $in->{no_lock} || !$USE_FLOCK ) {
 
       # only non-existent files get bitmask arguments
-      if ( -e $clean_name ) {
-
-         # XXX
+      if ( -e $clean_name )
+      {
          # you can't use UTF8 'mode' on system IO, so if a user requests
          # UTF8, we have to use PerlIO
          if ( $in->{binmode} && lc $in->{binmode} eq 'utf8' )
@@ -1464,8 +1467,8 @@ sub write_file {
             );
          }
       }
-      else {
-
+      else
+      {
          sysopen
             $write_fh,
             $clean_name,
@@ -1482,10 +1485,11 @@ sub write_file {
          );
       }
    }
-   else {
+   else
+   {
       # open read-only first to safely check if we can get a lock.
-      if ( -e $clean_name ) {
-
+      if ( -e $clean_name )
+      {
          open $write_fh, '<', $clean_name
          or return $this->_throw(
             'bad open'   => {
@@ -1502,7 +1506,6 @@ sub write_file {
 
          return unless $lockstat;
 
-         # XXX
          # you can't use UTF8 'mode' on system IO, so if a user requests
          # UTF8, we have to use PerlIO
          if ( $in->{binmode} && lc $in->{binmode} eq 'utf8' )
@@ -1541,7 +1544,6 @@ sub write_file {
       else { # only non-existent files get bitmask arguments
              # ...unless doing utf8 business, in which case it's irrelevant
 
-         # XXX
          # you can't use UTF8 'mode' on system IO, so if a user requests
          # UTF8, we have to use PerlIO
          if ( $in->{binmode} && lc $in->{binmode} eq 'utf8' )
@@ -1597,7 +1599,6 @@ sub write_file {
       }
    }
 
-   # XXX
    if ( $in->{binmode} )
    {
       if ( lc $in->{binmode} eq 'utf8' )
@@ -1615,9 +1616,15 @@ sub write_file {
             return $this->_throw( 'no unicode' => $in );
          }
       }
-      else
+      elsif ( $in->{binmode} == 1 )
       {
          binmode $write_fh;
+
+         syswrite( $write_fh, $content );
+      }
+      else
+      {
+         binmode $write_fh, $in->{binmode}; # apply user-specified IO layer(s)
 
          syswrite( $write_fh, $content );
       }
@@ -2586,7 +2593,6 @@ sub open_handle {
       );
    }
 
-   # XXX
    # Final bit of input validation made necessary by the would-be perils
    # of IO encoding while using sys(open,read,write,seek,tell,etc) -
    # Basically, using :utf8 encoding with syswrite is deprecated
@@ -2779,9 +2785,13 @@ sub open_handle {
             return $this->_throw( 'no unicode' => $in );
          }
       }
-      else
+      elsif ( $in->{binmode} == 1 )
       {
          binmode $fh;
+      }
+      else
+      {
+         binmode $fh, $in->{binmode} # apply user-specified IO layer(s)
       }
    }
 
@@ -2989,7 +2999,10 @@ have to worry about whether their programs will work on other operating systems
 and/or architectures.  It works on Linux, Windows, Mac, BSD, Unix and others.
 
 File::Util is written B<purely in Perl>, and requires no compiler or make
-utility on your system in order to install and run it.
+utility on your system in order to install and run it.  It loads a minimal
+amount of code when used, only pulling in support for lesser-used methods
+on demand.  It has no dependencies other than what comes installed with Perl
+itself.
 
 File::Util also aims to be as backward compatible as possible, running without
 problems on Perl installations as old as 5.006.  You are encouraged to run
@@ -3023,20 +3036,20 @@ reference materials:
 
 =over
 
-=item B<The "Nutshell">
+=item B<Examples>
 
 The L<File::Util::Manual::Examples> document has a long list of small, reusable
 code snippets and techniques to use in your own programs.  This is the "cheat
 sheet", and is a great place to get started quickly.  Almost everything you
 need is here.
 
-=item B<The Manual>
+=item B<Complete API Reference>
 
 The L<File::Util::Manual> is the complete reference document explaining every
 available feature and object method.  Use this to look up the full information
 on any given feature when the examples aren't enough.
 
-=item B<The Cookbook>
+=item B<Cookbook>
 
 The L<File::Util::Cookbook> contains examples of complete, working programs
 that use File::Util to easily accomplish tasks which require file handling.
@@ -3062,22 +3075,16 @@ that use File::Util to easily accomplish tasks which require file handling.
 
 =head2 File Operations
 
-   # load content into a variable, be it text, or binary, either works
-   my $content = $f->load_file( 'data.txt' );
+   # load file content into a scalar variable as raw text
+   my $content = $f->load_file( 'somefile.txt' );
 
-   # wrangle some text
-   $content =~ s/this/that/g;
+   # read a binary file the same way
+   my $binary_content = $f->load_file( 'barking-cat.mp4' );
 
-   # write a file with your changes
-   $f->write_file( 'new_data.txt' => $content );
+   # write a raw text file
+   $f->write_file( 'somefile.txt' => $content );
 
-   # try binary this time
-   my $binary_content = $f->load_file( 'barking-cat.avi' );
-
-   # get some image data from somewhere...
-   my $picture_data = get_image_upload();
-
-   # ...and write a binary image file, using some other options as well
+   # ...and write a binary file, using some other options as well
    $f->write_file(
       'llama.jpg' => $picture_data => { binmode => 1, bitmask => oct 644 }
    );
@@ -3131,8 +3138,18 @@ that use File::Util to easily accomplish tasks which require file handling.
 
    syswrite $fh, "that's no moon";
 
-   # ...you can use any of these syswrite modes, also with { binmode => 'utf8' }
+   # ...You can use any of these syswrite modes with open_handle():
    # read, write, append, rwcreate, rwclobber, rwappend, rwupdate, and trunc
+
+PLEASE NOTE that as of Perl 5.23, it is deprecated to mix system IO
+(sysopen/syswrite/sysread/sysseek) with utf8 binmode (see perldoc perlport).
+As such, File::Util will no longer allow you to do this after version
+4.132140.  Please see notes on UTF-8 and encoding further below.
+
+   # ...THIS WILL NOW FAIL!
+   $f->open_handle(
+      'somefile.txt' => 'write' => { use_sysopen => 1, binmode => 'utf8' }
+   );
 
 =head2 Directories
 
@@ -3192,16 +3209,83 @@ that use File::Util to easily accomplish tasks which require file handling.
 pattern matching in directories, callbacks, directory walking, user-definable
 error handlers, and more.
 
+=head2 File Encoding and UTF-8
+
+If you want to read/write in UTF-8, you can do that:
+
+   $ftl->load_file( 'file.txt' => $content => { binmode => 'utf8' } );
+
+   $ftl->write_file( 'file.txt' => $content => { binmode => 'utf8' } );
+
+   $ftl->open_handle( 'file.txt' => 'read' => { binmode => 'utf8' } );
+
+   # ...and so on
+
+Only use C<binmode =E<gt> 'utf8'> for text.
+
+Encoding and IO layers (sometimes called disciplines) can become complex.
+It's not something you usually need to worry about unless you wish to
+really fine tune File::Util's behavior beyond what are very suitible, portable
+defaults, or accomplish very specific tasks like encoding conversions.
+
+You're free to specify any binmode you like, or allow File::Util to use the
+system's default IO layering.  It will automatically use the ":raw" pseudo layer
+when reading files that are binary, unless specifically told to use something
+different.
+
+You can control things as shown in the examples below:
+
+   $ftl->load_file( 'file.txt' => $content => { binmode => SPEC } );
+
+   $ftl->write_file( 'file.txt' => $content => { binmode => SPEC } );
+
+   $ftl->open_handle( 'file.txt' => 'read' => { binmode => SPEC } );
+
+...where C<SPEC> is one or more of any supported IO layers on your system.
+Examples might include:
+
+=over
+
+=item *
+
+C<':raw'>
+
+=item *
+
+C<':unix'>
+
+=item *
+
+C<':crlf'>
+
+=item *
+
+C<':stdio'>
+
+=item *
+
+C<':encoding(ENCODING)'> I<with ENCODING's like iso-8859-1, shiftjis, etc>
+
+=item *
+
+...and much more
+
+=back
+
+You can learn about the IO layers available to you and what they do in the
+L<PerlIO> perldoc.  Available options have increased over the years, and are
+likely subject to continued evolution.  Consult the L<PerlIO> and L<Encode>
+documentation as your authoritative source of info on what layers to use.
+
 =head1 PERFORMANCE
 
-File::Util consists of several modules, but only loads the ones it needs when
-it needs them and also offers a comparatively fast load-up time, so using
-File::Util doesn't bloat your code footprint.
+File::Util consists of a set of smaller modules, but only loads the ones it
+needs when it needs them.  It offers a comparatively fast load-up time, so using
+File::Util doesn't bloat your code's resource footprint.
 
 Additionally, File::Util has been optimized to run fast.  In many scenarios
-it does more and still out-performs other popular IO modules from anywhere
-from 100%-400%, although L<Path::Tiny> is also extremely fast at what it is
-designed to do.
+it does more and still out-performs other popular IO modules.  Benchmarking tools
+are included as part of the File::Util installation package.
 
 I<(See the benchmarking and profiling scripts>
 I<that are included as part of this distribution.)>
