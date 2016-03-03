@@ -1,5 +1,16 @@
 Revision history for Perl extension File::Util.pm
 
+4.160630 2016-03-03
+ - TRIAL RELEASE
+ - Fix for bug https://rt.cpan.org/Ticket/Display.html?id=106771
+ - Added tests
+ - Added documentation regarding the bug fix, namely the now-unsupported
+   (because Perl 5.23 deprecates) the combination of sysread/write/seek
+   on filehandles in :utf8 binmode.
+ - Added the ability for users to specify their own IO layers via the
+   { binmode => ':layerspec' } option to ::load_file(), ::write_file(),
+   and ::open_handle()
+
 4.131591 2013-06-07
  - POD (documentation) corrections.
 

@@ -3225,7 +3225,7 @@ Only use C<binmode =E<gt> 'utf8'> for text.
 
 Encoding and IO layers (sometimes called disciplines) can become complex.
 It's not something you usually need to worry about unless you wish to
-really fine tune File::Util's behavior beyond what are very suitible, portable
+really fine tune File::Util's behavior beyond what are very suitable, portable
 defaults, or accomplish very specific tasks like encoding conversions.
 
 You're free to specify any binmode you like, or allow File::Util to use the

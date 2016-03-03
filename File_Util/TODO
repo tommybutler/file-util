@@ -36,7 +36,7 @@ Not necessarily listed in order of priority:
 
 11) [DONE] Remove all traces of old invocation syntax from the POD
 
-12) [IN PROGRESS] Now that documentation has been divided into the ::Manual and
+12) [DONE] Now that documentation has been divided into the ::Manual and
     the ::Cookbook, I want to add more content to them.  More examples,
     More fully-functional programs (recipes).
 
@@ -76,8 +76,14 @@ Not necessarily listed in order of priority:
 17) [DONE] keep track of inodes seen while traversing directories to avoid
     filesystem loops
 
-18) Write even more unicode tests
+18) [DONE] Write even more unicode tests
 
 19) Create option to allow user to specify that atomic file operations should
     be performed instead of regular IO.  It's a handy feature that will be
     added in soon
+
+20) [DONE] Allow users to specify custom IO layers for reads/writes/opens
+
+21) Revisit documentation structure to see if improvements can't be made
+
+22) Create convenience methods for UTF8 reads/writes/opens
