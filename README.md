@@ -3,26 +3,22 @@ file-util
 
 This is the git repository for the File::Util Perl 5 package
 
-If you want to DOWNLOAD a packaged release of File::Util, this is not the 
-place to get it. Use your CPAN client or download a package from 
-https://metacpan.org/module/File::Util
+To read the DOCUMENTATION for File::Util, please refer to
+`perldoc File::Util` or visit:
+   https://metacpan.org/pod/File::Util
 
-If you want HELP with File::Util, or even if you want to complain about 
-it, send me an email from www.atrixnet.com/contact or post your question 
-at www.perlmonks.org
+If you want HELP with File::Util, or have a complaint or BUG, please
+create a github issue here:
+   https://github.com/tommybutler/file-util/issues
 
-If you want INFORMATION about File::Util, go to https://metacpan.org/author/TOMMY 
-and click on the "File::Util" link. All the documentation and packaged 
-distributions are there.
-
-To report a BUG, go here:
+You can also file bugs at rt.cpan.org:
    https://rt.cpan.org/Dist/Display.html?Name=File%3A%3AUtil
 
-If you want to CONTRIBUTE to File::Util, clone it, patch it, and generally 
-feel invited to participate in whatever way you may wish via the git 
-mechanism (git://github.com/tommybutler/file-util.git)
+If you want to DOWNLOAD a packaged release of File::Util, use your CPAN
+client or download a package tarball from:
+   https://metacpan.org/module/File::Util
 
-This project was a private endeavor for too long so don't hesitate to pitch in. 
-I want to say I very much appreciate the bug reports, patches, and testers.
+If you want to CONTRIBUTE to File::Util, please send pull requests:
+   git://github.com/tommybutler/file-util.git
 
--Tommy Butler
+Thank you for your bug reports, patches, and and test reports.
