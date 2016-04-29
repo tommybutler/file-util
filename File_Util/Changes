@@ -1,5 +1,10 @@
 Revision history for Perl extension File::Util.pm
 
+4.161200 2016-04-29
+  - The previous TRIAL release passes muster by cpantesters.  This is
+    now released as a STABLE dist, although more features are planned in
+    coming releases.  See also: TODO
+
 4.160630 2016-03-03
  - TRIAL RELEASE
  - Fix for bug https://rt.cpan.org/Ticket/Display.html?id=106771
