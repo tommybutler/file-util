@@ -1,5 +1,10 @@
 NEWS for File::Util
 
+Tue Jul 12 18:37:17 CDT 2016
+   Releasing this bug fix to CPAN immediately.  Having changed only one line
+   of code, and knowing the criticality of the bug, I'm releasing this as
+   GA and skipping the ...-TRIAL dist formalities.  Regression test also added.
+
 Thu Jun  6 23:11:39 CDT 2013
    Since Sat Mar 2 01:13:46 CST 2013, 580 test runs from the CPAN testers
    have had 100% complete PASSes.  I'm releasing the code as-is, as

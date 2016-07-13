@@ -113,7 +113,9 @@ sub list_dir {
    my $dir  = shift @_;
    my $opts = ref $_[0] eq 'REF' ? ${ shift @_ } : $this->_remove_opts( \@_ );
 
-   my ( @dir_contents, $subdirs, $files );
+   my @dir_contents;
+
+   my ( $subdirs, $files ) = ( [], [] );
 
    my $abort_depth = $opts->{abort_depth};
 
