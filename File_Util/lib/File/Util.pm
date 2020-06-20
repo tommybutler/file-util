@@ -2,8 +2,6 @@ use 5.006;
 use strict;
 use warnings;
 
-use lib 'lib';
-
 package File::Util;
 
 use File::Util::Definitions qw( :all );

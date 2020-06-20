@@ -1,8 +1,6 @@
 use strict;
 use warnings;
 
-use lib 'lib';
-
 package File::Util::Exception::Diagnostic;
 
 # ABSTRACT: Diagnostic (verbose) error messages

@@ -1,8 +1,6 @@
 use strict;
 use warnings;
 
-use lib 'lib';
-
 package File::Util::Exception;
 
 # ABSTRACT: Base exception class for File::Util

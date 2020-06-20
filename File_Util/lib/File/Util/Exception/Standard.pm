@@ -1,8 +1,6 @@
 use strict;
 use warnings;
 
-use lib 'lib';
-
 package File::Util::Exception::Standard;
 
 # ABSTRACT: Standard (non-verbose) error messages

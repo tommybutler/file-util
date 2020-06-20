@@ -5,8 +5,6 @@ package File::Util::Interface::Modern;
 
 # ABSTRACT: Modern call interface to File::Util
 
-use lib 'lib';
-
 use File::Util::Interface::Classic qw( _myargs );
 use File::Util::Definitions qw( :all );
 

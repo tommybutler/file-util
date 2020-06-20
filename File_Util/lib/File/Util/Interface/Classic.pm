@@ -7,8 +7,6 @@ package File::Util::Interface::Classic;
 
 use Scalar::Util qw( blessed );
 
-use lib 'lib';
-
 use File::Util::Definitions qw( :all );
 
 use vars qw(
